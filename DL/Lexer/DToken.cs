@@ -21,12 +21,28 @@ public class DToken
     public int Line { get; set; } = 0;
 
     /// <summary>
+    /// Turn to token into an understandable string.
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+        return $"Token({Type}): Span: {{ {Lexeme.Start}, {Lexeme.End} }}, Line: {Line}";
+    }
+
+    /// <summary>
     /// An invalid token.
     /// </summary>
     public static readonly DToken Bad = new()
     {
         Lexeme = new DSpan { Start = 0, End = 0 },
         Type = TokenType.Invalid,
+        Line = -1
+    };
+
+    public static readonly DToken Whitespace = new()
+    {
+        Lexeme = new DSpan { Start = 0, End = 0 },
+        Type = TokenType.Whitespace,
         Line = -1
     };
 }

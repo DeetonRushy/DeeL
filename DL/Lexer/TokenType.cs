@@ -105,6 +105,11 @@ public enum TokenType
     Eof,
 
     /// <summary>
+    /// Whitespace, an empty character.
+    /// </summary>
+    Whitespace,
+
+    /// <summary>
     /// Special token that represents an invalid token.
     /// </summary>
     Invalid

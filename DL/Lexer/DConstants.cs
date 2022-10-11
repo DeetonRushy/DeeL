@@ -15,7 +15,13 @@ public static class DConstants
 
     public static readonly List<char> StringDelims = new() { '\'', '"' };
 
-    public const char Endline = ';';
+    /// <summary>
+    /// Attempt to work this into the source, in a way that would allow this to be changed to '\n'
+    /// without many problems.
+    /// </summary>
+    public const char Endline = '\n';
+    public const char WindowsGarbage = '\r';
+    public const char Whitespace = ' ';
 
     public const char Comment = '#';
 

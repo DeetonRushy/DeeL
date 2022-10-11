@@ -51,12 +51,36 @@ public class DLexer
     {
         // TODO: lex the contents.
 
+        DToken? token;
+
+        for (; ; )
+        {
+            token = LexSingle();
+
+            // Returns null when windows newlines are detected (and possibly others).
+            // This is to ignore the '\r'
+            if (token is null)
+            {
+                continue;
+            }
+
+            if (token.Type == TokenType.Eof)
+            {
+                break;
+            }
+
+            _tokens.Add(token);
+        }
+
         return _tokens;
     }
     
-    public DToken LexSingle()
+    public DToken? LexSingle()
     {
-        return Advance() switch
+        // Dont make inline, makes debugging near impossible.
+        var ch = Advance();
+
+        return ch switch
         {
             DConstants.ListOpen =>  MakeToken(TokenType.ListOpen),
             DConstants.ListClose => MakeToken(TokenType.ListClose),
@@ -66,6 +90,8 @@ public class DLexer
             DConstants.Comment =>   LexComment(),
             DConstants.EOF =>       MakeToken(TokenType.Eof),
             DConstants.Endline =>   LexNewline(),
+            DConstants.WindowsGarbage => null,
+            DConstants.Whitespace => DToken.Whitespace,
             var c when DConstants.StringDelims.Contains(c) => LexString(),
             var c when char.IsNumber(c) => LexGenericNumber(),
             _ => DToken.Bad
@@ -114,7 +140,7 @@ public class DLexer
     {
         var res = new DToken ()
         {
-            Lexeme = _span,
+            Lexeme = new DSpan { Start = _span.Start, End = _span.End },
             Type = type,
             Line = (int)_line
         };
@@ -142,6 +168,8 @@ public class DLexer
 
     char Advance()
     {
-        return _contents[++_span.End];
+        if (++_span.End >= _contents.Length)
+            return DConstants.EOF;
+        return _contents[_span.End];
     }
 }
