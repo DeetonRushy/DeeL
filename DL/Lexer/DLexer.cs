@@ -121,9 +121,32 @@ public class DLexer
 
     private DToken LexString()
     {
-        // TODO: lex strings
+        Expect(DConstants.IsStringDelimeter(CurrentThenReset()), "internal error");
 
-        throw new LexerException("Implement LexString()");
+        // The goal is to have *ONLY* the string contents within the lexeme.
+        // Do not include the delimeters.
+
+        Skip(1); // Skip the initial delimeter
+
+        /* [*] = good
+         * [-] = bad
+         * 
+         * 'hello, world!'
+         * -*************-
+         */
+
+        // cleaner ways to write this, yes... but its impossible to debug.
+
+        char current = Advance();
+        while (!DConstants.IsStringDelimeter(current))
+        {
+            current = Advance();
+        }
+
+        Expect(!_span.Contents().Any(x => DConstants.IsStringDelimeter(x)),
+            "failed to correctly lex string contents.");
+
+        return MakeToken(TokenType.String);
     }
 
     private DToken LexGenericNumber()
@@ -210,6 +233,21 @@ public class DLexer
         return _contents[_span.End];
     }
 
+    char CurrentThenAdvance()
+    {
+        char current = Current();
+        ++_span.End;
+        return current;
+    }
+
+    char CurrentThenReset()
+    {
+        char current = Current();
+        // discard current range.
+        MakeToken(TokenType.Invalid);
+        return current;
+    }
+
     char Advance()
     {
         if (++_span.End >= _contents.Length)
@@ -231,5 +269,16 @@ public class DLexer
             return;
         _span.Start += count;
         _span.End += count;
+    }
+
+    void Skip(int count = 1)
+    {
+        _span.Start += count;
+    }
+
+    void Expect(bool condition, string message)
+    {
+        if (!condition)
+            throw new LexerException(message);
     }
 }

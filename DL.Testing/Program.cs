@@ -1,8 +1,8 @@
 ﻿using DL.Lexer;
 
-string script = @"102 = 12";
+string script = @"'height' = 12";
 
-DLexer lexer = new DLexer(script);
+var lexer = new DLexer(script);
 
 var tokens = lexer.Lex();
 

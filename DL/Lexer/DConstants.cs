@@ -15,6 +15,11 @@ public static class DConstants
 
     public static readonly List<char> StringDelims = new() { '\'', '"' };
 
+    public static bool IsStringDelimeter(char c)
+    {
+        return StringDelims.Contains(c);
+    }
+
     /// <summary>
     /// Attempt to work this into the source, in a way that would allow this to be changed to '\n'
     /// without many problems.
