@@ -32,11 +32,16 @@ public class DSpan
             throw new InvalidOperationException("DSpan.SourceContents has not been set before calling Contents()");
         }
 
-        if (Start >= SourceContents.Length || 0 > Start)
+        if (Start > SourceContents.Length || 0 > Start)
             throw new InvalidOperationException("invalid span");
-        if (End >= SourceContents.Length || 0 > End)
+        if (End > SourceContents.Length || 0 > End)
             throw new InvalidOperationException("invalid span");
 
         return SourceContents[Start..End];
+    }
+
+    public int Difference()
+    {
+        return End - Start;
     }
 }

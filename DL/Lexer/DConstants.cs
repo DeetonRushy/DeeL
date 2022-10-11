@@ -37,4 +37,17 @@ public static class DConstants
     {
         return SpecialRhsAssignees?[Assignee] ?? null;
     }
+
+    public static bool IsDLNumberCharacter(char ch)
+    {
+        if (ch <= 31)
+        {
+            /* anything under character code 31 is stupid shit. */
+            return false;
+        }
+
+        // It's okay if the numbers looks like this: 1.2.2.34.24.
+        // It's invalid & will fail checks with decimal.TryParse.
+        return ch >= '0' && ch <= '9' || ch == '.';
+    }
 }

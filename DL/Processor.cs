@@ -7,7 +7,7 @@ namespace DL;
 /// </summary>
 public class DLRuntime
 {
-    private DLexer lexer;
+    private readonly DLexer lexer;
 
     public DLRuntime(string fileName)
     {

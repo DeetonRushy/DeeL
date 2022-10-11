@@ -21,6 +21,12 @@ public class DToken
     public int Line { get; set; } = 0;
 
     /// <summary>
+    /// Optional attached data. This is for if the parser wants some extra information
+    /// that the lexer can work out before-hand.
+    /// </summary>
+    public object? Literal { get; set; } = null;
+
+    /// <summary>
     /// Turn to token into an understandable string.
     /// </summary>
     /// <returns></returns>

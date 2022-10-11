@@ -1,3 +1,5 @@
+using DL.Lexer.Exceptions;
+
 namespace DL.Lexer;
 
 /// <summary>
@@ -18,7 +20,7 @@ public class DLexer
     /// <summary>
     /// The span representing the current span of text being viewed.
     /// </summary>
-    DSpan _span;
+    readonly DSpan _span;
 
     /// <summary>
     /// The current line number being viewed.
@@ -58,8 +60,8 @@ public class DLexer
             token = LexSingle();
 
             // Returns null when windows newlines are detected (and possibly others).
-            // This is to ignore the '\r'
-            if (token is null)
+            // This is to ignore the '\r' and to skip whitespace.
+            if (token is null || token.Type == TokenType.Whitespace)
             {
                 continue;
             }
@@ -91,9 +93,10 @@ public class DLexer
             DConstants.EOF =>       MakeToken(TokenType.Eof),
             DConstants.Endline =>   LexNewline(),
             DConstants.WindowsGarbage => null,
-            DConstants.Whitespace => DToken.Whitespace,
-            var c when DConstants.StringDelims.Contains(c) => LexString(),
+            DConstants.Whitespace => MakeToken(TokenType.Whitespace),
+            DConstants.Equals => MakeToken(TokenType.Equals),
             var c when char.IsNumber(c) => LexGenericNumber(),
+            var c when DConstants.StringDelims.Contains(c) => LexString(),
             _ => DToken.Bad
         };
     }
@@ -119,13 +122,47 @@ public class DLexer
     private DToken LexString()
     {
         // TODO: lex strings
-        return DToken.Bad;
+
+        throw new LexerException("Implement LexString()");
     }
 
     private DToken LexGenericNumber()
     {
-        // TODO: lex numbers
-        return DToken.Bad;
+        /*
+         * numbers in DL are represented as either an Int64 or Decimal.
+         * All there is to do, is to collect the numbers characters & verify
+         * it's correct.
+         */
+
+        var ch = Advance();
+
+        while (DConstants.IsDLNumberCharacter(ch))
+        {
+            if (ch == DConstants.EOF)
+            {
+                throw new 
+                    LexerException("unexpected end of file while lexing a number.");
+            }
+
+            ch = Advance();
+        }
+
+        var content = CurrentSpan().Trim();
+
+        bool is_long = long.TryParse(content, out var value_long);
+        bool is_decimal = decimal.TryParse(content, out var value_decimal);
+
+        if (!is_long && !is_decimal)
+        {
+            throw new LexerException($"malformed number literal: {content}");
+        }
+
+        // clear extra whitespace. EDIT: Dont work.
+        // AdjustRight();
+
+        return is_long 
+            ? MakeToken(TokenType.Number, value_long) 
+            : MakeToken(TokenType.Decimal, value_decimal);
     }
 
     private DToken LexNewline()
@@ -147,6 +184,13 @@ public class DLexer
 
         _span.Start = _span.End;
         return res;
+    }
+
+    DToken MakeToken(TokenType type, object literal)
+    {
+        var token = MakeToken(type);
+        token.Literal = literal;
+        return token;
     }
 
     DToken LastToken()
@@ -171,5 +215,21 @@ public class DLexer
         if (++_span.End >= _contents.Length)
             return DConstants.EOF;
         return _contents[_span.End];
+    }
+
+    void AdjustLeft(int count = 1)
+    {
+        if (_span.Start == _span.End)
+            return;
+        _span.End -= count;
+        _span.Start -= count;
+    }
+
+    void AdjustRight(int count = 1)
+    {
+        if (_span.Start == _span.End)
+            return;
+        _span.Start += count;
+        _span.End += count;
     }
 }
