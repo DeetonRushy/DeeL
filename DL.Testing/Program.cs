@@ -1,6 +1,16 @@
 ﻿using DL.Lexer;
 
-string script = @"'height' = 12";
+string script = @"
+'windows' = [
+    'garbage',
+    'terrible'
+]
+
+'dict' = {
+    'attributes': [ 'nice' ],
+    'size': 2
+}
+";
 
 var lexer = new DLexer(script);
 
