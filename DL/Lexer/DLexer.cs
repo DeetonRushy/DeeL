@@ -95,9 +95,11 @@ public class DLexer
             DConstants.WindowsGarbage => null,
             DConstants.Whitespace => MakeToken(TokenType.Whitespace),
             DConstants.Equals => MakeToken(TokenType.Equals),
+            DConstants.Colon => MakeToken(TokenType.Colon),
             var c when char.IsNumber(c) => LexGenericNumber(),
             var c when DConstants.StringDelims.Contains(c) => LexString(),
-            _ => DToken.Bad
+            // assign the literal for debugging purposes
+            _ => new DToken { Literal = ch, Type = TokenType.Invalid }
         };
     }
 

@@ -18,8 +18,11 @@ var tokens = lexer.Lex();
 
 foreach (var token in tokens)
 {
-    Console.Write(token);
-    var contents = token.Lexeme.Contents();
-    Console
-        .Write($" | Content: {contents} (LC: {contents.Length}, Real: {token.Lexeme.Difference()})\n");
+    if (token.Type == TokenType.Invalid)
+    {
+        Console.WriteLine($"invalid token: {token.Literal}");
+        continue;
+    }
+
+    Console.WriteLine(token);
 }

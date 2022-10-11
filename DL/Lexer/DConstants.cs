@@ -12,6 +12,7 @@ public static class DConstants
 
     public const char ListOpen = '[';
     public const char ListClose = ']';
+    public const char Colon = ':';
 
     public static readonly List<char> StringDelims = new() { '\'', '"' };
 
