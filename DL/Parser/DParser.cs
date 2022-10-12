@@ -26,7 +26,14 @@ public class DParser
     {
         var result = new List<DNode>();
 
+        while (!_isAtEnd)
+        {
+            var decl = ParseDeclaration();
+            if (decl is not null)
+                result.Add(decl);
+        }
 
+        return result;
     }
 
     public DNode ParseDeclaration()
@@ -34,33 +41,45 @@ public class DParser
         // the first node should be a declaration.
         // there is only declarations in DL.
 
-        var initial = ConsumeNormalValue();
-
-        Consume(TokenType.Equals, DErrorCode.ExpectedEquals);
-
-        if (Match(TokenType.ListOpen))
+        if (ConsumeNormalValue() != null)
         {
-            return ParseListDeclaration();
+            var literal = ParseLiteral();
+            Consume(TokenType.Equals, DErrorCode.ExpectedEquals);
+
+            if (Match(TokenType.ListOpen))
+            {
+                var list = ParseListDeclaration();
+                return new Assignment(literal, list);
+            }
+
+            if (Match(TokenType.DictOpen))
+            {
+                var dict = ParseDictDeclaration();
+                return new Assignment(literal, dict);
+            }
+
+            // assume its a normal literal.
+            var value = ParseLiteral();
+            return new Assignment(literal, value);
         }
 
-        if (Match(TokenType.DictOpen))
-        {
-            return ParseDictDeclaration();
-        }
-
-        var value = ConsumeNormalValue();
-
-        return new Assignment(initial, value);
+        _error.CreateDefault(DErrorCode.NonNormalKey);
+        return null!;
     }
 
     private DNode ParseListDeclaration()
     {
-
+        throw new NotImplementedException();
     }
 
     private DNode ParseDictDeclaration()
     {
+        throw new NotImplementedException();
+    }
 
+    private DNode ParseLiteral()
+    {
+        throw new NotImplementedException();
     }
 
     private DToken Consume(TokenType type, DErrorCode code)

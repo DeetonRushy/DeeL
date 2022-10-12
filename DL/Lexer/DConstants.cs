@@ -39,9 +39,9 @@ public static class DConstants
         { "MIN_DECIMAL", TokenType.MinDecimal }
     };
 
-    public static TokenType? IsSpecialAssignee(string Assignee)
+    public static TokenType? IsSpecialAssignee(string assignee)
     {
-        return SpecialRhsAssignees?[Assignee] ?? null;
+        return SpecialRhsAssignees?[assignee] ?? null;
     }
 
     public static bool IsDLNumberCharacter(char ch)

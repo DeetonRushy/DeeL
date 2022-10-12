@@ -2,7 +2,7 @@ using DL.Lexer;
 
 namespace DL.Parser.Production;
 
-public record Assignment(DToken Key, DToken Value) : DNode
+public record Assignment(DNode Key, DNode Value) : DNode
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {

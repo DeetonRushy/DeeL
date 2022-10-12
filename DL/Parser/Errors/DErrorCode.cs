@@ -7,7 +7,8 @@ public enum DErrorCode
     Default = 1000,
     ExpectedIdentifier,
     ExpectedEquals,
-    ExpectedValue
+    ExpectedValue,
+    NonNormalKey
 
     /* add these as more error scenarios are defined. */
 }

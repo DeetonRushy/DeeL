@@ -2,14 +2,15 @@ namespace DL.Parser.Errors;
 
 public class DErrorHandler
 {
-    private IDictionary<DErrorCode, (DErrorLevel, string)> _defaultLevels
+    private readonly IDictionary<DErrorCode, (DErrorLevel, string)> _defaultLevels
         = new Dictionary<DErrorCode, (DErrorLevel, string)>()
         {
             /* define these as you go along. */
             { DErrorCode.Default, (DErrorLevel.All, "this shouldn't happen...") },
             { DErrorCode.ExpectedIdentifier, (DErrorLevel.All, "expected an identifier.") },
             { DErrorCode.ExpectedEquals, (DErrorLevel.All, "expected an assignment.") },
-            { DErrorCode.ExpectedValue, (DErrorLevel.All, "expected an identifier next to `=`") }
+            { DErrorCode.ExpectedValue, (DErrorLevel.All, "expected an identifier next to `=`") },
+            { DErrorCode.NonNormalKey, (DErrorLevel.All, "keys must be a string, integer or decimal.") }
         };
 
     private readonly string _contents;

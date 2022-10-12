@@ -174,10 +174,10 @@ public class DLexer
 
         var content = CurrentSpan().Trim();
 
-        bool is_long = long.TryParse(content, out var value_long);
-        bool is_decimal = decimal.TryParse(content, out var value_decimal);
+        bool isLong = long.TryParse(content, out var valueLong);
+        bool isDecimal = decimal.TryParse(content, out var valueDecimal);
 
-        if (!is_long && !is_decimal)
+        if (!isLong && !isDecimal)
         {
             throw new LexerException($"malformed number literal: {content}");
         }
@@ -185,9 +185,9 @@ public class DLexer
         // clear extra whitespace. EDIT: Dont work.
         // AdjustRight();
 
-        return is_long 
-            ? MakeToken(TokenType.Number, value_long) 
-            : MakeToken(TokenType.Decimal, value_decimal);
+        return isLong
+            ? MakeToken(TokenType.Number, valueLong)
+            : MakeToken(TokenType.Decimal, valueDecimal);
     }
 
     private DToken LexNewline()
