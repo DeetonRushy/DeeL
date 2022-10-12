@@ -94,13 +94,20 @@ public class DParser
                  * ]
                  */
             }
-            elements.Add(ParseLiteral());
+            var literal = ParseLiteral();
+            if (literal is null)
+                continue;
+            elements.Add(literal);
         } while (MatchAndAdvance(TokenType.Comma, TokenType.Newline));
 
         var close = Consume(TokenType.ListClose, DErrorCode.ExpectedListClose);
         _ = MatchAndAdvance(TokenType.Newline);
 
-        return new List(open, elements.ToArray(), close);
+        return new List(
+            open,
+            // hacky fix to sort the above loop adding an extra null element..
+            elements.ToArray(), 
+            close);
     }
 
     private DNode ParseDictDeclaration()
