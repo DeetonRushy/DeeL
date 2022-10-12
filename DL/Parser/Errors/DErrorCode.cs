@@ -8,7 +8,9 @@ public enum DErrorCode
     ExpectedIdentifier,
     ExpectedEquals,
     ExpectedValue,
-    NonNormalKey
+    NonNormalKey,
+    ExpectedListOpen,
+    ExpectedListClose
 
     /* add these as more error scenarios are defined. */
 }

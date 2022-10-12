@@ -1,5 +1,6 @@
 using DL.Lexer;
 using DL.Parser.Errors;
+using DL.Parser.Exceptions;
 using DL.Parser.Production;
 
 namespace DL.Parser;
@@ -7,14 +8,15 @@ namespace DL.Parser;
 public class DParser
 {
     readonly List<DToken> _tokens;
-    readonly DErrorHandler _error;
-    private bool _isAtEnd;
+    public readonly DErrorHandler _error;
+    private bool _isAtEnd => Peek().Type == TokenType.Eof;
     private int _current;
 
     public DParser(List<DToken> tokens)
     {
         _tokens = tokens;
         _error = new DErrorHandler(DSpan.SourceContents!);
+        SetErrorLevel(DErrorLevel.All);
     }
 
     public void SetErrorLevel(DErrorLevel level)
@@ -41,7 +43,15 @@ public class DParser
         // the first node should be a declaration.
         // there is only declarations in DL.
 
-        if (ConsumeNormalValue() != null)
+        // safety statement to avoid start of file newlines.
+        if (MatchAndAdvance(TokenType.Newline))
+        { }
+
+        if (Match(
+            TokenType.String,
+            TokenType.Number, 
+            TokenType.Decimal)
+            )
         {
             var literal = ParseLiteral();
             Consume(TokenType.Equals, DErrorCode.ExpectedEquals);
@@ -67,9 +77,19 @@ public class DParser
         return null!;
     }
 
-    private DNode ParseListDeclaration()
+    private List ParseListDeclaration()
     {
-        throw new NotImplementedException();
+        var open = Consume(TokenType.ListOpen, DErrorCode.ExpectedListOpen);
+        var elements = new List<Literal>();
+
+        do
+        {
+            elements.Add(ParseLiteral());
+        } while (Check(TokenType.Comma));
+
+        var close = Consume(TokenType.ListClose, DErrorCode.ExpectedListClose);
+
+        return new List(open, elements.ToArray(), close);
     }
 
     private DNode ParseDictDeclaration()
@@ -77,9 +97,61 @@ public class DParser
         throw new NotImplementedException();
     }
 
-    private DNode ParseLiteral()
+    private Literal ParseLiteral()
     {
-        throw new NotImplementedException();
+        // a literal in this context is a string, number or a decimal.
+
+        var value = ConsumeNormalValue();
+
+        if (value is null)
+        {
+            _error.CreateDefault(DErrorCode.NonNormalKey);
+            return null!;
+        }
+
+        if (value.Type == TokenType.Decimal)
+        {
+            if (value.Literal is decimal dec)
+            {
+                return new Literal(value, dec);
+            }
+
+            // wasn't set in the lexer, attempt to convert it here.
+
+            if (!decimal.TryParse(value.Lexeme.Contents(), out decimal dec2))
+            {
+                throw new 
+                    ParserException("decimal literal could not be parsed.");
+            }
+
+            return new Literal(value, dec2);
+        }
+
+        if (value.Type == TokenType.Number)
+        {
+            if (value.Literal is long l)
+            {
+                return new Literal(value, l);
+            }
+
+            // wasnt set in the lexer, attempt to convert it here.
+
+            if (!long.TryParse(value.Lexeme.Contents(), out long l2))
+            {
+                throw new
+                    ParserException("number literal could not be parsed.");
+            }
+
+            return new Literal(value, l2);
+        }
+
+        if (value.Type == TokenType.String)
+        {
+            var str = value.Lexeme.Contents();
+            return new Literal(value, str);
+        }
+
+        throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
     }
 
     private DToken Consume(TokenType type, DErrorCode code)
@@ -96,6 +168,11 @@ public class DParser
 
     public DToken ConsumeNormalValue()
     {
+        // deal with any leading newlines
+
+        if (Match(TokenType.Newline))
+            _ = Advance();
+
         if (!Check(TokenType.String)
             && !Check(TokenType.Number)
             && !Check(TokenType.Decimal))
@@ -123,11 +200,18 @@ public class DParser
         {
             if (Check(type))
             {
-                Advance();
                 return true;
             }
         }
         return false;
+    }
+
+    private bool MatchAndAdvance(params TokenType[] types)
+    {
+        bool result = Match(types);
+        if (result)
+            Advance();
+        return result;
     }
 
     private bool Check(TokenType type)

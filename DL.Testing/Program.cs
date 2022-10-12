@@ -1,28 +1,31 @@
 ﻿using DL.Lexer;
+using DL.Parser;
+using DL.Parser.Production;
 
 string script = @"
-'windows' = [
-    'garbage',
-    'terrible'
-]
-
-'dict' = {
-    'attributes': [ 'nice' ],
-    'size': 2
-}
+'windows' = 'garbage'
 ";
 
 var lexer = new DLexer(script);
 
 var tokens = lexer.Lex();
 
-foreach (var token in tokens)
-{
-    if (token.Type == TokenType.Invalid)
-    {
-        Console.WriteLine($"invalid token: {token.Literal}");
-        continue;
-    }
+var parser = new DParser(tokens);
 
-    Console.WriteLine(token);
+List<DNode> ast = new List<DNode>();
+
+try
+{
+    ast = parser.Parse();
 }
+catch 
+{
+    Console.WriteLine($"failure. {parser._error.Errors.Count} error(s)");
+
+    if (parser._error.Errors.Count >= 1)
+        parser._error.DisplayErrors();
+}
+
+
+
+

@@ -3,8 +3,11 @@ namespace DL.Parser.Errors;
 public class DError: Exception
 {
     public DError()
-        : base() { }
+        : base() 
+    {
+        Message = $"DL{(int)Code} ({Code}): ";
+    }
 
-    public new string Message { get; set; } = null!;
+    public new string Message { get; set; }
     public DErrorCode Code { get; set; }
 }

@@ -10,7 +10,9 @@ public class DErrorHandler
             { DErrorCode.ExpectedIdentifier, (DErrorLevel.All, "expected an identifier.") },
             { DErrorCode.ExpectedEquals, (DErrorLevel.All, "expected an assignment.") },
             { DErrorCode.ExpectedValue, (DErrorLevel.All, "expected an identifier next to `=`") },
-            { DErrorCode.NonNormalKey, (DErrorLevel.All, "keys must be a string, integer or decimal.") }
+            { DErrorCode.NonNormalKey, (DErrorLevel.All, "keys must be a string, integer or decimal.") },
+            { DErrorCode.ExpectedListOpen, (DErrorLevel.All, "expected an opening '['") },
+            { DErrorCode.ExpectedListClose, (DErrorLevel.All, "expected a list closer ']'") }
         };
 
     private readonly string _contents;
@@ -44,9 +46,17 @@ public class DErrorHandler
         DError error = new ()
         {
             Code = code,
-            Message = message
+            Message = $"DL{(int)code} {code}: {message}"
         };
 
-        throw error;
+        Errors.Add(error);
+    }
+
+    public void DisplayErrors()
+    {
+        Errors.ForEach(x =>
+        {
+            Console.WriteLine(x.Message);
+        });
     }
 }
