@@ -74,6 +74,7 @@ public class DLexer
             _tokens.Add(token);
         }
 
+        _tokens.Add(new DToken { Type = TokenType.Eof });
         return _tokens;
     }
     
