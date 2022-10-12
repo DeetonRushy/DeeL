@@ -84,10 +84,21 @@ public class DParser
 
         do
         {
+            if (MatchAndAdvance(TokenType.Newline)) 
+            {
+                // list item is like this:
+                /*
+                 * 'thing' = [
+                 *     'value',
+                 *     'value'
+                 * ]
+                 */
+            }
             elements.Add(ParseLiteral());
-        } while (Check(TokenType.Comma));
+        } while (MatchAndAdvance(TokenType.Comma, TokenType.Newline));
 
         var close = Consume(TokenType.ListClose, DErrorCode.ExpectedListClose);
+        _ = MatchAndAdvance(TokenType.Newline);
 
         return new List(open, elements.ToArray(), close);
     }

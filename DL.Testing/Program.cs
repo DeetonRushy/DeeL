@@ -3,7 +3,12 @@ using DL.Parser;
 using DL.Parser.Production;
 
 string script = @"
-'windows' = 'garbage'
+'windows' = [
+    'hot',
+    'garbage'
+]
+
+'version' = 1.02
 ";
 
 var lexer = new DLexer(script);
@@ -12,7 +17,7 @@ var tokens = lexer.Lex();
 
 var parser = new DParser(tokens);
 
-List<DNode> ast = new List<DNode>();
+List<DNode> ast = new();
 
 try
 {
