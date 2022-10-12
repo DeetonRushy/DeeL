@@ -1,0 +1,47 @@
+# DeeL (Work In Progress)
+
+A lightweight configuration "language". Including json inspired syntax, custom interpreter support, optional string delimiters and no semi-colons. 
+
+There are 5 data types in DeeL. 
+
+ - Strings: just a string. They can be optionally delimited by a ' or ".
+ - Numbers: a number, represented by a 64 bit integer.
+ - Decimals: a floating point value.
+ - Lists: an array of any of the above data types.
+ - Dictionarys: an array of key-value pairs. Keys must be a String, Number or Decimal. Values can be any of the above, including nested dictionary's. 
+
+## Goals
+
+ 1. Provide fast lexical analysis and parsing.
+ 2. Provide an intuitive C# API for interfacing with the configuration data.
+ 3. Make a cool project!
+
+## Examples
+```json
+ # optional use of `'` or `"`
+'string' = "string"
+ # lists
+`values` = [
+    `string value`,
+    69.6969, # decimal values
+    9223372036854775806 # integer values
+] 
+```
+
+### Nearly completed features
+Dictionarys. Json set the standard, so they have to be included.
+```json
+'name-to-person' = {
+    'deeton': {
+	    `age`: 19,
+	    `country`: 'England'
+	},
+}
+```
+
+## This isn't too serious
+I'm making this to challenge myself. That being said, this isn't going to be the fastest, most reliable configuration language out there. However, it's been fun to work on up to now so it's worth it.
+
+## Credits
+[Jay Madden](https://github.com/Jay-Madden) with their project [SharpLox](https://github.com/Jay-Madden/SharpLox).
+The entire design was inspired by this project.
