@@ -17,7 +17,7 @@ There are 5 data types in DeeL.
  3. Make a cool project!
 
 ## Examples
-```json
+```
  # optional use of `'` or `"`
 'string' = "string"
  # lists
@@ -30,7 +30,7 @@ There are 5 data types in DeeL.
 
 ### Nearly completed features
 Dictionarys. Json set the standard, so they have to be included.
-```json
+```
 'name-to-person' = {
     'deeton': {
 	    `age`: 19,
