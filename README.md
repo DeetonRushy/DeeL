@@ -21,8 +21,8 @@ There are 5 data types in DeeL.
  # optional use of `'` or `"`
 'string' = "string"
  # lists
-`values` = [
-    `string value`,
+'values' = [
+    'string value',
     69.6969, # decimal values
     9223372036854775806 # integer values
 ] 
@@ -33,8 +33,8 @@ Dictionarys. Json set the standard, so they have to be included.
 ```
 'name-to-person' = {
     'deeton': {
-	    `age`: 19,
-	    `country`: 'England'
+	    'age': 19,
+	    'country': 'England'
 	},
 }
 ```
