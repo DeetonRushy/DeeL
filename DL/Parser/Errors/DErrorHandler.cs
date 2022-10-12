@@ -7,12 +7,12 @@ public class DErrorHandler
         {
             /* define these as you go along. */
             { DErrorCode.Default, (DErrorLevel.All, "this shouldn't happen...") },
-            { DErrorCode.ExpectedIdentifier, (DErrorLevel.All, "expected an identifier.") },
-            { DErrorCode.ExpectedEquals, (DErrorLevel.All, "expected an assignment.") },
-            { DErrorCode.ExpectedValue, (DErrorLevel.All, "expected an identifier next to `=`") },
-            { DErrorCode.NonNormalKey, (DErrorLevel.All, "keys must be a string, integer or decimal.") },
-            { DErrorCode.ExpectedListOpen, (DErrorLevel.All, "expected an opening '['") },
-            { DErrorCode.ExpectedListClose, (DErrorLevel.All, "expected a list closer ']'") }
+            { DErrorCode.ExpIdentifier, (DErrorLevel.All, "expected an identifier.") },
+            { DErrorCode.ExpEquals, (DErrorLevel.All, "expected an assignment.") },
+            { DErrorCode.ExpValue, (DErrorLevel.All, "expected an identifier next to `=`") },
+            { DErrorCode.InvalidKey, (DErrorLevel.All, "keys must be a string, integer or decimal.") },
+            { DErrorCode.ExpListOpen, (DErrorLevel.All, "expected an opening '['") },
+            { DErrorCode.ExpListClose, (DErrorLevel.All, "expected a list closer ']'") }
         };
 
     private readonly string _contents;

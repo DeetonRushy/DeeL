@@ -54,7 +54,7 @@ public class DParser
             )
         {
             var literal = ParseLiteral();
-            Consume(TokenType.Equals, DErrorCode.ExpectedEquals);
+            Consume(TokenType.Equals, DErrorCode.ExpEquals);
 
             if (Match(TokenType.ListOpen))
             {
@@ -73,13 +73,13 @@ public class DParser
             return new Assignment(literal, value);
         }
 
-        _error.CreateDefault(DErrorCode.NonNormalKey);
+        _error.CreateDefault(DErrorCode.InvalidKey);
         return null!;
     }
 
     private List ParseListDeclaration()
     {
-        var open = Consume(TokenType.ListOpen, DErrorCode.ExpectedListOpen);
+        var open = Consume(TokenType.ListOpen, DErrorCode.ExpListOpen);
         var elements = new List<Literal>();
 
         do
@@ -100,7 +100,7 @@ public class DParser
             elements.Add(literal);
         } while (MatchAndAdvance(TokenType.Comma, TokenType.Newline));
 
-        var close = Consume(TokenType.ListClose, DErrorCode.ExpectedListClose);
+        var close = Consume(TokenType.ListClose, DErrorCode.ExpListClose);
         _ = MatchAndAdvance(TokenType.Newline);
 
         return new List(
@@ -123,7 +123,7 @@ public class DParser
 
         if (value is null)
         {
-            _error.CreateDefault(DErrorCode.NonNormalKey);
+            _error.CreateDefault(DErrorCode.InvalidKey);
             return null!;
         }
 
