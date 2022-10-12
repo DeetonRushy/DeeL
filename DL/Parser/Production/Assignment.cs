@@ -9,14 +9,34 @@ public record Assignment(DNode Key, DNode Value) : DNode
         return visitor.VisitAssignment(this);
     }
 
-    public override void Debug()
+    public override string Debug()
     {
         // value could be anything, so attempt to
         // display the key. (key can only be str, num, dec)
 
-        if (Key is Literal literal)
+        var identifier = Key as Literal;
+
+        if (identifier is null)
         {
-            Console.WriteLine($"Assignment(Id: {literal.Object})");
+            throw new 
+                NotImplementedException("somehow, some way, an assignments key is null...");
         }
+        
+        if (Value is Literal value)
+        {
+            return $"Assignment(Id: {identifier.Object}, Value: {value.Object})";
+        }
+
+        if (Value is List list)
+        {
+            return $"Assignment(Id: {identifier.Object}, Value: {list.Debug()})";
+        }
+
+        if (Value is Dict dict)
+        {
+            return $"Assignment(Id: {identifier.Object}, Value: {dict.Debug()}";
+        }
+
+        return $"Assignment(Id: {identifier.Object}, Value: <unknown>";
     }
 }

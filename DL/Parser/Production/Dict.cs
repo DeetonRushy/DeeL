@@ -9,8 +9,8 @@ public record Dict(DToken OpenBrace, DictAssignment[] Members, DToken CloseBrace
         return visitor.VisitDict(this);
     }
 
-    public override void Debug()
+    public override string Debug()
     {
-        Console.WriteLine($"Dict({Members.Length} items)");
+        return $"Dict({Members.Length} items)";
     }
 }

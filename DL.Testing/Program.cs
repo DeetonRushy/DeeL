@@ -33,7 +33,7 @@ catch
 
 foreach (var node in ast)
 {
-    node.Debug();
+    Console.WriteLine(node.Debug());
 }
 
 

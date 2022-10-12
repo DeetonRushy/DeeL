@@ -9,8 +9,8 @@ public record Literal(DToken Sentiment, object Object) : DNode
         return visitor.VisitLiteral(this);
     }
 
-    public override void Debug()
+    public override string Debug()
     {
-        Console.WriteLine($"Literal({Sentiment.Type}): {Object}");
+        return $"Literal({Sentiment.Type}): {Object}";
     }
 }

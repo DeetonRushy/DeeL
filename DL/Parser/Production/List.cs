@@ -9,8 +9,8 @@ public record List(DToken OpenBracket, Literal[] Literals, DToken CloseBracket) 
         return visitor.VisitList(this);
     }
 
-    public override void Debug()
+    public override string Debug()
     {
-        Console.WriteLine($"List({Literals.Length} items)");
+        return $"List({Literals.Length} items)";
     }
 }
