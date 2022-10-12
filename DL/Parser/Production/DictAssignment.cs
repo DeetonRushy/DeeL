@@ -8,4 +8,9 @@ public record DictAssignment(Literal Key, DToken Colon, Literal Value) : DNode
     {
         return visitor.VisitDictAssignment(this);
     }
+
+    public override void Debug()
+    {
+        Console.WriteLine($"DictElement(Key: {Key.Object}, Value: {Value.Object})");
+    }
 }

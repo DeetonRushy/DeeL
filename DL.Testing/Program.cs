@@ -26,6 +26,11 @@ catch
         parser._error.DisplayErrors();
 }
 
+foreach (var node in ast)
+{
+    node.Debug();
+}
+
 
 
 
