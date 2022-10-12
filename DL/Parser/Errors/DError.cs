@@ -4,10 +4,8 @@ public class DError: Exception
 {
     public DError()
         : base() 
-    {
-        Message = $"DL{(int)Code} ({Code}): ";
-    }
+    {}
 
-    public new string Message { get; set; }
+    public new string Message { get; set; } = null!;
     public DErrorCode Code { get; set; }
 }
