@@ -9,8 +9,9 @@ public class DParser
 {
     readonly List<DToken> _tokens;
     public readonly DErrorHandler _error;
-    private bool _isAtEnd => Peek().Type == TokenType.Eof;
-    private int _current;
+    private bool IsAtEnd => Peek().Type == TokenType.Eof;
+    private int _current = 0;
+    private bool _wasError = false;
 
     public DParser(List<DToken> tokens)
     {
@@ -28,7 +29,7 @@ public class DParser
     {
         var result = new List<DNode>();
 
-        while (!_isAtEnd)
+        while (!IsAtEnd && !_wasError)
         {
             var decl = ParseDeclaration();
             if (decl is not null)
@@ -73,7 +74,7 @@ public class DParser
             return new Assignment(literal, value);
         }
 
-        _error.CreateDefault(DErrorCode.InvalidKey);
+        AddParseError(DErrorCode.InvalidKey);
         return null!;
     }
 
@@ -96,7 +97,10 @@ public class DParser
             }
             var literal = ParseLiteral();
             if (literal is null)
+            {
+                // TODO: verify last literal wasn't just invalid.
                 continue;
+            }
             elements.Add(literal);
         } while (MatchAndAdvance(TokenType.Comma, TokenType.Newline));
 
@@ -112,7 +116,51 @@ public class DParser
 
     private DNode ParseDictDeclaration()
     {
-        throw new NotImplementedException();
+        var open = Consume(TokenType.DictOpen, DErrorCode.ExpDictOpen);
+
+        // in the case of 'dict' = {\n
+        _ = MatchAndAdvance(TokenType.Newline);
+
+        List<DictAssignment> elements = new();
+
+        do
+        {
+            var key = ParseLiteral();
+            var colon = Consume(TokenType.Colon, DErrorCode.ExpColonDictPair);
+
+            if (Match(TokenType.DictOpen))
+            {
+                // recursive, need to be careful about this.
+                var dict = ParseDictDeclaration();
+                elements.Add(new DictAssignment(key, colon, dict));
+                continue;
+            }
+
+            if (Match(TokenType.ListOpen))
+            {
+                var list = ParseListDeclaration();
+                elements.Add(new DictAssignment(key, colon, list));
+                continue;
+            }
+
+            // can only be a literal.
+            var value = ParseLiteral();
+
+            if (value is null)
+            {
+                // there is no value
+                AddParseError(DErrorCode.ExpDictValue);
+                // attempt to recover, so further errors can be displayed.
+                return null!;
+            }
+
+            elements.Add(new DictAssignment(key, colon, value));
+            ConsumeTrailingNewline();
+
+        } while (MatchAndAdvance(TokenType.Comma));
+
+        var close = Consume(TokenType.DictClose, DErrorCode.ExpDictClose);
+        return new Dict(open, elements.ToArray(), close);
     }
 
     private Literal ParseLiteral()
@@ -123,7 +171,7 @@ public class DParser
 
         if (value is null)
         {
-            _error.CreateDefault(DErrorCode.InvalidKey);
+            AddParseError(DErrorCode.InvalidKey);
             return null!;
         }
 
@@ -172,6 +220,12 @@ public class DParser
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
     }
 
+    private void ConsumeTrailingNewline()
+    {
+        if (Match(TokenType.Newline))
+            Advance();
+    }
+
     private DToken Consume(TokenType type, DErrorCode code)
     {
         if (Check(type))
@@ -180,7 +234,7 @@ public class DParser
         }
 
         // throws
-        _error.CreateDefault(code);
+        AddParseError(code);
         return null!;
     }
 
@@ -201,15 +255,10 @@ public class DParser
         return Advance();
     }
 
-    private DToken ConsumeMany(DErrorCode code, params TokenType[] types)
+    private void AddParseError(DErrorCode code)
     {
-        if (Match(types))
-        {
-            return Advance();
-        }
-
-        _error.CreateDefault(code);
-        return null!;
+        _error.CreateDefaultWithToken(code, Peek());
+        _wasError = true;
     }
 
     private bool Match(params TokenType[] types)
@@ -234,7 +283,7 @@ public class DParser
 
     private bool Check(TokenType type)
     {
-        if (_isAtEnd)
+        if (IsAtEnd)
         {
             return false;
         }
@@ -243,7 +292,7 @@ public class DParser
 
     private DToken Advance()
     {
-        if (!_isAtEnd)
+        if (!IsAtEnd)
         {
             _current++;
         }

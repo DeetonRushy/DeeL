@@ -32,7 +32,7 @@ public class DToken
     /// <returns></returns>
     public override string ToString()
     {
-        return $"Token({Type}): Span: {{ {Lexeme.Start}, {Lexeme.End} }}, Line: {Line}";
+        return $"Token({Type}): Span: {{ {Lexeme.Start}, {Lexeme.End} }}, Line: {Line} [{Lexeme.Contents()}]";
     }
 
     /// <summary>

@@ -42,7 +42,27 @@ public enum DErrorCode
     /// When a list closing was expected, but not present. An example: if the contents are
     /// `"array" = [1, 2, 3` then this should occur.
     /// </summary>
-    ExpListClose
+    ExpListClose,
+
+    /// <summary>
+    /// When a dictionary opener was expected, but not present.
+    /// </summary>
+    ExpDictOpen,
+
+    /// <summary>
+    /// When a dictionary closing brace was expected, but not present.
+    /// </summary>
+    ExpDictClose,
+
+    /// <summary>
+    /// Expected a colon.
+    /// </summary>
+    ExpColonDictPair,
+
+    /// <summary>
+    /// Expected a value inside of a dictionary pair.
+    /// </summary>
+    ExpDictValue,
 
     /* add these as more error scenarios are defined. */
 }

@@ -4,32 +4,36 @@ using DL.Parser.Production;
 
 string script = @"
 'windows' = [
-    'hot',
-    'garbage'
+    WINVER,
+    true,
+    __cpp_version
 ]
 
 'version' = 1.02
+
+'dict' = {
+    'nested': {
+        'value': 102
+    },
+    'version': 1.02
+}
 ";
 
 var lexer = new DLexer(script);
 
 var tokens = lexer.Lex();
 
+tokens.ForEach(x =>
+{
+    if (x.Type != TokenType.Eof && x.Type != TokenType.Invalid)
+        Console.WriteLine(x);
+});
+
 var parser = new DParser(tokens);
 
-List<DNode> ast = new();
+List<DNode> ast = parser.Parse();
 
-try
-{
-    ast = parser.Parse();
-}
-catch 
-{
-    Console.WriteLine($"failure. {parser._error.Errors.Count} error(s)");
-
-    if (parser._error.Errors.Count >= 1)
-        parser._error.DisplayErrors();
-}
+parser._error.DisplayErrors();
 
 foreach (var node in ast)
 {

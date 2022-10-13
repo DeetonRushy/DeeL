@@ -1,3 +1,5 @@
+using DL.Lexer;
+
 namespace DL.Parser.Errors;
 
 public class DErrorHandler
@@ -12,7 +14,11 @@ public class DErrorHandler
             { DErrorCode.ExpValue, (DErrorLevel.All, "expected an identifier next to `=`") },
             { DErrorCode.InvalidKey, (DErrorLevel.All, "keys must be a string, integer or decimal.") },
             { DErrorCode.ExpListOpen, (DErrorLevel.All, "expected an opening '['") },
-            { DErrorCode.ExpListClose, (DErrorLevel.All, "expected a list closer ']'") }
+            { DErrorCode.ExpListClose, (DErrorLevel.All, "expected a list closer ']'") },
+            { DErrorCode.ExpDictOpen, (DErrorLevel.All, "expected a dict opening '{'") },
+            { DErrorCode.ExpDictClose, (DErrorLevel.All, "expected a dict closing '}'") },
+            { DErrorCode.ExpColonDictPair, (DErrorLevel.All, "expected a colon ':', between a dictionary pair") },
+            { DErrorCode.ExpDictValue, (DErrorLevel.All, "expected a value inside of dictionary pair.") }
         };
 
     private readonly string _contents;
@@ -26,7 +32,7 @@ public class DErrorHandler
         Errors = new List<DError>();
     }
 
-    public void CreateDefault(DErrorCode code)
+    public void CreateDefault(DErrorCode code, int line)
     {
         if (!_defaultLevels.TryGetValue(code, out var defaults))
             throw new 
@@ -46,7 +52,33 @@ public class DErrorHandler
         DError error = new ()
         {
             Code = code,
-            Message = $"DL{(int)code} {code}: {message}"
+            Message = $"DL{(int)code} {code}: {message} [line {line}]"
+        };
+
+        Errors.Add(error);
+    }
+
+    public void CreateDefaultWithToken(DErrorCode code, DToken token)
+    {
+        if (!_defaultLevels.TryGetValue(code, out var defaults))
+            throw new
+                NotImplementedException(
+                $"please implement DErrorCode.{code} in {nameof(DErrorHandler)}.{nameof(_defaultLevels)}");
+
+        var (level, message) = defaults;
+
+        if (level != Level && level > Level)
+        {
+            // error is not significant due to error level.
+            return;
+        }
+
+        // display default message.
+
+        DError error = new()
+        {
+            Code = code,
+            Message = $"DL{(int)code} {code}: {message} [line {token.Line}]\nhere: '{token.Lexeme.Contents()}'"
         };
 
         Errors.Add(error);

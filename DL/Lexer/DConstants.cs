@@ -39,6 +39,12 @@ public static class DConstants
         { "MIN_DECIMAL", TokenType.MinDecimal }
     };
 
+    public static readonly List<string> BooleanValues = new()
+    {
+        "true",
+        "false"
+    };
+
     public static TokenType? IsSpecialAssignee(string assignee)
     {
         return SpecialRhsAssignees?[assignee] ?? null;

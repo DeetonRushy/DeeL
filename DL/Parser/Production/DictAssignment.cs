@@ -2,7 +2,7 @@ using DL.Lexer;
 
 namespace DL.Parser.Production;
 
-public record DictAssignment(Literal Key, DToken Colon, Literal Value) : DNode
+public record DictAssignment(Literal Key, DToken Colon, DNode Value) : DNode
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {
@@ -11,6 +11,6 @@ public record DictAssignment(Literal Key, DToken Colon, Literal Value) : DNode
 
     public override string Debug()
     {
-        return $"DictElement(Key: {Key.Object}, Value: {Value.Object})";
+        return $"DictElement(Key: {Key.Object})";
     }
 }

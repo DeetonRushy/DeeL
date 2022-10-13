@@ -98,6 +98,7 @@ public class DLexer
             DConstants.Equals => MakeToken(TokenType.Equals),
             DConstants.Colon => MakeToken(TokenType.Colon),
             var c when char.IsNumber(c) => LexGenericNumber(),
+            var c when char.IsLetter(c) => LexIdentifier(),
             var c when DConstants.StringDelims.Contains(c) => LexString(),
             // assign the literal for debugging purposes
             _ => new DToken { Literal = ch, Type = TokenType.Invalid }
@@ -195,6 +196,30 @@ public class DLexer
     {
         ++_line;
         return MakeToken(TokenType.Newline);
+    }
+
+    /// <summary>
+    /// For lexing an identifier. An identifier would be anything, such as boolean values
+    /// or constant variables for use in the config file.
+    /// </summary>
+    /// <returns></returns>
+    private DToken LexIdentifier()
+    {
+        var ch = Advance();
+
+        while (char.IsLetter(ch) || ch == '_')
+        {
+            ch = Advance();
+        }
+
+        _span.Start += 1;
+
+        if (DConstants.BooleanValues.Contains(_span.Contents()))
+        {
+            return MakeToken(TokenType.Boolean);
+        }
+
+        return MakeToken(TokenType.Identifier);
     }
 
     /* helpers */

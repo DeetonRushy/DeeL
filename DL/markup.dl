@@ -28,7 +28,8 @@
 # decimals
 'PI' = 3.14159265359;
 
+# decided to remove this because its kind of pointless.
 #            Determined by the CLR.
 #                  vvvvvvv
 # 
-'system-max-int' = MAX_INT; # MIN_INT || MAX_DECIMAL || MIN_DECIMAL
+# 'system-max-int' = MAX_INT; # MIN_INT || MAX_DECIMAL || MIN_DECIMAL
