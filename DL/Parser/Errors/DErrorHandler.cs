@@ -18,7 +18,8 @@ public class DErrorHandler
             { DErrorCode.ExpDictOpen, (DErrorLevel.All, "expected a dict opening '{'") },
             { DErrorCode.ExpDictClose, (DErrorLevel.All, "expected a dict closing '}'") },
             { DErrorCode.ExpColonDictPair, (DErrorLevel.All, "expected a colon ':', between a dictionary pair") },
-            { DErrorCode.ExpDictValue, (DErrorLevel.All, "expected a value inside of dictionary pair.") }
+            { DErrorCode.ExpDictValue, (DErrorLevel.All, "expected a value inside of dictionary pair.") },
+            { DErrorCode.ExpLineBreak, (DErrorLevel.All, "expected a ';' at the end of a declaration or statement.") }
         };
 
     private readonly string _contents;
@@ -58,7 +59,7 @@ public class DErrorHandler
         Errors.Add(error);
     }
 
-    public void CreateDefaultWithToken(DErrorCode code, DToken token)
+    public void CreateDefaultWithToken(DErrorCode code, DToken token, string thrower, int callingLineNumber)
     {
         if (!_defaultLevels.TryGetValue(code, out var defaults))
             throw new
@@ -78,7 +79,7 @@ public class DErrorHandler
         DError error = new()
         {
             Code = code,
-            Message = $"DL{(int)code} {code}: {message} [line {token.Line}]\nhere: '{token.Lexeme.Contents()}'"
+            Message = $"DL{(int)code} {code}: {message} [line {token.Line}]\n (originates from {thrower}:{callingLineNumber})"
         };
 
         Errors.Add(error);

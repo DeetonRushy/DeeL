@@ -1,4 +1,6 @@
-﻿using DL.Lexer;
+﻿using DL.Interpreting;
+using DL.Lexer;
+using DL.Parser;
 
 namespace DL;
 
@@ -7,17 +9,29 @@ namespace DL;
 /// </summary>
 public class DLRuntime
 {
-    private readonly DLexer lexer;
-
-    public DLRuntime(string fileName)
+    public static DContext ProcessConfig(string contents)
     {
-        lexer = new DLexer(new FileInfo(fileName));
+        var lexer = new DLexer(contents);
+        var tokens = lexer.Lex();
+        var parser = new DParser(tokens);
+        var ast = parser.Parse();
+        var interpreter = new Interpreter();
+
+        var config = interpreter.Interpret(ast);
+
+        return new DContext { Config = config, Errors = parser._error.Errors };
     }
 
-    /// <summary>
-    /// Lex the contents. This will convert each `token` of the source into a <see cref="DToken"/>
-    /// </summary>
-    /// <returns></returns>
-    public List<DToken> Lex()
-        => lexer.Lex();
+    public static DContext ProcessConfig(FileInfo contents)
+    {
+        var lexer = new DLexer(contents);
+        var tokens = lexer.Lex();
+        var parser = new DParser(tokens);
+        var ast = parser.Parse();
+        var interpreter = new Interpreter();
+
+        var config = interpreter.Interpret(ast);
+
+        return new DContext { Config = config, Errors = parser._error.Errors };
+    }
 }

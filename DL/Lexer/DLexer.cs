@@ -90,6 +90,7 @@ public class DLexer
             DConstants.DictOpen =>  MakeToken(TokenType.DictOpen),
             DConstants.DictClose => MakeToken(TokenType.DictClose),
             DConstants.Comma =>     MakeToken(TokenType.Comma),
+            DConstants.LineBreak => MakeToken(TokenType.LineBreak),
             DConstants.Comment =>   LexComment(),
             DConstants.EOF =>       MakeToken(TokenType.Eof),
             DConstants.Endline =>   LexNewline(),
@@ -150,7 +151,7 @@ public class DLexer
         Expect(!_span.Contents().Any(x => DConstants.IsStringDelimeter(x)),
             "failed to correctly lex string contents.");
 
-        return MakeToken(TokenType.String);
+        return MakeToken(TokenType.String, _span.Contents());
     }
 
     private DToken LexGenericNumber()

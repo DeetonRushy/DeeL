@@ -2,7 +2,7 @@ using DL.Lexer;
 
 namespace DL.Parser.Production;
 
-public record Assignment(DNode Key, DNode Value) : DNode
+public record Assignment(Literal Key, DNode Value) : DNode
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {
@@ -14,7 +14,7 @@ public record Assignment(DNode Key, DNode Value) : DNode
         // value could be anything, so attempt to
         // display the key. (key can only be str, num, dec)
 
-        var identifier = Key as Literal;
+        var identifier = Key;
 
         if (identifier is null)
         {

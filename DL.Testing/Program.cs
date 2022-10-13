@@ -1,13 +1,13 @@
-﻿using DL.Lexer;
+﻿using DL;
+using DL.Lexer;
 using DL.Parser;
 using DL.Parser.Production;
 
 string script = @"
 'windows' = [
-    WINVER,
-    true,
-    __cpp_version
-]
+    'terrible',
+    'garbage'
+];
 
 'version' = 1.02
 
@@ -19,26 +19,17 @@ string script = @"
 }
 ";
 
-var lexer = new DLexer(script);
+var context = DLRuntime.ProcessConfig(script);
 
-var tokens = lexer.Lex();
-
-tokens.ForEach(x =>
+if (context.Errors.Count >= 1)
 {
-    if (x.Type != TokenType.Eof && x.Type != TokenType.Invalid)
-        Console.WriteLine(x);
-});
-
-var parser = new DParser(tokens);
-
-List<DNode> ast = parser.Parse();
-
-parser._error.DisplayErrors();
-
-foreach (var node in ast)
-{
-    Console.WriteLine(node.Debug());
+    Console.WriteLine($"{context.Errors.Count} error(s)");
+    context.Errors.ForEach(x => Console.WriteLine(x.Message));
 }
+
+var config = context.Config;
+
+Console.WriteLine(config.Count);
 
 
 

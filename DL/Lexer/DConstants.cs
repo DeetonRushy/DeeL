@@ -26,6 +26,8 @@ public static class DConstants
     /// without many problems.
     /// </summary>
     public const char Endline = '\n';
+    public const char LineBreak = ';';
+
     public const char WindowsGarbage = '\r';
     public const char Whitespace = ' ';
 

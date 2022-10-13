@@ -2,6 +2,7 @@ using DL.Lexer;
 using DL.Parser.Errors;
 using DL.Parser.Exceptions;
 using DL.Parser.Production;
+using System.Runtime.CompilerServices;
 
 namespace DL.Parser;
 
@@ -39,6 +40,15 @@ public class DParser
         return result;
     }
 
+    /*
+     * Consume line breaks ';' within here.
+     * 
+     * Dictionarys can parse other dictionarys within itself, so if
+     * they all require a ';' at the end it would be awful.
+     * 
+     * Each declaration requires a line break, not literals, lists or dicts.
+     */
+
     public DNode ParseDeclaration()
     {
         // the first node should be a declaration.
@@ -60,17 +70,20 @@ public class DParser
             if (Match(TokenType.ListOpen))
             {
                 var list = ParseListDeclaration();
+                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
                 return new Assignment(literal, list);
             }
 
             if (Match(TokenType.DictOpen))
             {
                 var dict = ParseDictDeclaration();
+                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
                 return new Assignment(literal, dict);
             }
 
             // assume its a normal literal.
             var value = ParseLiteral();
+            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return new Assignment(literal, value);
         }
 
@@ -102,10 +115,10 @@ public class DParser
                 continue;
             }
             elements.Add(literal);
-        } while (MatchAndAdvance(TokenType.Comma, TokenType.Newline));
+        } while (MatchAndAdvance(TokenType.Comma));
 
-        var close = Consume(TokenType.ListClose, DErrorCode.ExpListClose);
         _ = MatchAndAdvance(TokenType.Newline);
+        var close = Consume(TokenType.ListClose, DErrorCode.ExpListClose);
 
         return new List(
             open,
@@ -255,9 +268,9 @@ public class DParser
         return Advance();
     }
 
-    private void AddParseError(DErrorCode code)
+    private void AddParseError(DErrorCode code, [CallerMemberName] string cm = "", [CallerLineNumber] int ln = 0)
     {
-        _error.CreateDefaultWithToken(code, Peek());
+        _error.CreateDefaultWithToken(code, Peek(), cm, ln);
         _wasError = true;
     }
 

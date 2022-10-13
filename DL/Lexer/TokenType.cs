@@ -106,6 +106,11 @@ public enum TokenType
     Newline,
 
     /// <summary>
+    /// Special token that represents the end of a statement or declaration.
+    /// </summary>
+    LineBreak,
+
+    /// <summary>
     /// Special token that represents the end of the contents.
     /// </summary>
     Eof,
