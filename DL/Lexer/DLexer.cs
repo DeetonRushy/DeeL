@@ -71,6 +71,12 @@ public class DLexer
                 break;
             }
 
+            if (token.Type == TokenType.Newline)
+            {
+                ++_line;
+                continue;
+            }
+
             _tokens.Add(token);
         }
 
@@ -93,7 +99,7 @@ public class DLexer
             DConstants.LineBreak => MakeToken(TokenType.LineBreak),
             DConstants.Comment =>   LexComment(),
             DConstants.EOF =>       MakeToken(TokenType.Eof),
-            DConstants.Endline =>   LexNewline(),
+            DConstants.Endline =>   MakeToken(TokenType.Newline),
             DConstants.WindowsGarbage => null,
             DConstants.Whitespace => MakeToken(TokenType.Whitespace),
             DConstants.Equals => MakeToken(TokenType.Equals),
@@ -162,7 +168,7 @@ public class DLexer
          * it's correct.
          */
 
-        var ch = Advance();
+        var ch = Current();
 
         while (DConstants.IsDLNumberCharacter(ch))
         {
@@ -171,6 +177,9 @@ public class DLexer
                 throw new 
                     LexerException("unexpected end of file while lexing a number.");
             }
+
+            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF)
+                break;
 
             ch = Advance();
         }
@@ -191,12 +200,6 @@ public class DLexer
         return isLong
             ? MakeToken(TokenType.Number, valueLong)
             : MakeToken(TokenType.Decimal, valueDecimal);
-    }
-
-    private DToken LexNewline()
-    {
-        ++_line;
-        return MakeToken(TokenType.Newline);
     }
 
     /// <summary>
@@ -255,6 +258,13 @@ public class DLexer
     string CurrentSpan()
     {
         return _contents[_span.Start.._span.End];
+    }
+
+    char Peek()
+    {
+        if ((_span.End + 1) > _contents.Length)
+            return DConstants.EOF;
+        return _contents[_span.End + 1];
     }
 
     char Current()

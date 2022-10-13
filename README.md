@@ -1,6 +1,6 @@
 # DeeL (Work In Progress)
 
-A lightweight configuration "language". Including json inspired syntax, custom interpreter support, optional string delimiters and no semi-colons. 
+A lightweight configuration "language". Including json inspired syntax, custom interpreter support and optional string delimiters. 
 
 There are 6 data types in DeeL. 
 

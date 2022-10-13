@@ -1,3 +1,5 @@
+using System.Security.Cryptography.X509Certificates;
+
 namespace DL.Lexer;
 
 public static class DConstants
@@ -57,6 +59,12 @@ public static class DConstants
         if (ch <= 31)
         {
             /* anything under character code 31 is stupid shit. */
+            return false;
+        }
+
+        // temporary fix
+        if (ch == ':' || ch == ';')
+        {
             return false;
         }
 

@@ -54,10 +54,6 @@ public class DParser
         // the first node should be a declaration.
         // there is only declarations in DL.
 
-        // safety statement to avoid start of file newlines.
-        if (MatchAndAdvance(TokenType.Newline))
-        { }
-
         if (Match(
             TokenType.String,
             TokenType.Number, 
@@ -98,16 +94,6 @@ public class DParser
 
         do
         {
-            if (MatchAndAdvance(TokenType.Newline)) 
-            {
-                // list item is like this:
-                /*
-                 * 'thing' = [
-                 *     'value',
-                 *     'value'
-                 * ]
-                 */
-            }
             var literal = ParseLiteral();
             if (literal is null)
             {
@@ -117,7 +103,6 @@ public class DParser
             elements.Add(literal);
         } while (MatchAndAdvance(TokenType.Comma));
 
-        _ = MatchAndAdvance(TokenType.Newline);
         var close = Consume(TokenType.ListClose, DErrorCode.ExpListClose);
 
         return new List(
@@ -130,9 +115,6 @@ public class DParser
     private DNode ParseDictDeclaration()
     {
         var open = Consume(TokenType.DictOpen, DErrorCode.ExpDictOpen);
-
-        // in the case of 'dict' = {\n
-        _ = MatchAndAdvance(TokenType.Newline);
 
         List<DictAssignment> elements = new();
 
@@ -168,7 +150,6 @@ public class DParser
             }
 
             elements.Add(new DictAssignment(key, colon, value));
-            ConsumeTrailingNewline();
 
         } while (MatchAndAdvance(TokenType.Comma));
 
@@ -233,12 +214,6 @@ public class DParser
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
     }
 
-    private void ConsumeTrailingNewline()
-    {
-        if (Match(TokenType.Newline))
-            Advance();
-    }
-
     private DToken Consume(TokenType type, DErrorCode code)
     {
         if (Check(type))
@@ -253,11 +228,6 @@ public class DParser
 
     public DToken ConsumeNormalValue()
     {
-        // deal with any leading newlines
-
-        if (Match(TokenType.Newline))
-            _ = Advance();
-
         if (!Check(TokenType.String)
             && !Check(TokenType.Number)
             && !Check(TokenType.Decimal))

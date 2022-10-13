@@ -1,7 +1,4 @@
 ﻿using DL;
-using DL.Lexer;
-using DL.Parser;
-using DL.Parser.Production;
 
 string script = @"
 'windows' = [
@@ -9,14 +6,14 @@ string script = @"
     'garbage'
 ];
 
-'version' = 1.02
+'version' = 1.02;
 
 'dict' = {
     'nested': {
         'value': 102
     },
     'version': 1.02
-}
+};
 ";
 
 var context = DLRuntime.ProcessConfig(script);
