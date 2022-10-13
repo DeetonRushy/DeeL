@@ -2,12 +2,13 @@
 
 A lightweight configuration "language". Including json inspired syntax, custom interpreter support, optional string delimiters and no semi-colons. 
 
-There are 5 data types in DeeL. 
+There are 6 data types in DeeL. 
 
  - Strings: just a string. They can be optionally delimited by a ' or ".
  - Numbers: a number, represented by a 64 bit integer.
  - Decimals: a floating point value.
  - Lists: an array of any of the above data types.
+ - Booleans: true or false.
  - Dictionarys: an array of key-value pairs. Keys must be a String, Number or Decimal. Values can be any of the above, including nested dictionary's. 
 
 ## Goals
