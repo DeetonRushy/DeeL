@@ -29,8 +29,8 @@ There are 6 data types in DeeL.
 ] 
 ```
 
-### Nearly completed features
-Dictionarys. Json set the standard, so they have to be included.
+### Dictionarys
+Json set the standard, so they have to be included.
 ```
 'name-to-person' = {
     'deeton': {
