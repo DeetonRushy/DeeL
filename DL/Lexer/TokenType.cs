@@ -82,6 +82,16 @@ public enum TokenType
     Identifier,
 
     /// <summary>
+    /// The token that represents the start of a function call.
+    /// </summary>
+    CallOpen,
+
+    /// <summary>
+    /// The token that represents the end of a function call. 
+    /// </summary>
+    CallClose,
+
+    /// <summary>
     /// Special token that specifies to set the value to <see cref="int.MaxValue"/>. `MAX_INT`
     /// </summary>
     MaxInt,

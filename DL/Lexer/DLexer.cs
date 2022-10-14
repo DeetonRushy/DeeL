@@ -115,6 +115,8 @@ public class DLexer
             DConstants.Whitespace => MakeToken(TokenType.Whitespace),
             DConstants.Equals => MakeToken(TokenType.Equals),
             DConstants.Colon => MakeToken(TokenType.Colon),
+            DConstants.CallOpen => MakeToken(TokenType.CallOpen),
+            DConstants.CallClose => MakeToken(TokenType.CallClose),
             var c when char.IsNumber(c) => LexGenericNumber(),
             var c when DConstants.IsDLIdentifierChar(c) => LexIdentifier(),
             var c when DConstants.StringDelims.Contains(c) => LexString(),
