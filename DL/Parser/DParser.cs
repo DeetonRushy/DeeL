@@ -2,6 +2,7 @@ using DL.Lexer;
 using DL.Parser.Errors;
 using DL.Parser.Exceptions;
 using DL.Parser.Production;
+using Microsoft.VisualBasic;
 using System.Runtime.CompilerServices;
 
 namespace DL.Parser;
@@ -17,7 +18,7 @@ public class DParser
     public DParser(List<DToken> tokens)
     {
         _tokens = tokens;
-        _error = new DErrorHandler(DSpan.SourceContents!);
+        _error = new DErrorHandler(DConstants.Contents);
         SetErrorLevel(DErrorLevel.All);
     }
 
@@ -61,6 +62,7 @@ public class DParser
             )
         {
             var literal = ParseLiteral();
+
             Consume(TokenType.Equals, DErrorCode.ExpEquals);
 
             if (Match(TokenType.ListOpen))
@@ -75,6 +77,44 @@ public class DParser
                 var dict = ParseDictDeclaration();
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
                 return new Assignment(literal, dict);
+            }
+
+            if (Match(TokenType.Identifier))
+            {
+                var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+                var contents = identifier.Lexeme;
+
+                if (Peek().Type == TokenType.CallOpen)
+                {
+                    // this needs to return a `FunctionCall`.
+                    // The interpreter implementation can then handle actually calling
+                    // the function.
+
+                    var args = ParseFunctionArguments();
+                    var call = new FunctionCall(contents, args.ToArray());
+
+                    _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+
+                    return new Assignment(literal, call);
+                }
+
+                if (!DVariables.GlobalSymbolExists(contents))
+                {
+                    AddParseError(DErrorCode.UndefinedSymbol);
+                    return null!;
+                }
+
+                /*
+                 * DVariables have a new re-written token & object instance
+                 * in order to avoid confusing, drawn-out interpreting.
+                 * 
+                 * This will make adding variables from the commandline harder.
+                 * But it's worth it.
+                 */
+
+                var (tok, inst) = DVariables.GetValueFor(contents);
+
+                return new Literal(tok, inst);
             }
 
             // assume its a normal literal.
@@ -224,36 +264,6 @@ public class DParser
             return new Literal(value, str);
         }
 
-        if (value.Type == TokenType.Identifier)
-        {
-            if (Peek().Type == TokenType.CallOpen)
-            {
-                // this needs to return a `FunctionCall`.
-                // The interpreter implementation can then handle actually calling
-                // the function.
-
-                throw new NotImplementedException("implement function call.");
-            }
-
-            if (!DVariables.GlobalSymbolExists(contents))
-            {
-                AddParseError(DErrorCode.UndefinedSymbol);
-                return null!;
-            }
-
-            /*
-             * DVariables have a new re-written token & object instance
-             * in order to avoid confusing, drawn-out interpreting.
-             * 
-             * This will make adding variables from the commandline harder.
-             * But it's worth it.
-             */
-
-            var (tok, inst) = DVariables.GetValueFor(contents);
-
-            return new Literal(tok, inst);
-        }
-
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
     }
 
@@ -348,6 +358,4 @@ public class DParser
 
     private DToken Previous()
         => _tokens[_current - 1];
-
-
 }

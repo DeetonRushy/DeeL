@@ -2,7 +2,7 @@
 using System.Diagnostics;
 
 string script = @"
-'directory' = $CurrentWorkingDirectory;
+'directory' = relative('/assets/window');
 'size' = 1029;
 ";
 

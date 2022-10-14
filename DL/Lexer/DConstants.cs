@@ -4,6 +4,8 @@ namespace DL.Lexer;
 
 public static class DConstants
 {
+    internal static string Contents { get; set; } = null!;
+
     public const char EOF = '\0';
 
     public const char DictOpen =   '{';
@@ -65,7 +67,7 @@ public static class DConstants
     }
 
     private const string AllowedIdentifierChars
-        = "ABCDEFGHIJKLMNOPQRSTUVWXYZwbcdefghijklmnopqrstuvwxyz";
+        = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     public static bool IsDLIdentifierChar(char c)
     {

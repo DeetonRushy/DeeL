@@ -36,7 +36,7 @@ public class DErrorHandler
         Errors = new List<DError>();
     }
 
-    public void CreateDefault(DErrorCode code, int line)
+    public void CreateDefault(DErrorCode code, int line = -1)
     {
         if (!_defaultLevels.TryGetValue(code, out var defaults))
             throw new 

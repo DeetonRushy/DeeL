@@ -4,16 +4,20 @@ using DL.Parser.Production;
 
 using DL.Lexer;
 using DL.Interpreting.Exceptions;
+using DL.Interpreting.Calls;
+using DL.Parser.Errors;
 
 namespace DL.Interpreting;
 
 public class Interpreter : ISyntaxTreeVisitor<DValue>
 {
     private readonly IConfig _config;
+    private readonly CallCenter _calls;
 
     public Interpreter()
     {
         _config = new DLConfig();
+        _calls = new CallCenter();
     }
 
     public IConfig Interpret(List<DNode> nodes)
@@ -62,7 +66,12 @@ public class Interpreter : ISyntaxTreeVisitor<DValue>
 
     public DValue VisitFunctionCall(FunctionCall call)
     {
-        throw new NotImplementedException();
+        if (!_calls.TryGetDefinition(call.Identifier, out var function))
+        {
+            throw new BadIdentifierException($"there is no function defined with name `{call.Identifier}`");
+        }
+
+        return function.Execute(this, call.Arguments).Take(this);
     }
 
     public DValue VisitList(List list)
