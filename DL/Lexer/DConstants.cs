@@ -39,24 +39,11 @@ public static class DConstants
 
     public const char Comment =        '#';
 
-    public static readonly Dictionary<string, TokenType> SpecialRhsAssignees = new()
-    {
-        { "MAX_INT", TokenType.MaxInt },
-        { "MIN_INT", TokenType.MinInt },
-        { "MAX_DECIMAL", TokenType.MaxDecimal },
-        { "MIN_DECIMAL", TokenType.MinDecimal }
-    };
-
     public static readonly List<string> BooleanValues = new()
     {
         "true",
         "false"
     };
-
-    public static TokenType? IsSpecialAssignee(string assignee)
-    {
-        return SpecialRhsAssignees?[assignee] ?? null;
-    }
 
     public static bool IsDLNumberCharacter(char ch)
     {
