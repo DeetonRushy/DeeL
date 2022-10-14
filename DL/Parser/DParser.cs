@@ -226,6 +226,15 @@ public class DParser
 
         if (value.Type == TokenType.Identifier)
         {
+            if (Peek().Type == TokenType.CallOpen)
+            {
+                // this needs to return a `FunctionCall`.
+                // The interpreter implementation can then handle actually calling
+                // the function.
+
+                throw new NotImplementedException("implement function call.");
+            }
+
             if (!DVariables.GlobalSymbolExists(contents))
             {
                 AddParseError(DErrorCode.UndefinedSymbol);
@@ -246,6 +255,22 @@ public class DParser
         }
 
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
+    }
+
+    public List<Literal> ParseFunctionArguments()
+    {
+        _ = Consume(TokenType.CallOpen, DErrorCode.ExpCallOpen);
+
+        var literals = new List<Literal>();
+
+        do
+        {
+            var arg = ParseLiteral();
+            literals.Add(arg);
+        } while (Match(TokenType.Comma));
+
+        _ = Consume(TokenType.CallClose, DErrorCode.ExpCallClose);
+        return literals;
     }
 
     private DToken Consume(TokenType type, DErrorCode code)

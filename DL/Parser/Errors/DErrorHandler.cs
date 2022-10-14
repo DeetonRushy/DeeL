@@ -20,7 +20,9 @@ public class DErrorHandler
             { DErrorCode.ExpColonDictPair, (DErrorLevel.All, "expected a colon ':', between a dictionary pair") },
             { DErrorCode.ExpDictValue, (DErrorLevel.All, "expected a value inside of dictionary pair.") },
             { DErrorCode.ExpLineBreak, (DErrorLevel.All, "expected a ';' at the end of a declaration or statement.") },
-            { DErrorCode.UndefinedSymbol, (DErrorLevel.All, "undefined symbol `{0}`") }
+            { DErrorCode.UndefinedSymbol, (DErrorLevel.All, "undefined symbol `{0}`") },
+            { DErrorCode.ExpCallOpen, (DErrorLevel.Many, "expected a '('") },
+            { DErrorCode.ExpCallClose, (DErrorLevel.Many, "expected a ')'") }
         };
 
     private readonly string _contents;

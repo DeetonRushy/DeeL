@@ -15,4 +15,5 @@ public interface ISyntaxTreeVisitor<T>
     public T VisitList(List list);
     public T VisitDictAssignment(DictAssignment assignment);
     public T VisitDict(Dict dict);
+    public T VisitFunctionCall(FunctionCall call);
 }

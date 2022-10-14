@@ -60,6 +60,11 @@ public class Interpreter : ISyntaxTreeVisitor<DValue>
         throw new NotImplementedException();
     }
 
+    public DValue VisitFunctionCall(FunctionCall call)
+    {
+        throw new NotImplementedException();
+    }
+
     public DValue VisitList(List list)
     {
         var dValues = new List<DValue>();
