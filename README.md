@@ -50,6 +50,21 @@ The dictionary called `Variables` contains key-value pairs. If the key matches t
 and value will replace the identifier token. This is all happens during parsing.
 
 I plan to add a way to add these from the commandline.
+
+### Functions (builtin)
+
+Small builtin functions can provide cross-platform, dynamic values. They can also prevent
+doing extra work at runtime.
+
+The `relative` function for example, will take a relative path and convert it to an absolute
+path before your code even sees it.
+
+### Custom Interpreter Info
+
+To implement your own interpreter, all you need to do is implement `ISyntaxTreeVisitor<T>`.
+
+You will need to implement your own way of working with a `FunctionCall`
+
 ## This isn't too serious
 I'm making this to challenge myself. That being said, this isn't going to be the fastest, most reliable configuration language out there. However, it's been fun to work on up to now so it's worth it.
 
