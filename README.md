@@ -20,13 +20,13 @@ There are 6 data types in DeeL.
 ## Examples
 ```
  # optional use of `'` or `"`
-'string' = "string"
+'string' = "string";
  # lists
 'values' = [
     'string value',
     69.6969, # decimal values
     9223372036854775806 # integer values
-] 
+]; 
 ```
 
 ### Dictionarys
@@ -37,9 +37,19 @@ Json set the standard, so they have to be included.
 	    'age': 19,
 	    'country': 'England'
 	},
-}
+};
 ```
 
+### Predefined variables
+```
+'working-directory' = $CurrentWorkingDirectory;
+```
+
+These are defined in `DVariables.cs`, the identifier doesn't have to start with '$'.
+The dictionary called `Variables` contains key-value pairs. If they key matches, the token
+and value will replace the identifier token.
+
+I plan to add a way to add these from the commandline.
 ## This isn't too serious
 I'm making this to challenge myself. That being said, this isn't going to be the fastest, most reliable configuration language out there. However, it's been fun to work on up to now so it's worth it.
 
