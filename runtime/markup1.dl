@@ -2,7 +2,7 @@
 
 
  # simple `special` member set.
-'dl_version' = `1.0.2`;
+'dl_version' = '1.0.2';
  # lists
 'modules' = [
     "mod1",
