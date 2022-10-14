@@ -9,6 +9,12 @@ namespace DL;
 /// </summary>
 public class DLRuntime
 {
+
+    public static List<DToken> ViewTokens(string contents)
+    {
+        return new DLexer(contents).Lex();
+    }
+
     public static DContext ProcessConfig(string contents)
     {
         var lexer = new DLexer(contents);

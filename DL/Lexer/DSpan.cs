@@ -37,7 +37,7 @@ public class DSpan
         if (End > SourceContents.Length || 0 > End)
             throw new InvalidOperationException("invalid span");
 
-        return SourceContents[Start..End];
+        return SourceContents[Start..End].Replace("\n", "");
     }
 
     public int Difference()

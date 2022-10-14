@@ -19,7 +19,8 @@ public class DErrorHandler
             { DErrorCode.ExpDictClose, (DErrorLevel.All, "expected a dict closing '}'") },
             { DErrorCode.ExpColonDictPair, (DErrorLevel.All, "expected a colon ':', between a dictionary pair") },
             { DErrorCode.ExpDictValue, (DErrorLevel.All, "expected a value inside of dictionary pair.") },
-            { DErrorCode.ExpLineBreak, (DErrorLevel.All, "expected a ';' at the end of a declaration or statement.") }
+            { DErrorCode.ExpLineBreak, (DErrorLevel.All, "expected a ';' at the end of a declaration or statement.") },
+            { DErrorCode.UndefinedSymbol, (DErrorLevel.All, "undefined symbol `{0}`") }
         };
 
     private readonly string _contents;
@@ -76,11 +77,27 @@ public class DErrorHandler
 
         // display default message.
 
-        DError error = new()
+        DError error;
+
+        if (message.Contains('{') && message.Contains('}'))
         {
-            Code = code,
-            Message = $"DL{(int)code} {code}: {message} [line {token.Line}]\n (originates from {thrower}:{callingLineNumber})"
-        };
+            error = new()
+            {
+                Code = code,
+                Message = string.Format(
+                    $"DL{(int)code} {code}: {message} [line {token.Line}]\n (originates from {thrower}:{callingLineNumber})",
+                    token.Lexeme
+                    )
+            };
+        }
+        else
+        {
+            error = new()
+            {
+                Code = code,
+                Message = $"DL{(int)code} {code}: {message} [line {token.Line}]\n (originates from {thrower}:{callingLineNumber})"
+            };
+        }
 
         Errors.Add(error);
     }

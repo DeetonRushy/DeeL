@@ -8,7 +8,7 @@ public class DToken
     /// <summary>
     /// The character literals that were lexed.
     /// </summary>
-    public DSpan Lexeme { get; set; } = null!;
+    public string Lexeme { get; set; } = null!;
 
     /// <summary>
     /// The type of token this is.
@@ -32,7 +32,7 @@ public class DToken
     /// <returns></returns>
     public override string ToString()
     {
-        return $"Token({Type}): Span: {{ {Lexeme.Start}, {Lexeme.End} }}, Line: {Line} [{Lexeme.Contents()}]";
+        return $"Token({Type}): Content: {Lexeme}";
     }
 
     /// <summary>
@@ -40,15 +40,24 @@ public class DToken
     /// </summary>
     public static readonly DToken Bad = new()
     {
-        Lexeme = new DSpan { Start = 0, End = 0 },
+        Lexeme = string.Empty,
         Type = TokenType.Invalid,
         Line = -1
     };
 
     public static readonly DToken Whitespace = new()
     {
-        Lexeme = new DSpan { Start = 0, End = 0 },
+        Lexeme = string.Empty,
         Type = TokenType.Whitespace,
         Line = -1
     };
+
+    public static DToken MakeVar(TokenType type)
+        => new DToken
+        {
+            Lexeme = string.Empty,
+            Line = 0,
+            Literal = null,
+            Type = type
+        };
 }

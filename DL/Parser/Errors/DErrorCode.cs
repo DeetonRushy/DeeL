@@ -69,5 +69,10 @@ public enum DErrorCode
     /// </summary>
     ExpLineBreak,
 
+    /// <summary>
+    /// Some specified identifier is not recognized.
+    /// </summary>
+    UndefinedSymbol,
+
     /* add these as more error scenarios are defined. */
 }

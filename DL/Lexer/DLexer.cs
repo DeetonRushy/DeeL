@@ -1,4 +1,5 @@
 using DL.Lexer.Exceptions;
+using System.Security.Cryptography.X509Certificates;
 
 namespace DL.Lexer;
 
@@ -18,9 +19,14 @@ public class DLexer
     readonly List<DToken> _tokens;
 
     /// <summary>
-    /// The span representing the current span of text being viewed.
+    /// The current lexeme.
     /// </summary>
-    readonly DSpan _span;
+    string _lexeme;
+
+    /// <summary>
+    /// The current position
+    /// </summary>
+    int _postion;
 
     /// <summary>
     /// The current line number being viewed.
@@ -38,7 +44,8 @@ public class DLexer
         DSpan.SourceContents = _contents;
         _tokens = new List<DToken>();
         //                                 -1 is needed.
-        _span = new DSpan { Start = 0, End = -1 };
+        _lexeme = string.Empty;
+        _postion = -1;
     }
 
     /// <summary>
@@ -66,6 +73,9 @@ public class DLexer
                 continue;
             }
 
+            if (token.Type == TokenType.String && token.Lexeme == string.Empty)
+                continue;
+
             if (token.Type == TokenType.Eof)
             {
                 break;
@@ -78,6 +88,7 @@ public class DLexer
             }
 
             _tokens.Add(token);
+            _lexeme = string.Empty;
         }
 
         _tokens.Add(new DToken { Type = TokenType.Eof });
@@ -105,7 +116,7 @@ public class DLexer
             DConstants.Equals => MakeToken(TokenType.Equals),
             DConstants.Colon => MakeToken(TokenType.Colon),
             var c when char.IsNumber(c) => LexGenericNumber(),
-            var c when char.IsLetter(c) => LexIdentifier(),
+            var c when DConstants.IsDLIdentifierChar(c) => LexIdentifier(),
             var c when DConstants.StringDelims.Contains(c) => LexString(),
             // assign the literal for debugging purposes
             _ => new DToken { Literal = ch, Type = TokenType.Invalid }
@@ -126,18 +137,14 @@ public class DLexer
             if (current == DConstants.EOF)
                 break;
         }
-
+        ++_line;
         return MakeToken(TokenType.Comment);
     }
 
     private DToken LexString()
     {
-        Expect(DConstants.IsStringDelimeter(CurrentThenReset()), "internal error");
-
         // The goal is to have *ONLY* the string contents within the lexeme.
         // Do not include the delimeters.
-
-        Skip(1); // Skip the initial delimeter
 
         /* [*] = good
          * [-] = bad
@@ -148,16 +155,22 @@ public class DLexer
 
         // cleaner ways to write this, yes... but its impossible to debug.
 
-        char current = Advance();
+        char current = Current();
+
+        if (DConstants.IsStringDelimeter(current))
+            current = Advance();
+
         while (!DConstants.IsStringDelimeter(current))
         {
+            _lexeme += current;
+
             current = Advance();
         }
 
-        Expect(!_span.Contents().Any(x => DConstants.IsStringDelimeter(x)),
+        Expect(!_lexeme.Any(x => DConstants.IsStringDelimeter(x)),
             "failed to correctly lex string contents.");
 
-        return MakeToken(TokenType.String, _span.Contents());
+        return MakeToken(TokenType.String, _lexeme);
     }
 
     private DToken LexGenericNumber()
@@ -172,6 +185,8 @@ public class DLexer
 
         while (DConstants.IsDLNumberCharacter(ch))
         {
+            _lexeme += ch;
+
             if (ch == DConstants.EOF)
             {
                 throw new 
@@ -184,7 +199,7 @@ public class DLexer
             ch = Advance();
         }
 
-        var content = CurrentSpan().Trim();
+        var content = _lexeme.Trim();
 
         bool isLong = long.TryParse(content, out var valueLong);
         bool isDecimal = decimal.TryParse(content, out var valueDecimal);
@@ -209,20 +224,34 @@ public class DLexer
     /// <returns></returns>
     private DToken LexIdentifier()
     {
-        var ch = Advance();
+        var ch = Current();
 
-        while (char.IsLetter(ch) || ch == '_')
+        while (DConstants.IsDLIdentifierChar(ch))
         {
+            _lexeme += ch;
+
+            if (ch == DConstants.EOF)
+            {
+                throw new
+                    LexerException("unexpected end of file while lexing a number.");
+            }
+
+            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF)
+                break;
+
             ch = Advance();
         }
 
-        _span.Start += 1;
+        /*
+         * For some reason the span just fucks everything here.
+         * 
+         * The reason the End of the span is adjusted is to account for bad lexing.
+         */
 
-        if (DConstants.BooleanValues.Contains(_span.Contents()))
+        if (DConstants.BooleanValues.Contains(_lexeme))
         {
             return MakeToken(TokenType.Boolean);
         }
-
         return MakeToken(TokenType.Identifier);
     }
 
@@ -232,12 +261,11 @@ public class DLexer
     {
         var res = new DToken ()
         {
-            Lexeme = new DSpan { Start = _span.Start, End = _span.End },
+            Lexeme = _lexeme,
             Type = type,
             Line = (int)_line
         };
 
-        _span.Start = _span.End;
         return res;
     }
 
@@ -255,28 +283,16 @@ public class DLexer
         return DToken.Bad;
     }
 
-    string CurrentSpan()
-    {
-        return _contents[_span.Start.._span.End];
-    }
-
     char Peek()
     {
-        if ((_span.End + 1) > _contents.Length)
+        if ((_postion + 1) > _contents.Length)
             return DConstants.EOF;
-        return _contents[_span.End + 1];
+        return _contents[_postion + 1];
     }
 
     char Current()
     {
-        return _contents[_span.End];
-    }
-
-    char CurrentThenAdvance()
-    {
-        char current = Current();
-        ++_span.End;
-        return current;
+        return _contents[_postion];
     }
 
     char CurrentThenReset()
@@ -289,30 +305,9 @@ public class DLexer
 
     char Advance()
     {
-        if (++_span.End >= _contents.Length)
+        if (++_postion >= _contents.Length)
             return DConstants.EOF;
-        return _contents[_span.End];
-    }
-
-    void AdjustLeft(int count = 1)
-    {
-        if (_span.Start == _span.End)
-            return;
-        _span.End -= count;
-        _span.Start -= count;
-    }
-
-    void AdjustRight(int count = 1)
-    {
-        if (_span.Start == _span.End)
-            return;
-        _span.Start += count;
-        _span.End += count;
-    }
-
-    void Skip(int count = 1)
-    {
-        _span.Start += count;
+        return _contents[_postion];
     }
 
     void Expect(bool condition, string message)

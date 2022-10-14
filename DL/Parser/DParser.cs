@@ -169,6 +169,8 @@ public class DParser
             return null!;
         }
 
+        var contents = value.Lexeme;
+
         if (value.Type == TokenType.Decimal)
         {
             if (value.Literal is decimal dec)
@@ -178,7 +180,7 @@ public class DParser
 
             // wasn't set in the lexer, attempt to convert it here.
 
-            if (!decimal.TryParse(value.Lexeme.Contents(), out decimal dec2))
+            if (!decimal.TryParse(contents, out decimal dec2))
             {
                 throw new 
                     ParserException("decimal literal could not be parsed.");
@@ -196,7 +198,7 @@ public class DParser
 
             // wasnt set in the lexer, attempt to convert it here.
 
-            if (!long.TryParse(value.Lexeme.Contents(), out long l2))
+            if (!long.TryParse(contents, out long l2))
             {
                 throw new
                     ParserException("number literal could not be parsed.");
@@ -205,10 +207,42 @@ public class DParser
             return new Literal(value, l2);
         }
 
+        if (value.Type == TokenType.Boolean)
+        {
+            if (!bool.TryParse(contents, out bool b))
+            {
+                throw new
+                    ParserException("boolean literal could not be parsed.");
+            }
+
+            return new Literal(value, b);
+        }
+
         if (value.Type == TokenType.String)
         {
-            var str = value.Lexeme.Contents();
+            var str = value.Lexeme;
             return new Literal(value, str);
+        }
+
+        if (value.Type == TokenType.Identifier)
+        {
+            if (!DVariables.GlobalSymbolExists(contents))
+            {
+                AddParseError(DErrorCode.UndefinedSymbol);
+                return null!;
+            }
+
+            /*
+             * DVariables have a new re-written token & object instance
+             * in order to avoid confusing, drawn-out interpreting.
+             * 
+             * This will make adding variables from the commandline harder.
+             * But it's worth it.
+             */
+
+            var (tok, inst) = DVariables.GetValueFor(contents);
+
+            return new Literal(tok, inst);
         }
 
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
@@ -230,7 +264,9 @@ public class DParser
     {
         if (!Check(TokenType.String)
             && !Check(TokenType.Number)
-            && !Check(TokenType.Decimal))
+            && !Check(TokenType.Decimal)
+            && !Check(TokenType.Boolean)
+            && !Check(TokenType.Identifier))
         {
             return null!;
         }
@@ -240,7 +276,7 @@ public class DParser
 
     private void AddParseError(DErrorCode code, [CallerMemberName] string cm = "", [CallerLineNumber] int ln = 0)
     {
-        _error.CreateDefaultWithToken(code, Peek(), cm, ln);
+        _error.CreateDefaultWithToken(code, Previous(), cm, ln);
         _wasError = true;
     }
 

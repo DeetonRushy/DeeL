@@ -72,4 +72,12 @@ public static class DConstants
         // It's invalid & will fail checks with decimal.TryParse.
         return ch >= '0' && ch <= '9' || ch == '.';
     }
+
+    private const string AllowedIdentifierChars
+        = "ABCDEFGHIJKLMNOPQRSTUVWXYZwbcdefghijklmnopqrstuvwxyz";
+
+    public static bool IsDLIdentifierChar(char c)
+    {
+        return c == '$' || c == '_' || AllowedIdentifierChars.Contains(c);
+    }
 }

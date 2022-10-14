@@ -1,22 +1,16 @@
 ﻿using DL;
+using System.Diagnostics;
 
 string script = @"
-'windows' = [
-    'terrible',
-    'garbage'
-];
-
-'version' = 1.02;
-
-'dict' = {
-    'nested': {
-        'value': 102
-    },
-    'version': 1.02
-};
+'directory' = $CurrentWorkingDirectory;
+'size' = 1029;
 ";
 
+Stopwatch sw = Stopwatch.StartNew();
 var context = DLRuntime.ProcessConfig(script);
+sw.Stop();
+
+Console.WriteLine($"took {sw.ElapsedMilliseconds}ms to process the config file!");
 
 if (context.Errors.Count >= 1)
 {
