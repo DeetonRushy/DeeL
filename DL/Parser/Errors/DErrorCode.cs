@@ -74,5 +74,15 @@ public enum DErrorCode
     /// </summary>
     UndefinedSymbol,
 
+    /// <summary>
+    /// Expected the start of a function call.
+    /// </summary>
+    ExpCallOpen,
+
+    /// <summary>
+    /// Expected the end of a function call.
+    /// </summary>
+    ExpCallClose,
+
     /* add these as more error scenarios are defined. */
 }

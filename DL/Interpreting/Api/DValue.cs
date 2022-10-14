@@ -108,4 +108,9 @@ public class DValue
         throw new
             InvalidOperationException($"invalid cast. the object type is correct ({value.Type}), but the instance is not of that type.");
     }
+
+    public override string ToString()
+    {
+        return Instance?.ToString() ?? "<dead-value>";
+    }
 }

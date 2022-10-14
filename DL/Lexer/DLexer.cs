@@ -1,4 +1,5 @@
 using DL.Lexer.Exceptions;
+using Microsoft.VisualBasic;
 using System.Security.Cryptography.X509Certificates;
 
 namespace DL.Lexer;
@@ -41,7 +42,7 @@ public class DLexer
     public DLexer(string contents)
     {
         _contents = contents + '\0';
-        DSpan.SourceContents = _contents;
+        DConstants.Contents = _contents;
         _tokens = new List<DToken>();
         //                                 -1 is needed.
         _lexeme = string.Empty;
@@ -115,6 +116,8 @@ public class DLexer
             DConstants.Whitespace => MakeToken(TokenType.Whitespace),
             DConstants.Equals => MakeToken(TokenType.Equals),
             DConstants.Colon => MakeToken(TokenType.Colon),
+            DConstants.CallOpen => MakeToken(TokenType.CallOpen),
+            DConstants.CallClose => MakeToken(TokenType.CallClose),
             var c when char.IsNumber(c) => LexGenericNumber(),
             var c when DConstants.IsDLIdentifierChar(c) => LexIdentifier(),
             var c when DConstants.StringDelims.Contains(c) => LexString(),
@@ -236,7 +239,7 @@ public class DLexer
                     LexerException("unexpected end of file while lexing a number.");
             }
 
-            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF)
+            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF || Peek() == DConstants.CallOpen)
                 break;
 
             ch = Advance();

@@ -52,7 +52,7 @@ public class DLConfig : IConfig
             if (!HasElement(key))
                 /* add an easy way to ToString the key */
                 throw new IndexOutOfRangeException($"no key `{key}`");
-            return Elements[key];
+            return Elements.Where(x => x.Key.Instance == key.Instance).First().Value;
         }
     }
 
