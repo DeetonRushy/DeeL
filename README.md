@@ -47,7 +47,7 @@ Json set the standard, so they have to be included.
 
 These are defined in `DVariables.cs`, the identifier doesn't have to start with '$'.
 The dictionary called `Variables` contains key-value pairs. If the key matches the identifier, the token
-and value will replace the identifier token.
+and value will replace the identifier token. This is all happens during parsing.
 
 I plan to add a way to add these from the commandline.
 ## This isn't too serious
