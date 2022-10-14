@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DL\DL.csproj" />
+    <ProjectReference Include="..\DL\Runtime.csproj" />
   </ItemGroup>
 
 </Project>

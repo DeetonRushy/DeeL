@@ -1,26 +1,44 @@
 ﻿using DL;
+using DL.Interpreting;
+using DL.Lexer;
+using DL.Parser;
+using DL.Parser.Production;
 using System.Diagnostics;
 
-string script = @"
-'directory' = relative('/assets/window');
-'size' = 1029;
-";
+// REPL version.
 
-Stopwatch sw = Stopwatch.StartNew();
-var context = DLRuntime.ProcessConfig(script);
-sw.Stop();
+Console.WriteLine("Dl REPL");
 
-Console.WriteLine($"took {sw.ElapsedMilliseconds}ms to process the config file!");
-
-if (context.Errors.Count >= 1)
+while (true)
 {
-    Console.WriteLine($"{context.Errors.Count} error(s)");
-    context.Errors.ForEach(x => Console.WriteLine(x.Message));
+    Console.Write(">> ");
+    var input = Console.ReadLine() ?? string.Empty;
+    Console.WriteLine();
+
+    if (input == "_quit")
+        break;
+
+    List<DToken> tokens;
+    List<DNode> ast;
+    IConfig config;
+
+    try
+    {
+        tokens = new DLexer(input).Lex();
+        ast = new DParser(tokens).Parse();
+        config = new Interpreter().Interpret(ast);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"an exception occured: {ex.Message}");
+        continue;
+    }
+
+    foreach (var (key, value) in config.Elements)
+    {
+        Console.WriteLine($"{key}: {value}");
+    }
 }
-
-var config = context.Config;
-
-Console.WriteLine(config.Count);
 
 
 

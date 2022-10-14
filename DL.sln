@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DL", "DL\DL.csproj", "{2BF6C889-9E45-406C-AF3D-0B7BE48F0B80}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Runtime", "DL\Runtime.csproj", "{2BF6C889-9E45-406C-AF3D-0B7BE48F0B80}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DL.Testing", "DL.Testing\DL.Testing.csproj", "{DA6B4902-B04D-413C-B9FC-02A6FDDAD1CE}"
 EndProject
@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DL.Tests", "DL.Tests\DL.Tests.csproj", "{E169D2E1-E3F8-480A-B432-0A9DA7C1A2FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DL.Tests", "DL.Tests\DL.Tests.csproj", "{E169D2E1-E3F8-480A-B432-0A9DA7C1A2FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

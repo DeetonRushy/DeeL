@@ -114,7 +114,7 @@ public class DParser
 
                 var (tok, inst) = DVariables.GetValueFor(contents);
 
-                return new Literal(tok, inst);
+                return new Assignment(literal, new Literal(tok, inst));
             }
 
             // assume its a normal literal.
