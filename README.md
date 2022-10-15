@@ -59,7 +59,7 @@ doing extra work at runtime.
 The `relative` function for example, will take a relative path and convert it to an absolute
 path before your code even sees it.
 
-Checkout builtin docs [here](https://github.com/DeetonRushy/DeeL/blob/master/DL/Interpreting/Calls/Builtins/README.md)!
+Checkout builtin docs [here](https://github.com/DeetonRushy/DeeL/blob/master/functions/README.md)!
 
 ### Custom Interpreter Info
 
