@@ -236,7 +236,7 @@ public class DLexer
             if (ch == DConstants.EOF)
             {
                 throw new
-                    LexerException("unexpected end of file while lexing a number.");
+                    LexerException("unexpected end of file while lexing an identifier.");
             }
 
             if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF || Peek() == DConstants.CallOpen)
