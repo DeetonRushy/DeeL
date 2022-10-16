@@ -14,6 +14,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Runtime", "runtime\Runtime.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DL.Tests", "tests\DL.Tests.csproj", "{3697AACA-070F-4BEB-B069-EBD4B98BB976}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "playground", "playground\playground.csproj", "{E096C7FF-E7F2-4890-A00C-5E709229EB27}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{3697AACA-070F-4BEB-B069-EBD4B98BB976}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3697AACA-070F-4BEB-B069-EBD4B98BB976}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3697AACA-070F-4BEB-B069-EBD4B98BB976}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E096C7FF-E7F2-4890-A00C-5E709229EB27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E096C7FF-E7F2-4890-A00C-5E709229EB27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E096C7FF-E7F2-4890-A00C-5E709229EB27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E096C7FF-E7F2-4890-A00C-5E709229EB27}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

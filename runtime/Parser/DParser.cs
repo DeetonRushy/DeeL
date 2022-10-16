@@ -86,7 +86,7 @@ public class DParser
 
                 if (Peek().Type == TokenType.CallOpen)
                 {
-                    // this needs to return a `FunctionCall`.
+                    // this needs to return an `Assignment`.
                     // The interpreter implementation can then handle actually calling
                     // the function.
 
