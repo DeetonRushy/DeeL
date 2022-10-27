@@ -1,4 +1,4 @@
-namespace DL.Parser.Exceptions;
+namespace Runtime.Parser.Exceptions;
 
 
 [Serializable]

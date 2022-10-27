@@ -1,5 +1,5 @@
-﻿using DL.Lexer;
-using DL.Parser;
+﻿using Runtime.Lexer;
+using Runtime.Parser;
 using Runtime.Interpreting.Meta;
 
 Interpreter<TestClass> interpreter = new();

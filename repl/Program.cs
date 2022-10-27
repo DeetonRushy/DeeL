@@ -1,9 +1,9 @@
-﻿using DL;
-using DL.Interpreting;
-using DL.Interpreting.Api;
-using DL.Lexer;
-using DL.Parser;
-using DL.Parser.Production;
+﻿using Runtime;
+using Runtime.Interpreting;
+using Runtime.Interpreting.Api;
+using Runtime.Lexer;
+using Runtime.Parser;
+using Runtime.Parser.Production;
 using System.Diagnostics;
 
 // REPL version.
@@ -18,7 +18,7 @@ if (args.Length >= 1)
     else
     {
         var contents = File.ReadAllText(file);
-        var cfg = DLRuntime.ProcessConfig(contents).Config;
+        var cfg = DlRuntime.ProcessConfig(contents).Config;
 
         foreach (var (key, value) in cfg.Elements)
         {

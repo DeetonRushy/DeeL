@@ -1,4 +1,4 @@
-namespace DL.Parser.Production;
+namespace Runtime.Parser.Production;
 
 public abstract record DNode
 {

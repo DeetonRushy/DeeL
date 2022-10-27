@@ -1,6 +1,6 @@
-using DL.Interpreting.Api;
+using Runtime.Interpreting.Api;
 
-namespace DL.Interpreting;
+namespace Runtime.Interpreting;
 
 /*
  * simple markup for now.

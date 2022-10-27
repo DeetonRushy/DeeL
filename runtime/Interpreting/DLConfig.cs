@@ -1,8 +1,8 @@
-using DL.Interpreting.Api;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
+using Runtime.Interpreting.Api;
 
-namespace DL.Interpreting;
+namespace Runtime.Interpreting;
 
 /// <summary>
 /// Base config implementation.

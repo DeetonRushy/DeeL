@@ -1,4 +1,4 @@
-namespace DL.Lexer;
+namespace Runtime.Lexer;
 
 /// <summary>
 /// Represents a type of <see cref="DToken"/>

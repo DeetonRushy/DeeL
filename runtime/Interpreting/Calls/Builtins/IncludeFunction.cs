@@ -1,9 +1,9 @@
-using DL.Interpreting.Api;
-using DL.Interpreting.Calls;
-using DL.Interpreting.Exceptions;
-using DL.Lexer;
-using DL.Parser;
-using DL.Parser.Production;
+using Runtime.Interpreting.Api;
+using Runtime.Interpreting.Calls;
+using Runtime.Interpreting.Exceptions;
+using Runtime.Lexer;
+using Runtime.Parser;
+using Runtime.Parser.Production;
 
 namespace Runtime.Interpreting.Calls.Builtins;
 

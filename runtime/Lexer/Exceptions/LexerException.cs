@@ -1,4 +1,4 @@
-namespace DL.Lexer.Exceptions;
+namespace Runtime.Lexer.Exceptions;
 
 
 [Serializable]

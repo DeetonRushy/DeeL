@@ -1,6 +1,6 @@
-﻿using DL.Parser.Production;
+﻿using Runtime.Parser.Production;
 
-namespace DL.Parser;
+namespace Runtime.Parser;
 
 /* design choice taken from SharpLox (https://github.com/Jay-Madden/SharpLox) */
 

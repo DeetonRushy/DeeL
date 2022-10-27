@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace DL.Interpreting.Calls;
+namespace Runtime.Interpreting.Calls;
 
 public class CallCenter
 {

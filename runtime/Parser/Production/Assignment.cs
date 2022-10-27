@@ -1,6 +1,6 @@
-using DL.Lexer;
+using Runtime.Lexer;
 
-namespace DL.Parser.Production;
+namespace Runtime.Parser.Production;
 
 public record Assignment(Literal Key, DNode Value) : DNode
 {

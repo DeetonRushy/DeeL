@@ -1,4 +1,4 @@
 global using Microsoft.VisualStudio.TestTools.UnitTesting;
-global using DL;
+global using Runtime;
 
-global using DL.Lexer;
+global using Runtime.Lexer;

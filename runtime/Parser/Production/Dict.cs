@@ -1,6 +1,6 @@
-using DL.Lexer;
+using Runtime.Lexer;
 
-namespace DL.Parser.Production;
+namespace Runtime.Parser.Production;
 
 public record Dict(DToken OpenBrace, DictAssignment[] Members, DToken CloseBrace) : DNode
 {

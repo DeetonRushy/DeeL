@@ -1,4 +1,6 @@
-namespace DL.Tests
+using Runtime.Lexer;
+
+namespace Runtime.Tests
 {
     [TestClass]
     public class LexerTests

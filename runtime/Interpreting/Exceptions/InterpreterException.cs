@@ -1,4 +1,4 @@
-namespace DL.Interpreting.Exceptions;
+namespace Runtime.Interpreting.Exceptions;
 
 
 [Serializable]

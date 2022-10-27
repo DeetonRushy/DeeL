@@ -1,4 +1,4 @@
-namespace DL.Interpreting.Api;
+namespace Runtime.Interpreting.Api;
 
 /// <summary>
 /// Represents a value from the configuration.

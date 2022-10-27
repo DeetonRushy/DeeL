@@ -1,9 +1,9 @@
-using DL.Interpreting.Api;
-using DL.Interpreting.Exceptions;
-using DL.Parser;
-using DL.Parser.Production;
+using Runtime.Interpreting.Api;
+using Runtime.Interpreting.Exceptions;
+using Runtime.Parser;
+using Runtime.Parser.Production;
 
-namespace DL.Interpreting.Calls.Builtins;
+namespace Runtime.Interpreting.Calls.Builtins;
 
 public class RelativeFilePathFunction : ICallable
 {

@@ -1,4 +1,4 @@
-namespace DL.Interpreting.Api;
+namespace Runtime.Interpreting.Api;
 
 public enum DType
 {

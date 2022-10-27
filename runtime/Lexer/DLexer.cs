@@ -1,8 +1,6 @@
-using DL.Lexer.Exceptions;
-using Microsoft.VisualBasic;
-using System.Security.Cryptography.X509Certificates;
+using Runtime.Lexer.Exceptions;
 
-namespace DL.Lexer;
+namespace Runtime.Lexer;
 
 /// <summary>
 /// This class is entirely responsible for generating a list of tokens from a DL config source file.
@@ -12,27 +10,27 @@ public class DLexer
     /// <summary>
     /// The source files contents in whole.
     /// </summary>
-    readonly string _contents;
+    private readonly string _contents;
 
     /// <summary>
     /// The resulting list of tokens after lexing.
     /// </summary>
-    readonly List<DToken> _tokens;
+    private readonly List<DToken> _tokens;
 
     /// <summary>
     /// The current lexeme.
     /// </summary>
-    string _lexeme;
+    private string _lexeme;
 
     /// <summary>
     /// The current position
     /// </summary>
-    int _postion;
+    private int _position;
 
     /// <summary>
     /// The current line number being viewed.
     /// </summary>
-    uint _line = 0;
+    private uint _line;
 
 
     /// <summary>
@@ -46,7 +44,7 @@ public class DLexer
         _tokens = new List<DToken>();
         //                                 -1 is needed.
         _lexeme = string.Empty;
-        _postion = -1;
+        _position = -1;
     }
 
     /// <summary>
@@ -59,13 +57,9 @@ public class DLexer
 
     public List<DToken> Lex()
     {
-        // TODO: lex the contents.
-
-        DToken? token;
-
         for (; ; )
         {
-            token = LexSingle();
+            var token = LexSingle();
 
             // Returns null when windows newlines are detected (and possibly others).
             // This is to ignore the '\r' and to skip whitespace.
@@ -96,7 +90,7 @@ public class DLexer
         return _tokens;
     }
     
-    public DToken? LexSingle()
+    private DToken? LexSingle()
     {
         // Dont make inline, makes debugging near impossible.
         var ch = Advance();
@@ -147,7 +141,7 @@ public class DLexer
     private DToken LexString()
     {
         // The goal is to have *ONLY* the string contents within the lexeme.
-        // Do not include the delimeters.
+        // Do not include the delimiters.
 
         /* [*] = good
          * [-] = bad
@@ -170,7 +164,7 @@ public class DLexer
             current = Advance();
         }
 
-        Expect(!_lexeme.Any(x => DConstants.IsStringDelimeter(x)),
+        Expect(!_lexeme.Any(DConstants.IsStringDelimeter),
             "failed to correctly lex string contents.");
 
         return MakeToken(TokenType.String, _lexeme);
@@ -255,7 +249,10 @@ public class DLexer
         {
             return MakeToken(TokenType.Boolean);
         }
-        return MakeToken(TokenType.Identifier);
+
+        return (_lexeme == DConstants.Null)
+            ? MakeToken(TokenType.Null)
+            : MakeToken(TokenType.Identifier);
     }
 
     /* helpers */
@@ -272,48 +269,37 @@ public class DLexer
         return res;
     }
 
-    DToken MakeToken(TokenType type, object literal)
+    private DToken MakeToken(TokenType type, object literal)
     {
         var token = MakeToken(type);
         token.Literal = literal;
         return token;
     }
 
-    DToken LastToken()
+    private DToken LastToken()
     {
-        if (_tokens.Count >= 1)
-            return _tokens[^1];
-        return DToken.Bad;
+        return (_tokens.Count >= 1) ? _tokens[^1] : DToken.Bad;
     }
 
-    char Peek()
+    private char Peek()
     {
-        if ((_postion + 1) > _contents.Length)
-            return DConstants.EOF;
-        return _contents[_postion + 1];
+        var cond = ((_position + 1) > _contents.Length);
+        return cond ? DConstants.EOF : _contents[_position + 1];
     }
 
-    char Current()
+    private char Current()
     {
-        return _contents[_postion];
+        return _contents[_position];
     }
 
-    char CurrentThenReset()
+    private char Advance()
     {
-        char current = Current();
-        // discard current range.
-        MakeToken(TokenType.Invalid);
-        return current;
+        return (++_position >= _contents.Length)
+            ? DConstants.EOF
+            : _contents[_position];
     }
 
-    char Advance()
-    {
-        if (++_postion >= _contents.Length)
-            return DConstants.EOF;
-        return _contents[_postion];
-    }
-
-    void Expect(bool condition, string message)
+    private static void Expect(bool condition, string message)
     {
         if (!condition)
             throw new LexerException(message);

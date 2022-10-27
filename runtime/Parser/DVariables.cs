@@ -1,9 +1,9 @@
-using DL.Lexer;
 using System.Diagnostics.CodeAnalysis;
+using Runtime.Lexer;
 
-namespace DL.Parser;
+namespace Runtime.Parser;
 
-public class DVariables
+public static class DVariables
 {
     /// <summary>
     /// All globally defined symbols must be inserted here in order to be processed.
@@ -11,7 +11,9 @@ public class DVariables
     public static readonly IDictionary<string, (DToken, object)> Variables 
         = new Dictionary<string, (DToken, object)>()
         {
-            { "$CurrentWorkingDirectory", (DToken.MakeVar(TokenType.String), Directory.GetCurrentDirectory())}
+            { "$CurrentWorkingDirectory", (DToken.MakeVar(TokenType.String), Directory.GetCurrentDirectory()) },
+            // TODO: add some sort of pre-compilation directive that defines version
+            { "$DLVersion", (DToken.MakeVar(TokenType.String), "0.1.1") }
         };
 
     public static (DToken, object) GetValueFor(string identifier)

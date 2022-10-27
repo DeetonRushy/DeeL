@@ -1,8 +1,8 @@
-using DL.Interpreting.Api;
-using DL.Parser;
-using DL.Parser.Production;
+using Runtime.Interpreting.Api;
+using Runtime.Parser;
+using Runtime.Parser.Production;
 
-namespace DL.Interpreting.Calls;
+namespace Runtime.Interpreting.Calls;
 
 public interface ICallable
 {

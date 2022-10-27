@@ -1,6 +1,6 @@
-using DL.Lexer;
+using Runtime.Lexer;
 
-namespace DL.Parser.Errors;
+namespace Runtime.Parser.Errors;
 
 public class DErrorHandler
 {

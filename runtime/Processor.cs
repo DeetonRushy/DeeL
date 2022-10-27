@@ -1,13 +1,13 @@
-﻿using DL.Interpreting;
-using DL.Lexer;
-using DL.Parser;
+﻿using Runtime.Interpreting;
+using Runtime.Lexer;
+using Runtime.Parser;
 
-namespace DL;
+namespace Runtime;
 
 /// <summary>
 /// The DL runtime. Contains methods that help to Lex, Parse and Interpret DL.
 /// </summary>
-public class DLRuntime
+public class DlRuntime
 {
 
     public static List<DToken> ViewTokens(string contents)
@@ -25,7 +25,7 @@ public class DLRuntime
 
         var config = interpreter.Interpret(ast);
 
-        return new DContext { Config = config, Errors = parser._error.Errors };
+        return new DContext { Config = config, Errors = parser.Errors.Errors };
     }
 
     public static DContext ProcessConfig(FileInfo contents)
@@ -38,6 +38,6 @@ public class DLRuntime
 
         var config = interpreter.Interpret(ast);
 
-        return new DContext { Config = config, Errors = parser._error.Errors };
+        return new DContext { Config = config, Errors = parser.Errors.Errors };
     }
 }

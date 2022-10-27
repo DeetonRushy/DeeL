@@ -1,16 +1,16 @@
-using DL.Lexer;
-using DL.Parser.Errors;
-using DL.Parser.Exceptions;
-using DL.Parser.Production;
 using Microsoft.VisualBasic;
 using System.Runtime.CompilerServices;
+using Runtime.Lexer;
+using Runtime.Parser.Errors;
+using Runtime.Parser.Exceptions;
+using Runtime.Parser.Production;
 
-namespace DL.Parser;
+namespace Runtime.Parser;
 
 public class DParser
 {
-    readonly List<DToken> _tokens;
-    public readonly DErrorHandler _error;
+    private readonly List<DToken> _tokens;
+    public readonly DErrorHandler Errors;
     private bool IsAtEnd => Peek().Type == TokenType.Eof;
     private int _current = 0;
     private bool _wasError = false;
@@ -18,13 +18,13 @@ public class DParser
     public DParser(List<DToken> tokens)
     {
         _tokens = tokens;
-        _error = new DErrorHandler(DConstants.Contents);
+        Errors = new DErrorHandler(DConstants.Contents);
         SetErrorLevel(DErrorLevel.All);
     }
 
     public void SetErrorLevel(DErrorLevel level)
     {
-        _error.Level = level;
+        Errors.Level = level;
     }
 
     public List<DNode> Parse()
@@ -34,8 +34,7 @@ public class DParser
         while (!IsAtEnd && !_wasError)
         {
             var decl = ParseDeclaration();
-            if (decl is not null)
-                result.Add(decl);
+            result.Add(decl);
         }
 
         return result;
@@ -44,7 +43,7 @@ public class DParser
     /*
      * Consume line breaks ';' within here.
      * 
-     * Dictionarys can parse other dictionarys within itself, so if
+     * Dictionary's can parse other dictionary's within itself, so if
      * they all require a ';' at the end it would be awful.
      * 
      * Each declaration requires a line break, not literals, lists or dicts.
@@ -267,7 +266,7 @@ public class DParser
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
     }
 
-    public List<Literal> ParseFunctionArguments()
+    private List<Literal> ParseFunctionArguments()
     {
         _ = Consume(TokenType.CallOpen, DErrorCode.ExpCallOpen);
 
@@ -295,7 +294,7 @@ public class DParser
         return null!;
     }
 
-    public DToken ConsumeNormalValue()
+    private DToken ConsumeNormalValue()
     {
         if (!Check(TokenType.String)
             && !Check(TokenType.Number)
@@ -311,7 +310,7 @@ public class DParser
 
     private void AddParseError(DErrorCode code, [CallerMemberName] string cm = "", [CallerLineNumber] int ln = 0)
     {
-        _error.CreateDefaultWithToken(code, Previous(), cm, ln);
+        Errors.CreateDefaultWithToken(code, Previous(), cm, ln);
         _wasError = true;
     }
 

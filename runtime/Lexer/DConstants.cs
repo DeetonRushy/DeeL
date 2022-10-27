@@ -1,6 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
 
-namespace DL.Lexer;
+namespace Runtime.Lexer;
 
 public static class DConstants
 {
@@ -21,6 +21,8 @@ public static class DConstants
     public const char CallClose =  ')';
 
     public const char Colon =      ':';
+
+    public const string Null = "null";
 
     public static readonly List<char> StringDelims = new() { '\'', '"' };
 

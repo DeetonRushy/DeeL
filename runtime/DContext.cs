@@ -1,7 +1,7 @@
-using DL.Interpreting;
-using DL.Parser.Errors;
+using Runtime.Interpreting;
+using Runtime.Parser.Errors;
 
-namespace DL;
+namespace Runtime;
 
 public class DContext
 {
