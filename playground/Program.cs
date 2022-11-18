@@ -8,7 +8,7 @@ var sw = Stopwatch.StartNew();
 Interpreter interpreter = new();
 
 var source = @"
-mod 'json@0.0.1';
+mod 'dl';
 
 'version-info' = {
   'initial': '0.0.1',
