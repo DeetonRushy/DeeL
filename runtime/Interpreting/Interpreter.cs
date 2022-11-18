@@ -1,5 +1,4 @@
 using Runtime.Parser.Errors;
-using Runtime.Interpreting.Api;
 using Runtime.Interpreting.Calls;
 using Runtime.Interpreting.Exceptions;
 using Runtime.Lexer;
@@ -8,99 +7,182 @@ using Runtime.Parser.Production;
 
 namespace Runtime.Interpreting;
 
-public class Interpreter : ISyntaxTreeVisitor<DValue>
+using Pair = KeyValuePair<object, object>;
+
+// Each interpreter is to be seen as a translation unit.
+
+public class Interpreter : ISyntaxTreeVisitor<object>
 {
-    private readonly IConfig _config;
+    public static readonly object Undefined = "undefined";
+    public string Identity { get; private set; } = "<anon>";
+    public readonly Dictionary<string, bool> ModuleFlags = new()
+    {
+        { "stdout", true },
+        { "stdin", false }
+    };
+
+    public bool Allows(string key) => ModuleFlags.ContainsKey(key) && ModuleFlags[key];
+
+    public bool AllowsStdout => Allows("stdout");
+    public bool AllowsStdin => Allows("stdin");
+
+    // TODO: make the interpreter more like a runtime. Instead of using 
+    // an IConfig. I think this language should be more than that.
+
     private readonly CallCenter _calls;
+    private readonly RuntimeStorage _storage;
+
+    internal RuntimeStorage Scope() => _storage;
 
     public Interpreter()
     {
-        _config = new DLConfig();
         _calls = new CallCenter();
+        _storage = new RuntimeStorage();
     }
 
-    public IConfig Interpret(List<DNode> nodes)
+    public object Interpret(List<DNode> nodes)
     {
-        // every node should be an assignment.
-
         foreach (var node in nodes)
         {
-            DValue result = Eval(node);
-            if (result.Instance is not KeyValuePair<DValue, DValue> kvp)
-            {
-                throw new InterpreterException($"expected key-value pair, got {result.Instance?.GetType()}");
-            }
+            if (node is null)
+                throw new InterpreterException("internal: parser problem... null node?");
 
-            ((DLConfig)_config).AddElement(kvp);
+            var result = node.Take(this);
+            
+            if (AllowsStdout)
+                Console.WriteLine(result);
         }
 
-        return _config;
+        return Undefined;
     }
 
-    public DValue VisitAssignment(Assignment assignment)
+    public object VisitAssignment(Assignment assignment)
     {
-        DValue? key = assignment.Key.Take(this);
-        DValue? value = assignment.Value.Take(this);
+        var identifier = assignment.Key.Take(this);
+        VerifyNotNull(identifier, "assignment identifier cannot be null");
+        var value = assignment.Value.Take(this);
+        VerifyNotNull(identifier, "value cannot actually be null");
 
-        return new DValue(new KeyValuePair<DValue, DValue>(key, value));
+        return _storage.Assign(identifier, value);
     }
 
-    public DValue VisitDict(Dict dict)
+    public object VisitDict(Dict dict)
     {
-        var dictValues = new Dictionary<DValue, DValue>();
-
-        foreach (var element in dict.Members)
+        var d = new Dictionary<object, object>();
+        foreach (var pair in dict.Members)
         {
-            var (k, v) = (Accept(element.Key), Accept(element.Value));
-            dictValues.Add(k, v);
+            var evaluation = pair.Take(this);
+
+            if (evaluation is not Pair actual)
+                throw new InterpreterException($"internal: VisitDictAssignment must return a Pair");
+            d.Add(actual.Key, actual.Value);
         }
 
-        return dictValues;
+        return d;
     }
 
-    public DValue VisitDictAssignment(DictAssignment assignment)
+    public object VisitDictAssignment(DictAssignment assignment)
     {
-        throw new NotImplementedException();
+        var key = assignment.Key.Take(this);
+        VerifyNotNull(key, "Dictionary key is null");
+        var value = assignment.Value.Take(this);
+        VerifyNotNull(value, "Dictionary value is null");
+        return new Pair(key, value);
     }
 
-    public DValue VisitFunctionCall(FunctionCall call)
+    public object VisitFunctionCall(FunctionCall call)
     {
-        if (!_calls.TryGetDefinition(call.Identifier, out var function))
+        if (!_calls.TryGetDefinition(call.Identifier, out ICallable function))
+            return Undefined;
+        // An arity of -1 means the function expects no specific number of arguments.
+        if (function.Arity != -1 && call.Arguments.Length != function.Arity)
         {
-            throw new BadIdentifierException($"there is no function defined with name `{call.Identifier}`");
+            DisplayErr($"'{call.Identifier}' expects {function.Arity} arguments, but {call.Arguments.Length} were supplied.");
+            return Undefined;
         }
-
-        return function.Execute(this, call.Arguments).Take(this);
+        return function.Execute(this, call.Arguments);
     }
 
-    public DValue VisitList(List list)
+    public object VisitList(List list)
     {
-        var dValues = new List<DValue>();
-
+        var items = new List<object>();
         foreach (var element in list.Literals)
         {
-            var v = Accept(element);
-            dValues.Add(v);
+            if (element is null)
+            {
+                continue;
+            }
+            var item = element.Take(this);
+            if (item is null)
+            {
+                items.Add(Undefined);
+                continue;
+            }
+            items.Add(item);
         }
 
-        return dValues;
+        return items;
     }
 
-    public DValue VisitLiteral(Literal literal)
+    public object VisitLiteral(Literal literal)
     {
-        return (literal.Object, literal.Sentiment.Type) switch
+        // Must return an actual C# type.
+
+        return (literal.Sentiment.Type, literal.Object) switch
         {
-            (_, TokenType.Boolean) => (bool)literal.Object,
-            (_, TokenType.String) => (string)literal.Object,
-            (_, TokenType.Decimal) => (decimal)literal.Object,
-            (_, TokenType.Number) => (long)literal.Object,
-            _ => false
+            (TokenType.String, _) => $"{literal.Sentiment.Lexeme}",
+            (TokenType.Number, _) => (long)literal.Object,
+            (TokenType.Boolean, _) => (bool)literal.Object,
+            (TokenType.Null, _) => Undefined,
+            (TokenType.Decimal, _) => (decimal)literal.Object,
+            _ => Undefined
         };
     }
 
-    internal DValue Accept(DNode node)
-        => node.Take(this);
+    public object VisitModuleIdentity(ModuleIdentity moduleIdentity)
+    {
+        var identifier = moduleIdentity.ModuleName.Take(this);
+        
+        if (identifier is not string id)
+        {
+            DisplayErr($"failed to set module identity to '{identifier}', name must be a string.");
+            return Undefined;
+        }
 
-    internal DValue Eval<T>(T node) where T : DNode
-        => node.Take(this);
+        Identity = id;
+        return id;
+    }
+
+    public object VisitSingleEvaluation(SingleEval evaluation)
+    {
+        var identifier = VisitLiteral(evaluation.identifier);
+        if (!_storage.Contains(identifier))
+        {
+            DisplayErr($"cannot evaluate '{identifier}', it does not exist.");
+            return Undefined;
+        }
+        return _storage.GetValue(identifier);
+    }
+
+    private void VerifyNotNull(object? value, string message)
+    {
+        if (value is null)
+            throw new InterpreterException(message);
+    }
+
+    internal void DisplayErr(string message)
+    {
+        if (AllowsStdout)
+        {
+            Console.WriteLine($"ERROR: {message} (in module '{Identity}')");
+        }
+    }
+
+    internal void ModLog(string message)
+    {
+        if (AllowsStdout) 
+        {
+            Console.WriteLine($"({Identity}): {message}");
+        }
+    }
 }

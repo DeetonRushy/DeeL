@@ -133,5 +133,25 @@ public enum TokenType
     /// <summary>
     /// Special token that represents an invalid token.
     /// </summary>
-    Invalid
+    Invalid,
+
+    /// <summary>
+    /// The module keyword. This sets the name of current translation unit
+    /// </summary>
+    Module,
+
+    /// <summary>
+    /// The end keyword. Signifies the end of a block of code.
+    /// </summary>
+    End,
+
+    /// <summary>
+    /// The if keyword. Conditional operations
+    /// </summary>
+    If,
+
+    /// <summary>
+    /// The else keyword. Fallback from conditional operations
+    /// </summary>
+    Else,
 }

@@ -25,7 +25,7 @@ public class DlRuntime
 
         var config = interpreter.Interpret(ast);
 
-        return new DContext { Config = config, Errors = parser.Errors.Errors };
+        return new DContext { Errors = parser.Errors.Errors };
     }
 
     public static DContext ProcessConfig(FileInfo contents)
@@ -38,6 +38,6 @@ public class DlRuntime
 
         var config = interpreter.Interpret(ast);
 
-        return new DContext { Config = config, Errors = parser.Errors.Errors };
+        return new DContext { Errors = parser.Errors.Errors };
     }
 }

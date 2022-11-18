@@ -92,7 +92,7 @@ public class DLexer
     
     private DToken? LexSingle()
     {
-        // Dont make inline, makes debugging near impossible.
+        // Dont inline, makes debugging near impossible.
         var ch = Advance();
 
         return ch switch
@@ -146,8 +146,8 @@ public class DLexer
         /* [*] = good
          * [-] = bad
          * 
-         * 'hello, world!'
-         * -*************-
+         *  'hello, world!'
+         *  -*************-
          */
 
         // cleaner ways to write this, yes... but its impossible to debug.
@@ -248,6 +248,11 @@ public class DLexer
         if (DConstants.BooleanValues.Contains(_lexeme))
         {
             return MakeToken(TokenType.Boolean);
+        }
+
+        if (DConstants.ReservedKeywords.ContainsKey(_lexeme))
+        {
+            return MakeToken(DConstants.ReservedKeywords[_lexeme]);
         }
 
         return (_lexeme == DConstants.Null)

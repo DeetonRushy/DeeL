@@ -5,7 +5,6 @@ using Runtime.Interpreting.Exceptions;
 
 using System.Reflection;
 using Runtime.Interpreting;
-using Runtime.Interpreting.Api;
 
 namespace Runtime.Interpreting.Meta;
 
@@ -159,4 +158,14 @@ public class Interpreter<T> : ISyntaxTreeVisitor<object> where T: new()
 
     internal object Eval<U>(U node) where U : DNode
         => node.Take(this);
+
+    public object VisitSingleEvaluation(SingleEval evaluation)
+    {
+        throw new NotImplementedException();
+    }
+
+    public object VisitModuleIdentity(ModuleIdentity moduleIdentity)
+    {
+        throw new NotImplementedException();
+    }
 }

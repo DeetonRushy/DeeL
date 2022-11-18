@@ -1,4 +1,3 @@
-using Runtime.Interpreting.Api;
 using Runtime.Interpreting.Calls;
 using Runtime.Interpreting.Exceptions;
 using Runtime.Lexer;
@@ -7,29 +6,25 @@ using Runtime.Parser.Production;
 
 namespace Runtime.Interpreting.Calls.Builtins;
 
+/// <summary>
+/// This function will read a file that is supplied
+/// then return the contents. If the file does not exist,
+/// it will return false.
+/// </summary>
 public class IncludeFunction : ICallable
 {
-    /*
-     * Read another file and store it into a string.
-     */
-
     public string Identifier => "include";
 
-    public Literal Execute(ISyntaxTreeVisitor<DValue> interpreter, params Literal[] args)
-    {
-        if (args.Length != 1)
-        {
-            throw new BadArgumentsException($"`{Identifier}` expects 1 argument.");
-        }
+    public int Arity => 1;
 
+    public Literal Execute(Interpreter interpreter, params Literal[] args)
+    {
         var fileName = interpreter.VisitLiteral(args[0]);
 
-        if (fileName.Type != DType.String)
+        if (fileName is not string path)
         {
             throw new BadArgumentsException($"`{Identifier}` the first argument to be a string.");
         }
-
-        var path = fileName.Instance as string;
 
         if (!File.Exists(path))
         {

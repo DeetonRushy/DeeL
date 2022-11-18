@@ -6,6 +6,14 @@ public static class DConstants
 {
     internal static string Contents { get; set; } = null!;
 
+    public static readonly Dictionary<string, TokenType> ReservedKeywords = new()
+    {
+        { "mod", TokenType.Module },
+        { "end", TokenType.End },
+        { "if", TokenType.If },
+        { "else", TokenType.Else }
+    };
+
     public const char EOF = '\0';
 
     public const char DictOpen =   '{';

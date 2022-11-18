@@ -1,21 +1,33 @@
 ﻿using Runtime.Lexer;
 using Runtime.Parser;
-using Runtime.Interpreting.Meta;
+using Runtime.Interpreting;
+using Runtime;
+using System.Diagnostics;
 
-Interpreter<TestClass> interpreter = new();
+var sw = Stopwatch.StartNew();
+Interpreter interpreter = new();
 
-var source = @"'Name' = 'Deeton';'Age' = 19;'Tags' = ['Human', 'Brown Eyes'];";
+var source = @"
+mod 'json@0.0.1';
+
+'version-info' = {
+  'initial': '0.0.1',
+  'versions': [
+    '0.0.1-dev'
+  ]
+};
+'main-version' = access('version-info', 'versions', 0);
+'initial-version' = access('version-info', 'initial');
+";
+
 var tokens = new DLexer(source).Lex();
-var ast = new DParser(tokens).Parse();
+var parser = new DParser(tokens);
+var ast = parser.Parse();
 
-TestClass instance = interpreter.Interpret(ast);
+var instance = interpreter.Interpret(ast);
+sw.Stop();
 
-Console.WriteLine($"{instance.Name} is {instance.Age}");
+Console.WriteLine(instance);
 
-
-class TestClass
-{
-    public string Name { get; set; }
-    public int Age { get; set; }
-    public List<string> Tags { get; set; }
-}
+parser.Errors.DisplayErrors();
+Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms to execute!");

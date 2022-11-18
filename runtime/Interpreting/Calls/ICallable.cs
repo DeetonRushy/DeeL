@@ -1,4 +1,3 @@
-using Runtime.Interpreting.Api;
 using Runtime.Parser;
 using Runtime.Parser.Production;
 
@@ -6,7 +5,9 @@ namespace Runtime.Interpreting.Calls;
 
 public interface ICallable
 {
+    public int Arity { get; }
+
     public string Identifier { get; }
 
-    Literal Execute(ISyntaxTreeVisitor<DValue> interpreter, params Literal[] args);
+    Literal Execute(Interpreter interpreter, params Literal[] args);
 }

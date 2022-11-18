@@ -33,6 +33,12 @@ public class DParser
 
         while (!IsAtEnd && !_wasError)
         {
+            if (Match(TokenType.Comment))
+            {
+                Advance();
+                continue;
+            }
+
             var decl = ParseDeclaration();
             result.Add(decl);
         }
@@ -120,6 +126,38 @@ public class DParser
             var value = ParseLiteral();
             _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return new Assignment(literal, value);
+        }
+
+        // parse top level function calls
+
+        if (Match(TokenType.Identifier))
+        {
+            var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier).Lexeme;
+
+            if (Peek().Type == TokenType.CallOpen)
+            {
+                var args = ParseFunctionArguments();
+                var call = new FunctionCall(identifier, args.ToArray());
+
+                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+
+                return call;
+            }
+        }
+
+        if (Match(TokenType.Module))
+        {
+            _ = Consume(TokenType.Module, DErrorCode.ExpKeyword);
+            var identifier = ParseLiteral();
+
+            if (identifier is null)
+            {
+                AddParseError(DErrorCode.ExpIdentifier);
+                return null!;
+            }
+
+            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+            return new ModuleIdentity(identifier);
         }
 
         AddParseError(DErrorCode.InvalidKey);
@@ -210,6 +248,11 @@ public class DParser
 
         var contents = value.Lexeme;
 
+        if (value.Type == TokenType.Identifier)
+        {
+            return new Literal(value, contents);
+        }
+
         if (value.Type == TokenType.Decimal)
         {
             if (value.Literal is decimal dec)
@@ -275,14 +318,19 @@ public class DParser
         do
         {
             var arg = ParseLiteral();
-            literals.Add(arg);
-        } while (Match(TokenType.Comma));
+            if (arg is not null)
+            {
+                literals.Add(arg);
+                continue;
+            }
+            throw new ParserException("an argument was NOT a literal?");
+        } while (MatchAndAdvance(TokenType.Comma));
 
         _ = Consume(TokenType.CallClose, DErrorCode.ExpCallClose);
         return literals;
     }
 
-    private DToken Consume(TokenType type, DErrorCode code)
+    private DToken Consume(TokenType type, DErrorCode code, [CallerMemberName] string m = "", [CallerLineNumber] int l = 0)
     {
         if (Check(type))
         {
@@ -290,7 +338,7 @@ public class DParser
         }
 
         // throws
-        AddParseError(code);
+        AddParseError(code, m, l);
         return null!;
     }
 
@@ -356,5 +404,9 @@ public class DParser
         => _tokens[_current];
 
     private DToken Previous()
-        => _tokens[_current - 1];
+    {
+        if (_current - 1 < 0)
+            return DToken.Bad;
+        return _tokens[_current - 1];
+    }
 }

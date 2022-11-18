@@ -84,5 +84,10 @@ public enum DErrorCode
     /// </summary>
     ExpCallClose,
 
+    /// <summary>
+    /// A keyword was expected.
+    /// </summary>
+    ExpKeyword,
+
     /* add these as more error scenarios are defined. */
 }

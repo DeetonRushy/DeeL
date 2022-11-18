@@ -22,7 +22,8 @@ public class DErrorHandler
             { DErrorCode.ExpLineBreak, (DErrorLevel.All, "expected a ';' at the end of a declaration or statement.") },
             { DErrorCode.UndefinedSymbol, (DErrorLevel.All, "undefined symbol `{0}`") },
             { DErrorCode.ExpCallOpen, (DErrorLevel.Many, "expected a '('") },
-            { DErrorCode.ExpCallClose, (DErrorLevel.Many, "expected a ')'") }
+            { DErrorCode.ExpCallClose, (DErrorLevel.Many, "expected a ')'") },
+            { DErrorCode.ExpKeyword, (DErrorLevel.Many, "expected a keyword") }
         };
 
     private readonly string _contents;
@@ -106,6 +107,8 @@ public class DErrorHandler
 
     public void DisplayErrors()
     {
+        Console.WriteLine($"finished with {Errors.Count} error(s)");
+
         Errors.ForEach(x =>
         {
             Console.WriteLine(x.Message);
