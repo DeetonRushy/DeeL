@@ -1,8 +1,13 @@
 # DeeL (Work In Progress)
 
-A lightweight configuration "language". Including json inspired syntax, custom interpreter support and optional string delimiters. 
+An esoteric language, that barely works at the moment.
 
-There are 6 data types in DeeL. 
+# DISCLAIMER
+This isn't actually a language persay, there are no types that actually build the language
+or make it extendable right now.
+
+# Information
+There are 6 implicit data types in DeeL. 
 
  - Strings: just a string. They can be optionally delimited by a ' or ".
  - Numbers: a number, represented by a 64 bit integer.
@@ -14,8 +19,7 @@ There are 6 data types in DeeL.
 ## Goals
 
  1. Provide fast lexical analysis and parsing.
- 2. Provide an intuitive C# API for interfacing with the configuration data.
- 3. Make a cool project!
+ 3. Have a cool project!
 
 ## Examples
 ```
