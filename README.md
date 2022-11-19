@@ -1,6 +1,6 @@
 # DeeL (Work In Progress)
 
-An esoteric language, that barely works at the moment.
+An esoteric language that barely works at the moment.
 
 # DISCLAIMER
 This isn't actually a language persay, there are no types that actually build the language
