@@ -2,7 +2,7 @@ using Runtime.Lexer;
 
 namespace Runtime.Parser.Production;
 
-public record Literal(DToken Sentiment, object Object) : DNode
+public record Literal(DToken Sentiment, object Object) : Statement
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {

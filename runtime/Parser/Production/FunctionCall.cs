@@ -2,7 +2,7 @@ using Runtime.Lexer;
 
 namespace Runtime.Parser.Production;
 
-public record FunctionCall(string Identifier, DNode[] Arguments) : DNode
+public record FunctionCall(string Identifier, Statement[] Arguments) : Statement
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {

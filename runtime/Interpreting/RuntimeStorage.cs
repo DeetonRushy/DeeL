@@ -34,4 +34,13 @@ internal class RuntimeStorage
     {
         return _storage.ContainsKey(key);
     }
+
+    public RuntimeStorage Merge(RuntimeStorage other)
+    {
+        var dict = new Dictionary<object, object>();
+        _storage.ToList().ForEach(x => dict.Add(x.Key, x.Value));
+        other._storage.ToList().ForEach(x => dict.Add(x.Key, x.Value));
+
+        return new RuntimeStorage { _storage = dict };
+    }
 }

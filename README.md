@@ -33,6 +33,15 @@ There are 6 implicit data types in DeeL.
 ]; 
 ```
 
+### User-defined functions
+```
+fn myFunction(arg) {
+    writeln(arg);
+}
+
+myFunction('Hello, World!');
+```
+
 ### Dictionarys
 Json set the standard, so they have to be included.
 ```

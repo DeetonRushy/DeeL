@@ -1,7 +1,7 @@
 ﻿
 namespace Runtime.Parser.Production;
 
-public record ModuleIdentity(Literal ModuleName) : DNode
+public record ModuleIdentity(Literal ModuleName) : Statement
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {

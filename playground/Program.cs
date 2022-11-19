@@ -9,19 +9,11 @@ var sw = Stopwatch.StartNew();
 Interpreter interpreter = new();
 
 var source = @"
-mod 'dl';
+fn myFunction(arg) {
+    writeln(arg);
+}
 
-'version-info' = {
-  'initial': '0.0.1',
-  'versions': [
-    '0.0.1-dev'
-  ]
-};
-'main-version' = access('version-info', 'versions', 0);
-'initial-version' = access('version-info', 'initial');
-'env' = 'PATH';
-
-'value' = envvar(access('env'));
+myFunction('Hello, World!');
 ";
 
 var tokens = new DLexer(source).Lex();

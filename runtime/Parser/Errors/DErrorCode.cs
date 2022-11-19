@@ -47,12 +47,12 @@ public enum DErrorCode
     /// <summary>
     /// When a dictionary opener was expected, but not present.
     /// </summary>
-    ExpDictOpen,
+    ExpLeftBrace,
 
     /// <summary>
     /// When a dictionary closing brace was expected, but not present.
     /// </summary>
-    ExpDictClose,
+    ExpRightBrace,
 
     /// <summary>
     /// Expected a colon.
@@ -77,17 +77,18 @@ public enum DErrorCode
     /// <summary>
     /// Expected the start of a function call.
     /// </summary>
-    ExpCallOpen,
+    ExpLeftParen,
 
     /// <summary>
     /// Expected the end of a function call.
     /// </summary>
-    ExpCallClose,
+    ExpRightParen,
 
     /// <summary>
     /// A keyword was expected.
     /// </summary>
     ExpKeyword,
+    ExpFnKeyword,
 
     /* add these as more error scenarios are defined. */
 }

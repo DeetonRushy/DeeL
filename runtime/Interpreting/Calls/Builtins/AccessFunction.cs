@@ -22,7 +22,7 @@ internal class AccessFunction : ICallable
         }
 
         var @var = interpreter.VisitLiteral(args[0]);
-        var scope = interpreter.Scope();
+        var scope = interpreter.GlobalScope();
 
         if (!scope.Contains(@var))
         {

@@ -2,7 +2,7 @@ using Runtime.Lexer;
 
 namespace Runtime.Parser.Production;
 
-public record DictAssignment(Literal Key, DToken Colon, DNode Value) : DNode
+public record DictAssignment(Literal Key, DToken Colon, Statement Value) : Statement
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {

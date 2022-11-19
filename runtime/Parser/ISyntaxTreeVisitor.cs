@@ -18,4 +18,7 @@ public interface ISyntaxTreeVisitor<T>
     public T VisitFunctionCall(FunctionCall call);
     public T VisitSingleEvaluation(SingleEval evaluation);
     public T VisitModuleIdentity(ModuleIdentity moduleIdentity);
+    public T VisitVariable(Variable variable);
+    public T VisitFunctionDeclaration(FunctionDeclaration functionDeclaration);
+    public T VisitBlock(Block block);
 }

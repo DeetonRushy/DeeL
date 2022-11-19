@@ -15,15 +15,16 @@ public class DErrorHandler
             { DErrorCode.InvalidKey, (DErrorLevel.All, "keys must be a string, integer or decimal.") },
             { DErrorCode.ExpListOpen, (DErrorLevel.All, "expected an opening '['") },
             { DErrorCode.ExpListClose, (DErrorLevel.All, "expected a list closer ']'") },
-            { DErrorCode.ExpDictOpen, (DErrorLevel.All, "expected a dict opening '{'") },
-            { DErrorCode.ExpDictClose, (DErrorLevel.All, "expected a dict closing '}'") },
+            { DErrorCode.ExpLeftBrace, (DErrorLevel.All, "expected an opening '{'") },
+            { DErrorCode.ExpRightBrace, (DErrorLevel.All, "expected a closing '}'") },
             { DErrorCode.ExpColonDictPair, (DErrorLevel.All, "expected a colon ':', between a dictionary pair") },
             { DErrorCode.ExpDictValue, (DErrorLevel.All, "expected a value inside of dictionary pair.") },
             { DErrorCode.ExpLineBreak, (DErrorLevel.All, "expected a ';' at the end of a declaration or statement.") },
             { DErrorCode.UndefinedSymbol, (DErrorLevel.All, "undefined symbol `{0}`") },
-            { DErrorCode.ExpCallOpen, (DErrorLevel.Many, "expected a '('") },
-            { DErrorCode.ExpCallClose, (DErrorLevel.Many, "expected a ')'") },
-            { DErrorCode.ExpKeyword, (DErrorLevel.Many, "expected a keyword") }
+            { DErrorCode.ExpLeftParen, (DErrorLevel.Many, "expected a '('") },
+            { DErrorCode.ExpRightParen, (DErrorLevel.Many, "expected a ')'") },
+            { DErrorCode.ExpKeyword, (DErrorLevel.Many, "expected a keyword") },
+            { DErrorCode.ExpFnKeyword, (DErrorLevel.All, "expected `fn`") }
         };
 
     private readonly string _contents;

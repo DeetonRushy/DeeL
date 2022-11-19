@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Runtime.Parser.Production
 {
-    public record SingleEval(Literal identifier) : DNode
+    public record SingleEval(Literal identifier) : Statement
     {
         public override string Debug()
         {

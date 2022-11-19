@@ -28,12 +28,12 @@ public enum TokenType
     /// <summary>
     /// The opening brace of a dictionary. `{`.
     /// </summary>
-    DictOpen,
+    LeftBrace,
 
     /// <summary>
     /// The closing brace of a dictionary. `}`.
     /// </summary>
-    DictClose,
+    RightBrace,
 
     /// <summary>
     /// The opening bracket of a list. `[`
@@ -84,31 +84,12 @@ public enum TokenType
     /// <summary>
     /// The token that represents the start of a function call.
     /// </summary>
-    CallOpen,
+    LeftParen,
 
     /// <summary>
     /// The token that represents the end of a function call. 
     /// </summary>
-    CallClose,
-
-    /// <summary>
-    /// Special token that specifies to set the value to <see cref="int.MaxValue"/>. `MAX_INT`
-    /// </summary>
-    MaxInt,
-
-    /// <summary>
-    /// Special token that specifies to set the value to <see cref="int.MinValue"/>. `MIN_INT`
-    /// </summary>
-    MinInt,
-
-    /// <summary>
-    /// Special token that specifies to set the value to <see cref="decimal.MaxValue"/>. `MAX_DECIMAL`
-    /// </summary>
-    MaxDecimal,
-    /// <summary>
-    /// Special token that specifies to set the value to <see cref="decimal.MinValue"/>. `MIN_DECIMAL`
-    /// </summary>
-    MinDecimal,
+    RightParen,
 
     /// <summary>
     /// Special token represents a newline.
@@ -154,4 +135,7 @@ public enum TokenType
     /// The else keyword. Fallback from conditional operations
     /// </summary>
     Else,
+    Fn,
+    Return,
+    Let,
 }

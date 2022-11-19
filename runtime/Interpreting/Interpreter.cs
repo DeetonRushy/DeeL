@@ -4,6 +4,7 @@ using Runtime.Interpreting.Exceptions;
 using Runtime.Lexer;
 using Runtime.Parser;
 using Runtime.Parser.Production;
+using System.Runtime.InteropServices.ObjectiveC;
 
 namespace Runtime.Interpreting;
 
@@ -14,7 +15,7 @@ using Pair = KeyValuePair<object, object>;
 public class Interpreter : ISyntaxTreeVisitor<object>
 {
     public static readonly object Undefined = "undefined";
-    public string Identity { get; private set; } = "<anon>";
+    public string Identity { get; internal set; } = "<anon>";
     public readonly Dictionary<string, bool> ModuleFlags = new()
     {
         { "stdout", true },
@@ -29,18 +30,31 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     // TODO: make the interpreter more like a runtime. Instead of using 
     // an IConfig. I think this language should be more than that.
 
-    private readonly CallCenter _calls;
-    private readonly RuntimeStorage _storage;
+    internal readonly CallCenter _calls;
+    internal readonly RuntimeStorage _global;
 
-    internal RuntimeStorage Scope() => _storage;
+    // this will only ever be not-null when the current context exists within this scope.
+    internal RuntimeStorage? _activeScope;
+
+    internal RuntimeStorage CurrentScope => _activeScope != null ? _activeScope : _global;
+    // dont look..
+    internal object GetFromEither(object key)
+        => _global.Contains(key) 
+            ? _global.GetValue(key) 
+            : _activeScope != null 
+               ? _activeScope.Contains(key) ? _activeScope.GetValue(key) : Undefined
+               : Undefined;
+
+    internal RuntimeStorage GlobalScope() => _global;
+    internal RuntimeStorage? ActiveScope() => _activeScope;
 
     public Interpreter()
     {
         _calls = new CallCenter();
-        _storage = new RuntimeStorage();
+        _global = new RuntimeStorage();
     }
 
-    public object Interpret(List<DNode> nodes)
+    public object Interpret(List<Statement> nodes)
     {
         foreach (var node in nodes)
         {
@@ -58,12 +72,12 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     public object VisitAssignment(Assignment assignment)
     {
-        var identifier = assignment.Key.Take(this);
-        VerifyNotNull(identifier, "assignment identifier cannot be null");
-        var value = assignment.Value.Take(this);
-        VerifyNotNull(identifier, "value cannot actually be null");
+        var name = assignment.Variable.Name;
+        var value = assignment.Statement.Take(this);
 
-        return _storage.Assign(identifier, value);
+        return _activeScope != null 
+            ? _activeScope.Assign(name, value)
+            : _global.Assign(name, value);
     }
 
     public object VisitDict(Dict dict)
@@ -92,6 +106,20 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     public object VisitFunctionCall(FunctionCall call)
     {
+        // see if the call is user-defined.
+        if (CurrentScope.Contains(call.Identifier))
+        {
+            var value = CurrentScope.GetValue(call.Identifier);
+
+            if (value is UserDefinedFunction userFunction)
+            {
+                // do shit
+                return userFunction.Execute(this, call.Arguments.ToList()).Value;
+            }
+
+            throw new InterpreterException($"The variable `{call.Identifier}` is not callable. (it is of type `{value.GetType().Name}`)");
+        }
+
         if (!_calls.TryGetDefinition(call.Identifier, out ICallable function))
             return Undefined;
         // An arity of -1 means the function expects no specific number of arguments.
@@ -113,6 +141,13 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
             if (arg is Literal paramLiteral)
                 arguments.Add(paramLiteral);
+
+            if (arg is Variable variable)
+            {
+                // builtin functions dont have their own scope.
+                var @var = GetFromEither(variable.Name);
+                arguments.Add(new Literal(DToken.MakeVar(TokenType.String), @var));
+            }
         }
         return function.Execute(this, arguments.ToArray());
     }
@@ -142,9 +177,14 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     {
         // Must return an actual C# type.
 
+        if (literal.Sentiment.Type == TokenType.String)
+        {
+            var lexeme = literal.Sentiment.Lexeme;
+            return lexeme is not null && lexeme != string.Empty ? literal.Sentiment.Lexeme : literal.Object;
+        }
+
         return (literal.Sentiment.Type, literal.Object) switch
         {
-            (TokenType.String, _) => $"{literal.Sentiment.Lexeme}",
             (TokenType.Number, _) => (long)literal.Object,
             (TokenType.Boolean, _) => (bool)literal.Object,
             (TokenType.Null, _) => Undefined,
@@ -170,15 +210,55 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     public object VisitSingleEvaluation(SingleEval evaluation)
     {
         var identifier = VisitLiteral(evaluation.identifier);
-        if (!_storage.Contains(identifier))
+        if (!_global.Contains(identifier))
         {
             DisplayErr($"cannot evaluate '{identifier}', it does not exist.");
             return Undefined;
         }
-        return _storage.GetValue(identifier);
+        return _global.GetValue(identifier);
     }
 
-    private void VerifyNotNull(object? value, string message)
+    public object VisitVariable(Variable variable)
+    {
+        var global = _global;
+        var local = _activeScope;
+
+        if (local is not null && local.Contains(variable.Name))
+        {
+            return local.GetValue(variable.Name);
+        }
+
+        if (global.Contains(variable.Name))
+        {
+            return global.GetValue(variable.Name);
+        }
+
+        throw new InterpreterException($"The variable `{variable.Name}` does exist in any scope.");
+    }
+
+    public object VisitFunctionDeclaration(FunctionDeclaration functionDeclaration)
+    {
+        var name = functionDeclaration.Identifier;
+        var args = functionDeclaration.Arguments;
+        var body = functionDeclaration.Body;
+
+        var udf = new UserDefinedFunction(name, body, args);
+        CurrentScope.Assign(name, udf);
+        return Undefined;
+    }
+
+    public object VisitBlock(Block block)
+    {
+        foreach (var statement in block.Statements)
+        {
+            var thing = statement.Take(this);
+            if (thing is ReturnValue @return) return @return;
+        }
+
+        return Undefined;
+    }
+
+    internal void VerifyNotNull(object? value, string message)
     {
         if (value is null)
             throw new InterpreterException(message);

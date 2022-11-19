@@ -27,9 +27,9 @@ public class DParser
         Errors.Level = level;
     }
 
-    public List<DNode> Parse()
+    public List<Statement> Parse()
     {
-        var result = new List<DNode>();
+        var result = new List<Statement>();
 
         while (!IsAtEnd && !_wasError)
         {
@@ -39,7 +39,7 @@ public class DParser
                 continue;
             }
 
-            var decl = ParseDeclaration();
+            var decl = ParseStatement();
             result.Add(decl);
         }
 
@@ -62,18 +62,19 @@ public class DParser
      * Each declaration requires a line break, not literals, lists or dicts.
      */
 
-    public DNode ParseDeclaration()
+    public Statement ParseStatement()
     {
         // the first node should be a declaration.
         // there is only declarations in DL.
 
         if (Match(
-            TokenType.String,
-            TokenType.Number, 
-            TokenType.Decimal)
+            TokenType.Let)
             )
         {
-            var literal = ParseLiteral();
+            _ = Consume(TokenType.Let, DErrorCode.Default);
+
+            var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+            var variableName = identifier.Lexeme;
 
             Consume(TokenType.Equals, DErrorCode.ExpEquals);
 
@@ -81,34 +82,34 @@ public class DParser
             {
                 var list = ParseListDeclaration();
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                return new Assignment(literal, list);
+                return new Assignment(new(variableName), list);
             }
 
-            if (Match(TokenType.DictOpen))
+            if (Match(TokenType.LeftBrace))
             {
                 var dict = ParseDictDeclaration();
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                return new Assignment(literal, dict);
+                return new Assignment(new(variableName), dict);
             }
 
             if (Match(TokenType.Identifier))
             {
-                var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+                var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
 
-                if (Peek().Type == TokenType.CallOpen)
+                if (Peek().Type == TokenType.LeftParen)
                 {
                     // this needs to return an `Assignment`.
                     // The interpreter implementation can then handle actually calling
                     // the function.
 
-                    var call = ParseFunction(identifier);
+                    var call = ParseFunction(rhsIdentifier);
 
                     _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
 
-                    return new Assignment(literal, call);
+                    return new Assignment(new(variableName), call);
                 }
 
-                var contents = identifier.Lexeme;
+                var contents = rhsIdentifier.Lexeme;
 
                 if (!DVariables.GlobalSymbolExists(contents))
                 {
@@ -126,13 +127,13 @@ public class DParser
 
                 var (tok, inst) = DVariables.GetValueFor(contents);
 
-                return new Assignment(literal, new Literal(tok, inst));
+                return new Assignment(new(variableName), new Literal(tok, inst));
             }
 
             // assume its a normal literal.
             var value = ParseLiteral();
             _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-            return new Assignment(literal, value);
+            return new Assignment(new(variableName), value);
         }
 
         // parse top level function calls
@@ -141,7 +142,7 @@ public class DParser
         {
             var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier).Lexeme;
 
-            if (Peek().Type == TokenType.CallOpen)
+            if (Peek().Type == TokenType.LeftParen)
             {
                 var args = ParseFunctionArguments();
                 var call = new FunctionCall(identifier, args.ToArray());
@@ -149,6 +150,23 @@ public class DParser
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
 
                 return call;
+            }
+
+            if (Peek().Type == TokenType.Equals)
+            {
+                // assignment to already existing variable.
+                _ = Consume(TokenType.Equals, DErrorCode.ExpEquals);
+
+                if (Peek().Type == TokenType.Identifier) 
+                {
+                    // assigning pre-existing variable to already existing variables value
+                    var right = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+                    return new Assignment(new(identifier), new Variable(right.Lexeme));
+                }
+
+                var lit = ParseLiteral();
+                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+                return new Assignment(new(identifier), lit);
             }
         }
 
@@ -167,8 +185,53 @@ public class DParser
             return new ModuleIdentity(identifier);
         }
 
+        if (Match(TokenType.Fn))
+        {
+            _ = Consume(TokenType.Fn, DErrorCode.ExpFnKeyword);
+            var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+
+            _ = Consume(TokenType.LeftParen, DErrorCode.ExpLeftParen);
+            var arguments = new List<Variable>();
+
+            do
+            {
+                var arg = ParseFunctionArgument();
+                // only a variable declaration is allowed within a function
+                // declarations argument list.
+                if (arg is not null && arg is Variable var)
+                {
+                    arguments.Add(var);
+                    continue;
+                }
+                break; // no args
+            } while (MatchAndAdvance(TokenType.Comma));
+
+            _ = Consume(TokenType.RightParen, DErrorCode.ExpRightParen);
+            // we are now here: fn name(arg1, arg2) <---
+
+            // parse the block
+            var body = ParseBlock();
+
+            return new FunctionDeclaration(identifier.Lexeme, arguments, body);
+        }
+
         AddParseError(DErrorCode.InvalidKey);
         return null!;
+    }
+
+    private Block ParseBlock()
+    {
+        _ = Consume(TokenType.LeftBrace, DErrorCode.ExpLeftBrace);
+        var statements = new List<Statement>();
+
+        while (!Match(TokenType.RightBrace))
+        {
+            var statement = ParseStatement();
+            if (statement is not null)
+                statements.Add(statement);
+        }
+        _ = Consume(TokenType.RightBrace, DErrorCode.ExpRightBrace);
+        return new Block(statements);
     }
 
     private List ParseListDeclaration()
@@ -196,9 +259,9 @@ public class DParser
             close);
     }
 
-    private DNode ParseDictDeclaration()
+    private Statement ParseDictDeclaration()
     {
-        var open = Consume(TokenType.DictOpen, DErrorCode.ExpDictOpen);
+        var open = Consume(TokenType.LeftBrace, DErrorCode.ExpLeftBrace);
 
         List<DictAssignment> elements = new();
 
@@ -207,7 +270,7 @@ public class DParser
             var key = ParseLiteral();
             var colon = Consume(TokenType.Colon, DErrorCode.ExpColonDictPair);
 
-            if (Match(TokenType.DictOpen))
+            if (Match(TokenType.LeftBrace))
             {
                 // recursive, need to be careful about this.
                 var dict = ParseDictDeclaration();
@@ -237,7 +300,7 @@ public class DParser
 
         } while (MatchAndAdvance(TokenType.Comma));
 
-        var close = Consume(TokenType.DictClose, DErrorCode.ExpDictClose);
+        var close = Consume(TokenType.RightBrace, DErrorCode.ExpRightBrace);
         return new Dict(open, elements.ToArray(), close);
     }
 
@@ -249,7 +312,6 @@ public class DParser
 
         if (value is null)
         {
-            AddParseError(DErrorCode.InvalidKey);
             return null!;
         }
 
@@ -316,14 +378,14 @@ public class DParser
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
     }
 
-    private DNode ParseFunctionArgument()
+    private Statement ParseFunctionArgument()
     {
         if (Match(TokenType.Identifier))
         {
             var identifier = Advance();
 
             // check if this is a function call.
-            if (Peek().Type == TokenType.CallOpen)
+            if (Peek().Type == TokenType.LeftParen)
             {
                 var call = ParseFunction(identifier);
                 return call;
@@ -333,8 +395,7 @@ public class DParser
 
             if (!DVariables.GlobalSymbolExists(contents))
             {
-                AddParseError(DErrorCode.UndefinedSymbol);
-                return null!;
+                return new Variable(contents);
             }
 
             var (tok, inst) = DVariables.GetValueFor(contents);
@@ -344,11 +405,11 @@ public class DParser
         return ParseLiteral();
     }
 
-    private List<DNode> ParseFunctionArguments()
+    private List<Statement> ParseFunctionArguments()
     {
-        _ = Consume(TokenType.CallOpen, DErrorCode.ExpCallOpen);
+        _ = Consume(TokenType.LeftParen, DErrorCode.ExpLeftParen);
 
-        var literals = new List<DNode>();
+        var literals = new List<Statement>();
 
         do
         {
@@ -358,10 +419,10 @@ public class DParser
                 literals.Add(arg);
                 continue;
             }
-            throw new ParserException("an argument was NOT a literal?");
+            break;
         } while (MatchAndAdvance(TokenType.Comma));
 
-        _ = Consume(TokenType.CallClose, DErrorCode.ExpCallClose);
+        _ = Consume(TokenType.RightParen, DErrorCode.ExpRightParen);
         return literals;
     }
 

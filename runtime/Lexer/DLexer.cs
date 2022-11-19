@@ -110,8 +110,8 @@ public class DLexer
         {
             DConstants.ListOpen =>  MakeToken(TokenType.ListOpen),
             DConstants.ListClose => MakeToken(TokenType.ListClose),
-            DConstants.DictOpen =>  MakeToken(TokenType.DictOpen),
-            DConstants.DictClose => MakeToken(TokenType.DictClose),
+            DConstants.LeftBrace =>  MakeToken(TokenType.LeftBrace),
+            DConstants.RightBrace => MakeToken(TokenType.RightBrace),
             DConstants.Comma =>     MakeToken(TokenType.Comma),
             DConstants.LineBreak => MakeToken(TokenType.LineBreak),
             DConstants.Comment =>   LexComment(),
@@ -121,8 +121,8 @@ public class DLexer
             DConstants.Whitespace => MakeToken(TokenType.Whitespace),
             DConstants.Equals => MakeToken(TokenType.Equals),
             DConstants.Colon => MakeToken(TokenType.Colon),
-            DConstants.CallOpen => MakeToken(TokenType.CallOpen),
-            DConstants.CallClose => MakeToken(TokenType.CallClose),
+            DConstants.LeftParen => MakeToken(TokenType.LeftParen),
+            DConstants.RightParen => MakeToken(TokenType.RightParen),
             var c when char.IsNumber(c) => LexGenericNumber(),
             var c when DConstants.IsDLIdentifierChar(c) => LexIdentifier(),
             var c when DConstants.StringDelims.Contains(c) => LexString(),
@@ -246,7 +246,7 @@ public class DLexer
                     LexerException("unexpected end of file while lexing an identifier.");
             }
 
-            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF || Peek() == DConstants.CallOpen)
+            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF || Peek() is DConstants.LeftParen or DConstants.RightParen)
                 break;
 
             ch = Advance();

@@ -2,7 +2,7 @@ using Runtime.Lexer;
 
 namespace Runtime.Parser.Production;
 
-public record Assignment(Literal Key, DNode Value) : DNode
+public record Assignment(Variable Variable, Statement Statement) : Statement
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {
@@ -11,32 +11,6 @@ public record Assignment(Literal Key, DNode Value) : DNode
 
     public override string Debug()
     {
-        // value could be anything, so attempt to
-        // display the key. (key can only be str, num, dec)
-
-        var identifier = Key;
-
-        if (identifier is null)
-        {
-            throw new 
-                NotImplementedException("somehow, some way, an assignments key is null...");
-        }
-        
-        if (Value is Literal value)
-        {
-            return $"Assignment(Id: {identifier.Object}, Value: {value.Object})";
-        }
-
-        if (Value is List list)
-        {
-            return $"Assignment(Id: {identifier.Object}, Value: {list.Debug()})";
-        }
-
-        if (Value is Dict dict)
-        {
-            return $"Assignment(Id: {identifier.Object}, Value: {dict.Debug()}";
-        }
-
-        return $"Assignment(Id: {identifier.Object}, Value: <unknown>";
+        return $"Variable(Name: '{Variable.Name}')";
     }
 }

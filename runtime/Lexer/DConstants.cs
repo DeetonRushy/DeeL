@@ -11,13 +11,16 @@ public static class DConstants
         { "mod", TokenType.Module },
         { "end", TokenType.End },
         { "if", TokenType.If },
-        { "else", TokenType.Else }
+        { "else", TokenType.Else },
+        { "fn", TokenType.Fn },
+        { "return", TokenType.Return },
+        { "let", TokenType.Let }
     };
 
     public const char EOF = '\0';
 
-    public const char DictOpen =   '{';
-    public const char DictClose =  '}';
+    public const char LeftBrace =   '{';
+    public const char RightBrace =  '}';
 
     public const char Comma =      ',';
     public new const char Equals = '=';
@@ -25,8 +28,8 @@ public static class DConstants
     public const char ListOpen =   '[';
     public const char ListClose =  ']';
 
-    public const char CallOpen =   '(';
-    public const char CallClose =  ')';
+    public const char LeftParen =   '(';
+    public const char RightParen =  ')';
 
     public const char Colon =      ':';
 

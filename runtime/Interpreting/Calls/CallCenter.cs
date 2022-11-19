@@ -28,6 +28,8 @@ public class CallCenter
         }
     }
 
+    public void AddDefinition(ICallable func) => _functions.Add(func);
+
     public bool HasDefinition(string identifier)
         => _functions.Any(x => x.Identifier == identifier);
 
