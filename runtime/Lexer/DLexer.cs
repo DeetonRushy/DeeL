@@ -171,7 +171,6 @@ public class DLexer
         while (!DConstants.IsStringDelimeter(current))
         {
             _lexeme += current;
-
             current = Advance();
         }
 
@@ -191,7 +190,7 @@ public class DLexer
 
         var ch = Current();
 
-        while (DConstants.IsDLNumberCharacter(ch))
+        while (true)
         {
             _lexeme += ch;
 
@@ -200,6 +199,9 @@ public class DLexer
                 throw new 
                     LexerException("unexpected end of file while lexing a number.");
             }
+
+            if (!DConstants.IsDLNumberCharacter(Peek()))
+                break;
 
             if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF)
                 break;

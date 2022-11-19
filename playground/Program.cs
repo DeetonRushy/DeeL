@@ -19,6 +19,9 @@ mod 'dl';
 };
 'main-version' = access('version-info', 'versions', 0);
 'initial-version' = access('version-info', 'initial');
+'env' = 'PATH';
+
+'value' = envvar(access('env'));
 ";
 
 var tokens = new DLexer(source).Lex();
