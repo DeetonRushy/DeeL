@@ -100,7 +100,21 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             DisplayErr($"'{call.Identifier}' expects {function.Arity} arguments, but {call.Arguments.Length} were supplied.");
             return Undefined;
         }
-        return function.Execute(this, call.Arguments);
+        var arguments = new List<Literal>();
+        foreach (var arg in call.Arguments)
+        {
+            if (arg is FunctionCall paramCall)
+            {
+                var result = paramCall.Take(this);
+                // FIXME: not all functions may return a string...
+                var literal = new Literal(DToken.MakeVar(TokenType.String), result);
+                arguments.Add(literal);
+            }
+
+            if (arg is Literal paramLiteral)
+                arguments.Add(paramLiteral);
+        }
+        return function.Execute(this, arguments.ToArray());
     }
 
     public object VisitList(List list)

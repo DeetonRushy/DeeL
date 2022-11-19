@@ -46,6 +46,13 @@ public class DParser
         return result;
     }
 
+    private FunctionCall ParseFunction(DToken identifier)
+    {
+        var args = ParseFunctionArguments();
+        var call = new FunctionCall(identifier.Lexeme, args.ToArray());
+        return call;
+    }
+
     /*
      * Consume line breaks ';' within here.
      * 
@@ -87,7 +94,6 @@ public class DParser
             if (Match(TokenType.Identifier))
             {
                 var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
-                var contents = identifier.Lexeme;
 
                 if (Peek().Type == TokenType.CallOpen)
                 {
@@ -95,13 +101,14 @@ public class DParser
                     // The interpreter implementation can then handle actually calling
                     // the function.
 
-                    var args = ParseFunctionArguments();
-                    var call = new FunctionCall(contents, args.ToArray());
+                    var call = ParseFunction(identifier);
 
                     _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
 
                     return new Assignment(literal, call);
                 }
+
+                var contents = identifier.Lexeme;
 
                 if (!DVariables.GlobalSymbolExists(contents))
                 {
@@ -309,15 +316,43 @@ public class DParser
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
     }
 
-    private List<Literal> ParseFunctionArguments()
+    private DNode ParseFunctionArgument()
+    {
+        if (Match(TokenType.Identifier))
+        {
+            var identifier = Advance();
+
+            // check if this is a function call.
+            if (Peek().Type == TokenType.CallOpen)
+            {
+                var call = ParseFunction(identifier);
+                return call;
+            }
+
+            var contents = identifier.Lexeme;
+
+            if (!DVariables.GlobalSymbolExists(contents))
+            {
+                AddParseError(DErrorCode.UndefinedSymbol);
+                return null!;
+            }
+
+            var (tok, inst) = DVariables.GetValueFor(contents);
+            return new Literal(DToken.MakeVar(tok.Type), inst);
+        }
+
+        return ParseLiteral();
+    }
+
+    private List<DNode> ParseFunctionArguments()
     {
         _ = Consume(TokenType.CallOpen, DErrorCode.ExpCallOpen);
 
-        var literals = new List<Literal>();
+        var literals = new List<DNode>();
 
         do
         {
-            var arg = ParseLiteral();
+            var arg = ParseFunctionArgument();
             if (arg is not null)
             {
                 literals.Add(arg);

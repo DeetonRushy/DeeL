@@ -28,7 +28,7 @@ namespace Runtime.Interpreting.Calls.Builtins
             var value = Environment.GetEnvironmentVariable(variable??"");
 
             return new Literal(DToken.MakeVar(TokenType.String),
-                value ?? string.Empty);
+                value ?? Interpreter.Undefined);
         }
     }
 }

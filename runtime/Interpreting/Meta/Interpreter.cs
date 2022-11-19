@@ -117,7 +117,7 @@ public class Interpreter<T> : ISyntaxTreeVisitor<object> where T: new()
             throw new BadIdentifierException($"there is no function defined with name `{call.Identifier}`");
         }
 
-        return function.Execute(_other, call.Arguments).Take(this);
+        throw new NotImplementedException("Fuck Meta!");
     }
 
     public object VisitList(List list)
