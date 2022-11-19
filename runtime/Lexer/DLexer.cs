@@ -8,6 +8,15 @@ namespace Runtime.Lexer;
 public class DLexer
 {
     /// <summary>
+    /// When true, the lexer will not dispose of spaces and newlines.
+    /// NOTE: when true, the parser will not be happy trying to parse
+    /// all the whitespace. This is meant to be used for syntax highlighting to
+    /// view the source in its actual form.
+    /// </summary>
+    public bool MaintainWhitespaceTokens { get; set; } = false;
+
+
+    /// <summary>
     /// The source files contents in whole.
     /// </summary>
     private readonly string _contents;
@@ -63,7 +72,7 @@ public class DLexer
 
             // Returns null when windows newlines are detected (and possibly others).
             // This is to ignore the '\r' and to skip whitespace.
-            if (token is null || token.Type == TokenType.Whitespace)
+            if (token is null || (!MaintainWhitespaceTokens && token.Type == TokenType.Whitespace))
             {
                 continue;
             }
@@ -79,6 +88,8 @@ public class DLexer
             if (token.Type == TokenType.Newline)
             {
                 ++_line;
+                if (MaintainWhitespaceTokens)
+                    _tokens.Add(token);
                 continue;
             }
 
