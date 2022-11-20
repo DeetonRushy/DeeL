@@ -1,4 +1,5 @@
-﻿using Runtime.Parser.Production;
+﻿using Runtime.Interpreting;
+using Runtime.Parser.Production;
 
 namespace Runtime.Parser;
 
@@ -21,4 +22,6 @@ public interface ISyntaxTreeVisitor<T>
     public T VisitVariable(Variable variable);
     public T VisitFunctionDeclaration(FunctionDeclaration functionDeclaration);
     public T VisitBlock(Block block);
+    public T VisitReturnStatement(ReturnValue returnValue);
+    public T VisitBreakPoint(ExplicitBreakpoint bp);
 }

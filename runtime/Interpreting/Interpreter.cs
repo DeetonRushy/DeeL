@@ -5,6 +5,8 @@ using Runtime.Lexer;
 using Runtime.Parser;
 using Runtime.Parser.Production;
 using System.Runtime.InteropServices.ObjectiveC;
+using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace Runtime.Interpreting;
 
@@ -33,6 +35,8 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     internal readonly CallCenter _calls;
     internal readonly RuntimeStorage _global;
 
+    public RuntimeStorage Globals() => _global;
+
     // this will only ever be not-null when the current context exists within this scope.
     internal RuntimeStorage? _activeScope;
 
@@ -51,7 +55,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     public Interpreter()
     {
         _calls = new CallCenter();
-        _global = new RuntimeStorage();
+        _global = new RuntimeStorage("<global>");
     }
 
     public object Interpret(List<Statement> nodes)
@@ -61,10 +65,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             if (node is null)
                 throw new InterpreterException("internal: parser problem... null node?");
 
-            var result = node.Take(this);
-            
-            if (AllowsStdout)
-                Console.WriteLine(result);
+            _ = node.Take(this);
         }
 
         return Undefined;
@@ -74,6 +75,20 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     {
         var name = assignment.Variable.Name;
         var value = assignment.Statement.Take(this);
+
+        if (value is ReturnValue @return)
+            value = @return.Value;
+
+        if (_activeScope != null && _global.Contains(name))
+        {
+            if (assignment.Variable.IsInitialization)
+            {
+                // cannot assign to a variable with the same name as an outer scope.
+                throw new InterpreterException($"The variable `{name}` already exists in the scope `{_global.Name}`.");
+            }
+
+            return _global.Assign(name, value);
+        }
 
         return _activeScope != null 
             ? _activeScope.Assign(name, value)
@@ -114,7 +129,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             if (value is UserDefinedFunction userFunction)
             {
                 // do shit
-                return userFunction.Execute(this, call.Arguments.ToList()).Value;
+                return userFunction.Execute(this, call.Arguments.ToList());
             }
 
             throw new InterpreterException($"The variable `{call.Identifier}` is not callable. (it is of type `{value.GetType().Name}`)");
@@ -247,12 +262,17 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         return Undefined;
     }
 
+    public object VisitReturnStatement(ReturnValue returnValue)
+    {
+        return returnValue.Value ?? Undefined;
+    }
+
     public object VisitBlock(Block block)
     {
         foreach (var statement in block.Statements)
         {
-            var thing = statement.Take(this);
-            if (thing is ReturnValue @return) return @return;
+            if (statement is ReturnValue @return) return @return;
+            _ = statement.Take(this);
         }
 
         return Undefined;
@@ -278,5 +298,16 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         {
             Console.WriteLine($"({Identity}): {message}");
         }
+    }
+
+    public object VisitBreakPoint(ExplicitBreakpoint bp)
+    {
+        if (!Debugger.Launch())
+        {
+            ModLog($"__break: failed to launch the debugger");
+            return Undefined;
+        }
+        Debugger.Break();
+        return Literal.True;
     }
 }

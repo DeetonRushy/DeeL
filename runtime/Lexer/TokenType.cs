@@ -138,4 +138,5 @@ public enum TokenType
     Fn,
     Return,
     Let,
+    ForcedBreakPoint,
 }

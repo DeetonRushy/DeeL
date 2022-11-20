@@ -5,5 +5,12 @@ namespace Runtime;
 
 public class DContext
 {
-    public List<DError> Errors { get; init; } = null!;
+    public DContext(DErrorHandler errorHandler, Interpreter interpreter)
+    {
+        ErrorHandler = errorHandler;
+        Interpreter = interpreter;
+    }
+
+    public DErrorHandler ErrorHandler { get; set; }
+    public Interpreter Interpreter { get; set; }
 }

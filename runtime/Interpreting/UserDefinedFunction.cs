@@ -8,41 +8,55 @@ public class UserDefinedFunction
 {
     public Block Body { get; private set; }
     public string Name { get; private set; }
-    public List<Variable> Arguments { get; private set; }
+    public List<Variable> ExpectedArguments { get; private set; }
 
     public UserDefinedFunction(string Name, Block block, List<Variable> arguments)
     {
         this.Name = Name;
         Body = block;
-        Arguments = arguments;
+        ExpectedArguments = arguments;
     }
 
-    public ReturnValue? Execute(Interpreter interpreter, List<Statement> args)
+    public ReturnValue Execute(Interpreter interpreter, List<Statement> receivedArguments)
     {
         var prevScope = interpreter._activeScope;
-        interpreter._activeScope = new RuntimeStorage();
+        interpreter._activeScope = new RuntimeStorage($"<fn {Name}>");
 
-        if (args.Count != Arguments.Count)
+        if (receivedArguments.Count != ExpectedArguments.Count)
         {
-            throw new InterpreterException($"function `{Name}` expects {Arguments.Count} arguments, but got {args.Count}.");
+            throw new InterpreterException($"function `{Name}` expects {ExpectedArguments.Count} argument(s), but got {receivedArguments.Count}.");
         }
 
         // populate the local scope with the arguments
-        for(int i = 0; i < Arguments.Count; ++i)
+        for(int i = 0; i < ExpectedArguments.Count; ++i)
         {
-            var value = args[i].Take(interpreter);
-            interpreter._activeScope.Assign(Arguments[i].Name, value);
+            var value = receivedArguments[i].Take(interpreter);
+            interpreter._activeScope.Assign(ExpectedArguments[i].Name, value);
         }
 
         var result = Body.Take(interpreter);
 
-        interpreter._activeScope = prevScope;
+        // before terminating this scope, check if the return value only exists
+        // within this scope. If so, return whatever it is.
+        ReturnValue? returnValue = null;
 
-        if (result is not ReturnValue @return)
+        if (result is ReturnValue ret)
         {
-            return new ReturnValue(Interpreter.Undefined);
+            if (ret.Value is Variable or Literal)
+                returnValue = new ReturnValue((ret.Value as Statement)!.Take(interpreter));
+            else
+            {
+                returnValue = new ReturnValue(ret.Value);
+            }
         }
 
-        return @return;
+        interpreter._activeScope = prevScope;
+
+        return returnValue ?? new ReturnValue(Literal.Undefined);
+    }
+
+    public override string ToString()
+    {
+        return $"<fn '{Name}'>";
     }
 }

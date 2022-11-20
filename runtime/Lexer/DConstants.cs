@@ -14,7 +14,8 @@ public static class DConstants
         { "else", TokenType.Else },
         { "fn", TokenType.Fn },
         { "return", TokenType.Return },
-        { "let", TokenType.Let }
+        { "let", TokenType.Let },
+        { "__break", TokenType.ForcedBreakPoint }
     };
 
     public const char EOF = '\0';

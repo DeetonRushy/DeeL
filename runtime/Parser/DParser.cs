@@ -4,6 +4,7 @@ using Runtime.Lexer;
 using Runtime.Parser.Errors;
 using Runtime.Parser.Exceptions;
 using Runtime.Parser.Production;
+using Runtime.Interpreting;
 
 namespace Runtime.Parser;
 
@@ -138,6 +139,13 @@ public class DParser
 
         // parse top level function calls
 
+        if (Match(TokenType.ForcedBreakPoint))
+        {
+            _ = Consume(TokenType.ForcedBreakPoint, DErrorCode.Default);
+            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+            return new ExplicitBreakpoint();
+        }
+
         if (Match(TokenType.Identifier))
         {
             var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier).Lexeme;
@@ -161,62 +169,84 @@ public class DParser
                 {
                     // assigning pre-existing variable to already existing variables value
                     var right = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
-                    return new Assignment(new(identifier), new Variable(right.Lexeme));
+                    _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+                    return new Assignment(new(identifier, false), new Variable(right.Lexeme));
                 }
 
                 var lit = ParseLiteral();
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
                 return new Assignment(new(identifier), lit);
             }
+
+            return new Variable(identifier);
+        }
+
+        if (Match(TokenType.Return))
+        {
+            // the next token IS a return statement, no error code
+            _ = Consume(TokenType.Return, DErrorCode.Default);
+            var value = ParseStatement();
+            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+            return new ReturnValue(value);
         }
 
         if (Match(TokenType.Module))
         {
-            _ = Consume(TokenType.Module, DErrorCode.ExpKeyword);
-            var identifier = ParseLiteral();
-
-            if (identifier is null)
-            {
-                AddParseError(DErrorCode.ExpIdentifier);
-                return null!;
-            }
-
-            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-            return new ModuleIdentity(identifier);
+            return ParseModuleIdentifier();
         }
 
         if (Match(TokenType.Fn))
         {
-            _ = Consume(TokenType.Fn, DErrorCode.ExpFnKeyword);
-            var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
-
-            _ = Consume(TokenType.LeftParen, DErrorCode.ExpLeftParen);
-            var arguments = new List<Variable>();
-
-            do
-            {
-                var arg = ParseFunctionArgument();
-                // only a variable declaration is allowed within a function
-                // declarations argument list.
-                if (arg is not null && arg is Variable var)
-                {
-                    arguments.Add(var);
-                    continue;
-                }
-                break; // no args
-            } while (MatchAndAdvance(TokenType.Comma));
-
-            _ = Consume(TokenType.RightParen, DErrorCode.ExpRightParen);
-            // we are now here: fn name(arg1, arg2) <---
-
-            // parse the block
-            var body = ParseBlock();
-
-            return new FunctionDeclaration(identifier.Lexeme, arguments, body);
+            return ParseFunctionDeclaration();
         }
 
         AddParseError(DErrorCode.InvalidKey);
         return null!;
+    }
+
+    private ModuleIdentity ParseModuleIdentifier()
+    {
+        _ = Consume(TokenType.Module, DErrorCode.ExpKeyword);
+        var identifier = ParseLiteral();
+
+        if (identifier is null)
+        {
+            AddParseError(DErrorCode.ExpIdentifier);
+            return null!;
+        }
+
+        _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+        return new ModuleIdentity(identifier);
+    }
+
+    private FunctionDeclaration ParseFunctionDeclaration()
+    {
+        _ = Consume(TokenType.Fn, DErrorCode.ExpFnKeyword);
+        var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+
+        _ = Consume(TokenType.LeftParen, DErrorCode.ExpLeftParen);
+        var arguments = new List<Variable>();
+
+        do
+        {
+            var arg = ParseFunctionArgument();
+            // only a variable declaration is allowed within a function
+            // declarations argument list.
+            if (arg is not null && arg is Variable var)
+            {
+                arguments.Add(var);
+                continue;
+            }
+            break; // no args
+        } while (MatchAndAdvance(TokenType.Comma));
+
+        _ = Consume(TokenType.RightParen, DErrorCode.ExpRightParen);
+        // we are now here: fn name(arg1, arg2) <---
+
+        // parse the block
+        var body = ParseBlock();
+
+        return new FunctionDeclaration(identifier.Lexeme, arguments, body);
     }
 
     private Block ParseBlock()
@@ -229,6 +259,8 @@ public class DParser
             var statement = ParseStatement();
             if (statement is not null)
                 statements.Add(statement);
+            else
+                break;
         }
         _ = Consume(TokenType.RightBrace, DErrorCode.ExpRightBrace);
         return new Block(statements);

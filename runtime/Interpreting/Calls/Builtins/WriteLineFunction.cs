@@ -17,12 +17,7 @@ internal class WriteLineFunction : ICallable
     public Literal Execute(Interpreter interpreter, params Literal[] args)
     {
         var message = interpreter.VisitLiteral(args[0]);
-        if (message is not string msg)
-        {
-            interpreter.DisplayErr($"{Identifier}: writeln expects a string.");
-            return new Literal(DToken.Bad, "");
-        }
-        interpreter.ModLog(msg);
+        interpreter.ModLog(message.ToString() ?? "null");
         return new Literal(DToken.MakeVar(TokenType.Null), Interpreter.Undefined);
     }
 }

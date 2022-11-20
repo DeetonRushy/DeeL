@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,13 +7,15 @@ using System.Threading.Tasks;
 
 namespace Runtime.Interpreting;
 
-internal class RuntimeStorage
+public class RuntimeStorage : IEnumerable<KeyValuePair<object, object>>
 {
     private IDictionary<object, object> _storage;
+    public string Name { get; }
 
-    public RuntimeStorage()
+    public RuntimeStorage(string Name)
     {
         _storage = new Dictionary<object, object>();
+        this.Name = Name;
     }
 
     public string Assign(object key, object value)
@@ -41,6 +44,16 @@ internal class RuntimeStorage
         _storage.ToList().ForEach(x => dict.Add(x.Key, x.Value));
         other._storage.ToList().ForEach(x => dict.Add(x.Key, x.Value));
 
-        return new RuntimeStorage { _storage = dict };
+        return new RuntimeStorage(Name) { _storage = dict };
+    }
+
+    public IEnumerator<KeyValuePair<object, object>> GetEnumerator()
+    {
+        return _storage.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

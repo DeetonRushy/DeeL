@@ -1,7 +1,7 @@
 ﻿
 namespace Runtime.Parser.Production;
 
-public record Variable(string Name) : Statement
+public record Variable(string Name, bool IsInitialization = true) : Statement
 {
     public override string Debug()
     {

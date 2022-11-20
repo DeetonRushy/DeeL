@@ -3,33 +3,36 @@ using Runtime.Parser;
 using Runtime.Interpreting;
 using Runtime;
 using System.Diagnostics;
-using playground;
 
-var sw = Stopwatch.StartNew();
-Interpreter interpreter = new();
+DContext ctx = null!;
 
-var source = @"
-fn myFunction(arg) {
-    writeln(arg);
+try
+{
+    var sw = Stopwatch.StartNew();
+
+    var source = @"
+fn doPrint(text) {
+  writeln(text);
+  return text;
 }
 
-myFunction('Hello, World!');
+let res = doPrint('hello, world');
+doPrint(res);
 ";
 
-var tokens = new DLexer(source).Lex();
-var parser = new DParser(tokens);
-var ast = parser.Parse();
+    ctx = DlRuntime.Run(source);
+    ctx.ErrorHandler.DisplayErrors();
 
-var instance = interpreter.Interpret(ast);
-sw.Stop();
+    sw.Stop();
+    Console.WriteLine($"Total execution time: {sw.Elapsed} ({sw.ElapsedMilliseconds}ms)");
+}
+catch (Exception ex)
+{
+    Console.WriteLine(ex.Message);
+}
 
-Console.WriteLine(instance);
-
-parser.Errors.DisplayErrors();
-Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms to execute!");
-
-var syntaxTokens = new DLexer(source) { MaintainWhitespaceTokens = true }.Lex();
-var pv = new PrettyView(syntaxTokens);
-var pretty = pv.Output();
-
-Console.WriteLine($"\nPretty View:\n\n {pretty}");
+Console.WriteLine("**** GLOBALS ****\n");
+foreach (var g in ctx.Interpreter.Globals())
+{
+    Console.WriteLine($"{{ {g.Key}: {g.Value} }}");
+}

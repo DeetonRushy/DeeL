@@ -1,6 +1,8 @@
-﻿using Runtime.Interpreting;
+﻿using Microsoft.VisualBasic;
+using Runtime.Interpreting;
 using Runtime.Lexer;
 using Runtime.Parser;
+using Runtime.Parser.Errors;
 
 namespace Runtime;
 
@@ -15,29 +17,16 @@ public class DlRuntime
         return new DLexer(contents).Lex();
     }
 
-    public static DContext ProcessConfig(string contents)
+    public static DContext Run(string source)
     {
-        var lexer = new DLexer(contents);
+        var lexer = new DLexer(source);
         var tokens = lexer.Lex();
         var parser = new DParser(tokens);
         var ast = parser.Parse();
         var interpreter = new Interpreter();
 
-        var config = interpreter.Interpret(ast);
+        interpreter.Interpret(ast);
 
-        return new DContext { Errors = parser.Errors.Errors };
-    }
-
-    public static DContext ProcessConfig(FileInfo contents)
-    {
-        var lexer = new DLexer(contents);
-        var tokens = lexer.Lex();
-        var parser = new DParser(tokens);
-        var ast = parser.Parse();
-        var interpreter = new Interpreter();
-
-        var config = interpreter.Interpret(ast);
-
-        return new DContext { Errors = parser.Errors.Errors };
+        return new DContext(parser.Errors, interpreter);
     }
 }
