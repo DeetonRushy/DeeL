@@ -11,12 +11,8 @@ try
     var sw = Stopwatch.StartNew();
 
     var source = @"
-
-fn getName() -> string {
-  return 'name';
-}
-
-writeln(getName(), 'arg2');
+let a = '123';
+writeln(result);
 ";
 
     ctx = DlRuntime.Run(source);
@@ -26,7 +22,7 @@ writeln(getName(), 'arg2');
 }
 catch (Exception ex)
 {
-    Console.WriteLine(ex.Message);
+    Console.WriteLine("exception: " + ex.Message);
 }
 
 ctx.ErrorHandler.DisplayErrors();

@@ -20,4 +20,7 @@ public static class RuntimeObjectExtensions
 
     public static bool IsStringy(this object obj)
         => obj is string;
+
+    public static bool IsDLObject(this object obj)
+        => obj.GetType().FullName?.Contains("Runtime") ?? true;
 }

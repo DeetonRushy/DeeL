@@ -5,6 +5,7 @@ using Runtime.Parser.Errors;
 using Runtime.Parser.Exceptions;
 using Runtime.Parser.Production;
 using Runtime.Interpreting;
+using Runtime.Parser.Production.Math;
 
 namespace Runtime.Parser;
 
@@ -134,11 +135,9 @@ public class DParser
                 return new Assignment(new(variableName, rt), new Literal(tok, inst));
             }
 
-            // assume its a normal literal.
-            var value = ParseLiteral();
+            var value = ParseStatement();
             _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-            var assumedType = TypeHint.HintFromTokenType(value.Sentiment.Type);
-            return new Assignment(new(variableName,assumedType), value);
+            return new Assignment(new(variableName,TypeHint.Any), value);
         }
 
         // parse top level function calls
@@ -148,6 +147,12 @@ public class DParser
             _ = Consume(TokenType.ForcedBreakPoint, DErrorCode.Default);
             _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return new ExplicitBreakpoint();
+        }
+
+        // grouping -- (190 * (92042 + 424))
+        if (Match(TokenType.LeftParen))
+        {
+            return ParseGrouping();
         }
 
         if (Match(TokenType.Identifier))
@@ -190,6 +195,7 @@ public class DParser
         {
             // the next token IS a return statement, no error code
             _ = Consume(TokenType.Return, DErrorCode.Default);
+            // return could be used to just return..
             var value = ParseStatement();
             _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return new ReturnValue(value);
@@ -205,7 +211,77 @@ public class DParser
             return ParseFunctionDeclaration();
         }
 
-        return ParseLiteral();
+        var literal = ParseLiteral();
+
+        if (Match(TokenType.Minus, TokenType.Star, TokenType.Plus, TokenType.Divide))
+        {
+            var mathStatement = HalfParseMathStatement(literal);
+            return mathStatement;
+        }
+
+        return literal;
+    }
+
+    // FIXME: ParseMathStatement relies on there being a left and right operand.
+    // This causes it to try and consume parens and shit.
+    private Grouping ParseGrouping()
+    {
+        _ = Consume(TokenType.LeftParen, "Expected grouping opener.");
+        var statements = new List<Statement>();
+
+        while (!Match(TokenType.RightParen))
+        {
+            if (Match(TokenType.LeftParen))
+            {
+                var grouping = ParseGrouping();
+                statements.Add(grouping);
+                continue;
+            }
+
+            var statement = ParseMathStatement();
+            if (statement is null)
+                continue;
+            statements.Add(statement);
+        }
+
+        _ = Consume(TokenType.RightParen, "expected end of grouping.");
+        return new Grouping(statements);
+    }
+
+    private MathStatement ParseMathStatement()
+    {
+        var left = ParseStatement();
+        return HalfParseMathStatement(left);
+    }
+
+    // FIXME: debug once this is aids.
+    private MathStatement HalfParseMathStatement(Statement left)
+    {
+        var op = Advance();
+        if (op.Type is TokenType.RightParen or TokenType.LineBreak)
+            return null!;
+        Statement? statement;
+        if (Match(TokenType.Identifier))
+        {
+            var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+            if (Match(TokenType.LeftParen))
+                statement = ParseFunction(identifier: identifier!);
+            else
+                statement = new Variable(identifier.Lexeme, TypeHint.Any);
+        }
+        else if (Match(TokenType.LeftParen))
+            statement = ParseGrouping();
+        else
+            statement = ParseLiteral();
+
+        return op.Type switch
+        {
+            TokenType.Plus => new Addition(left, statement!),
+            TokenType.Minus => new Subtraction(left, statement!),
+            TokenType.Star => new Multiplication(left, statement!),
+            TokenType.Divide => new Division(left, statement!),
+            _ => throw new ParserException($"unhandled math operator '{op.Type}'")
+        };
     }
 
     private ModuleIdentity ParseModuleIdentifier()
@@ -502,6 +578,17 @@ public class DParser
 
         _ = Consume(TokenType.RightParen, DErrorCode.ExpRightParen);
         return literals;
+    }
+
+    private DToken Consume(TokenType type, string message, [CallerMemberName] string m = "", [CallerLineNumber] int l = 0)
+    {
+        if (Check(type))
+        {
+            return Advance();
+        }
+
+        Errors.CreateWithMessage(Peek(), message);
+        return null!;
     }
 
     private DToken Consume(TokenType type, DErrorCode code, [CallerMemberName] string m = "", [CallerLineNumber] int l = 0)

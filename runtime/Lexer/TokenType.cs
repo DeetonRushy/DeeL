@@ -135,11 +135,89 @@ public enum TokenType
     /// The else keyword. Fallback from conditional operations
     /// </summary>
     Else,
+
+    /// <summary>
+    /// The `fn` keyword. Used to define a function.
+    /// </summary>
     Fn,
+
+    /// <summary>
+    /// The `return` keyword. Used to return a value from a function.
+    /// </summary>
     Return,
+
+    /// <summary>
+    /// The `let` keyword. Used to define a variable.
+    /// </summary>
     Let,
+
+    /// <summary>
+    /// The `__break` keyword. Used to programatically break and enter the debugger for the interpreter.
+    /// </summary>
     ForcedBreakPoint,
+
+    /// <summary>
+    /// The `->` operator.
+    /// </summary>
     Arrow,
 
-    Minus
+    /// <summary>
+    /// The `-` operator.
+    /// </summary>
+    Minus,
+
+    /// <summary>
+    /// The `+` operator.
+    /// </summary>
+    Plus,
+
+    /// <summary>
+    /// The `/` operator
+    /// </summary>
+    Divide,
+
+    /// <summary>
+    /// The `*` operator
+    /// </summary>
+    Star,
+
+    /// <summary>
+    /// The `%` operator
+    /// </summary>
+    Modulo,
+
+    /// <summary>
+    /// The `>` operator.
+    /// </summary>
+    Greater,
+
+    /// <summary>
+    /// The `>=` operator.
+    /// </summary>
+    GreaterEqual,
+
+    /// <summary>
+    /// The `&lt;` operator.
+    /// </summary>
+    Lesser,
+
+    /// <summary>
+    /// The '&lt;=' operator.
+    /// </summary>
+    LesserEqual,
+
+    /// <summary>
+    /// The '==' operator.
+    /// </summary>
+    EqualComparison,
+
+    /// <summary>
+    /// The '!=' operator.
+    /// </summary>
+    NotEqual,
+
+    /// <summary>
+    /// The '!' operator
+    /// </summary>
+    Not,
 }

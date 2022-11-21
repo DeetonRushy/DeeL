@@ -1,6 +1,8 @@
 using Microsoft.VisualBasic;
 using Runtime.Lexer.Exceptions;
 
+using static Runtime.Lexer.DConstants;
+
 namespace Runtime.Lexer;
 
 /// <summary>
@@ -113,46 +115,89 @@ public class DLexer
 
         switch (ch)
         {
-            case DConstants.ListOpen:  
+            case ListOpen:  
                 return MakeToken(TokenType.ListOpen);
-            case DConstants.ListClose: 
+            case ListClose: 
                 return MakeToken(TokenType.ListClose);
-            case DConstants.LeftBrace: 
+            case LeftBrace: 
                 return MakeToken(TokenType.LeftBrace);
-            case DConstants.RightBrace: 
+            case RightBrace: 
                 return MakeToken(TokenType.RightBrace);
-            case DConstants.Comma: 
+            case Comma: 
                 return MakeToken(TokenType.Comma);
-            case DConstants.LineBreak: 
+            case LineBreak: 
                 return MakeToken(TokenType.LineBreak);
-            case DConstants.Comment: 
+            case Comment: 
                 return LexComment();
-            case DConstants.EOF: 
+            case EOF: 
                 return MakeToken(TokenType.Eof);
-            case DConstants.Endline: 
+            case Endline: 
                 return MakeToken(TokenType.Newline);
-            case DConstants.WindowsGarbage: 
+            case WindowsGarbage: 
                 return null;
-            case DConstants.Whitespace: 
+            case Whitespace: 
                 return MakeToken(TokenType.Whitespace);
-            case DConstants.Equals: 
-                return MakeToken(TokenType.Equals);
-            case DConstants.Colon: 
-                return MakeToken(TokenType.Colon);
-            case DConstants.LeftParen: 
-                return MakeToken(TokenType.LeftParen);
-            case DConstants.RightParen: 
-                return MakeToken(TokenType.RightParen);
-            case DConstants.Minus:
+            case DConstants.Equals:
                 {
-                    if (Peek() == DConstants.GreaterThan) {
+                    if (Peek() == DConstants.Equals)
+                    {
+                        _ = Advance();
+                        return MakeToken(TokenType.EqualComparison);
+                    }
+                    return MakeToken(TokenType.Equals);
+                }
+            case Bang:
+                {
+                    if (Peek() == DConstants.Equals)
+                    {
+                        _ = Advance();
+                        return MakeToken(TokenType.NotEqual);
+                    }
+                    return MakeToken(TokenType.Not);
+                }
+            case Colon: 
+                return MakeToken(TokenType.Colon);
+            case LeftParen: 
+                return MakeToken(TokenType.LeftParen);
+            case RightParen: 
+                return MakeToken(TokenType.RightParen);
+            case Minus:
+                {
+                    if (Peek() == GreaterThan) {
+                        _ = Advance();
                         return MakeToken(TokenType.Arrow);
                     }
                     return MakeToken(TokenType.Minus);
                 }
+            case Plus:
+                return MakeToken(TokenType.Plus);
+            case Multipy:
+                return MakeToken(TokenType.Star);
+            case Divide:
+                return MakeToken(TokenType.Divide);
+            case Modulo:
+                return MakeToken(TokenType.Modulo);
+            case GreaterThan:
+                {
+                    if (Peek() == DConstants.Equals)
+                    {
+                        _ = Advance();
+                        return MakeToken(TokenType.GreaterEqual);
+                    }
+                    return MakeToken(TokenType.Greater);
+                }
+            case LesserThan:
+                {
+                    if (Peek() == DConstants.Equals)
+                    {
+                        _ = Advance();
+                        return MakeToken(TokenType.LesserEqual);
+                    }
+                    return MakeToken(TokenType.Lesser);
+                }
             case var c when char.IsNumber(c): return LexGenericNumber();
-            case var c when DConstants.IsDLIdentifierChar(c): return LexIdentifier();
-            case var c when DConstants.StringDelims.Contains(c): return LexString();
+            case var c when IsDLIdentifierChar(c): return LexIdentifier();
+            case var c when StringDelims.Contains(c): return LexString();
             // assign the literal for debugging purposes
             default:
                 return new DToken { Literal = ch, Type = TokenType.Invalid };
@@ -168,9 +213,9 @@ public class DLexer
         /* ignore text? would make it quicker. */
 
         char current;
-        while ((current = Advance()) != DConstants.Endline)
+        while ((current = Advance()) != Endline)
         {
-            if (current == DConstants.EOF)
+            if (current == EOF)
                 break;
         }
         ++_line;
@@ -193,16 +238,16 @@ public class DLexer
 
         char current = Current();
 
-        if (DConstants.IsStringDelimeter(current))
+        if (IsStringDelimeter(current))
             current = Advance();
 
-        while (!DConstants.IsStringDelimeter(current))
+        while (!IsStringDelimeter(current))
         {
             _lexeme += current;
             current = Advance();
         }
 
-        Expect(!_lexeme.Any(DConstants.IsStringDelimeter),
+        Expect(!_lexeme.Any(IsStringDelimeter),
             "failed to correctly lex string contents.");
 
         return MakeToken(TokenType.String, _lexeme);
@@ -222,16 +267,16 @@ public class DLexer
         {
             _lexeme += ch;
 
-            if (ch == DConstants.EOF)
+            if (ch == EOF)
             {
                 throw new 
                     LexerException("unexpected end of file while lexing a number.");
             }
 
-            if (!DConstants.IsDLNumberCharacter(Peek()))
+            if (!IsDLNumberCharacter(Peek()))
                 break;
 
-            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF)
+            if (Peek() == LineBreak || Peek() == EOF)
                 break;
 
             ch = Advance();
@@ -264,18 +309,18 @@ public class DLexer
     {
         var ch = Current();
 
-        while (DConstants.IsDLIdentifierChar(ch))
+        while (IsDLIdentifierChar(ch))
         {
             _lexeme += ch;
 
-            if (ch == DConstants.EOF)
+            if (ch == EOF)
             {
                 throw new
                     LexerException("unexpected end of file while lexing an identifier.");
             }
 
-            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF || 
-                Peek() is DConstants.LeftParen or DConstants.RightParen or DConstants.Comma or DConstants.Colon or DConstants.LeftBrace)
+            if (Peek() == LineBreak || Peek() == EOF || 
+                Peek() is LeftParen or RightParen or Comma or Colon or LeftBrace)
                 break;
 
             ch = Advance();
@@ -287,17 +332,17 @@ public class DLexer
          * The reason the End of the span is adjusted is to account for bad lexing.
          */
 
-        if (DConstants.BooleanValues.Contains(_lexeme))
+        if (BooleanValues.Contains(_lexeme))
         {
             return MakeToken(TokenType.Boolean);
         }
 
-        if (DConstants.ReservedKeywords.ContainsKey(_lexeme))
+        if (ReservedKeywords.ContainsKey(_lexeme))
         {
-            return MakeToken(DConstants.ReservedKeywords[_lexeme]);
+            return MakeToken(ReservedKeywords[_lexeme]);
         }
 
-        return (_lexeme == DConstants.Null)
+        return (_lexeme == Null)
             ? MakeToken(TokenType.Null)
             : MakeToken(TokenType.Identifier);
     }
@@ -323,15 +368,10 @@ public class DLexer
         return token;
     }
 
-    private DToken LastToken()
-    {
-        return (_tokens.Count >= 1) ? _tokens[^1] : DToken.Bad;
-    }
-
     private char Peek()
     {
         var cond = ((_position + 1) > FileContents.Length);
-        return cond ? DConstants.EOF : FileContents[_position + 1];
+        return cond ? EOF : FileContents[_position + 1];
     }
 
     private char Current()
@@ -342,7 +382,7 @@ public class DLexer
     private char Advance()
     {
         return (++_position >= FileContents.Length)
-            ? DConstants.EOF
+            ? EOF
             : FileContents[_position];
     }
 

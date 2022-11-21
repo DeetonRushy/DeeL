@@ -29,8 +29,10 @@ public class DlRuntime
             var ast = parser.Parse();
             interpreter.Interpret(ast);
         }
-        catch
-        { }
+        catch (Exception ex)
+        {
+            Console.WriteLine("exception: {0}", ex.Message);
+        }
 
         return new DContext(parser.Errors, interpreter);
     }

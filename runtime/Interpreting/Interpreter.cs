@@ -7,6 +7,8 @@ using Runtime.Parser.Production;
 using System.Runtime.InteropServices.ObjectiveC;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using Runtime.Parser.Production.Math;
+using Runtime.Interpreting.Extensions;
 
 namespace Runtime.Interpreting;
 
@@ -309,5 +311,106 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         }
         Debugger.Break();
         return Literal.True;
+    }
+
+    // return the result of the calculation (as long)
+    public object VisitGrouping(Grouping grouping)
+    {
+        long result = 0;
+
+        foreach (var operation in grouping.Statements)
+        {
+            var res = operation.Take(this);
+            if (res is decimal dec) result += (long)dec;
+            if (res is long @long) result += @long;
+        }
+
+        return result;
+    }
+
+    public object VisitAddition(Addition addition)
+    {
+        var left = GetActualValue(addition.Left);
+        var right = GetActualValue(addition.Right);
+
+        if (!left.IsIntegral() || !right.IsIntegral())
+        {
+            throw new InterpreterException($"cannot perform addition between `{left}` and `{right}`");
+        }
+
+        if (left is decimal lDec && right is decimal rDec) return lDec + rDec;
+        if (left is decimal lDec1 && right is long rLong) return lDec1 + rLong;
+        if (left is long lLong && right is decimal rDec1) return lLong + rDec1;
+        if (left is long lLong1 && right is long rLong1) return lLong1 + rLong1;
+
+        throw new NotImplementedException($"Math operation failed with Addition: {addition}");
+    }
+
+    public object VisitSubtraction(Subtraction subtraction)
+    {
+        var left = GetActualValue(subtraction.Left);
+        var right = GetActualValue(subtraction.Right);
+
+        if (!left.IsIntegral() || !right.IsIntegral())
+        {
+            throw new InterpreterException($"cannot perform subtraction between `{left}` and `{right}`");
+        }
+
+        if (left is decimal lDec && right is decimal rDec) return lDec - rDec;
+        if (left is decimal lDec1 && right is long rLong) return lDec1 - rLong;
+        if (left is long lLong && right is decimal rDec1) return lLong - rDec1;
+        if (left is long lLong1 && right is long rLong1) return lLong1 - rLong1;
+
+        throw new NotImplementedException($"Math operation failed with Addition: {subtraction}");
+    }
+
+    public object VisitMultiplication(Multiplication multiplication)
+    {
+        var left = GetActualValue(multiplication.Left);
+        var right = GetActualValue(multiplication.Right);
+
+        if (!left.IsIntegral() || !right.IsIntegral())
+        {
+            throw new InterpreterException($"cannot perform multiplaction between `{left}` and `{right}`");
+        }
+
+        if (left is decimal lDec && right is decimal rDec) return lDec * rDec;
+        if (left is decimal lDec1 && right is long rLong) return lDec1 * rLong;
+        if (left is long lLong && right is decimal rDec1) return lLong * rDec1;
+        if (left is long lLong1 && right is long rLong1) return lLong1 * rLong1;
+
+        throw new NotImplementedException($"Math operation failed with Addition: {multiplication}");
+    }
+
+    public object VisitDivision(Division division)
+    {
+        var left = GetActualValue(division.Left);
+        var right = GetActualValue(division.Right);
+
+        if (!left.IsIntegral() || !right.IsIntegral())
+        {
+            throw new InterpreterException($"cannot perform division between `{left}` and `{right}`");
+        }
+
+        if (left is decimal lDec && right is decimal rDec) return lDec / rDec;
+        if (left is decimal lDec1 && right is long rLong) return lDec1 / rLong;
+        if (left is long lLong && right is decimal rDec1) return lLong / rDec1;
+        if (left is long lLong1 && right is long rLong1) return lLong1 / rLong1;
+
+        throw new NotImplementedException($"Math operation failed with Addition: {division}");
+    }
+
+    public object GetActualValue(object value)
+    {
+        object result = value;
+
+        while (result.IsDLObject())
+        {
+            if (result is Statement statement)
+                result = statement.Take(this);
+            break;
+        }
+
+        return result;
     }
 }

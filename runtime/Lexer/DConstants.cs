@@ -66,6 +66,7 @@ public static class DConstants
     public const char Multipy = '*';
     public const char Divide = '/';
     public const char Modulo = '%';
+    public const char Bang = '!';
 
     public static bool IsDLNumberCharacter(char ch)
     {

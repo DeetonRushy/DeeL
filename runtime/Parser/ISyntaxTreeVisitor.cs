@@ -1,5 +1,6 @@
 ﻿using Runtime.Interpreting;
 using Runtime.Parser.Production;
+using Runtime.Parser.Production.Math;
 
 namespace Runtime.Parser;
 
@@ -24,4 +25,9 @@ public interface ISyntaxTreeVisitor<T>
     public T VisitBlock(Block block);
     public T VisitReturnStatement(ReturnValue returnValue);
     public T VisitBreakPoint(ExplicitBreakpoint bp);
+    public T VisitGrouping(Grouping grouping);
+    public T VisitAddition(Addition addition);
+    public T VisitSubtraction(Subtraction subtraction);
+    public T VisitMultiplication(Multiplication multiplication);
+    public T VisitDivision(Division division);
 }
