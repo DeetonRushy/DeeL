@@ -11,9 +11,9 @@ public static class DVariables
     public static readonly IDictionary<string, (DToken, object)> Variables 
         = new Dictionary<string, (DToken, object)>()
         {
-            { "$CurrentWorkingDirectory", (DToken.MakeVar(TokenType.String), Directory.GetCurrentDirectory()) },
+            { "cwd", (DToken.MakeVar(TokenType.String), Directory.GetCurrentDirectory()) },
             // TODO: add some sort of pre-compilation directive that defines version
-            { "$DLVersion", (DToken.MakeVar(TokenType.String), "0.1.1") },
+            { "version", (DToken.MakeVar(TokenType.String), "0.1.1") },
             { "undefined", (DToken.MakeVar(TokenType.String), "undefined") }
         };
 

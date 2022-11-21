@@ -250,7 +250,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             return global.GetValue(variable.Name);
         }
 
-        throw new InterpreterException($"The variable `{variable.Name}` does exist in any scope.");
+        throw new InterpreterException($"The variable `{variable.Name}` does not exist in any scope.");
     }
 
     public object VisitFunctionDeclaration(FunctionDeclaration functionDeclaration)

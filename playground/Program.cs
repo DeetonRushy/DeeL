@@ -11,8 +11,18 @@ try
     var sw = Stopwatch.StartNew();
 
     var source = @"
-let a = '123';
-writeln(result);
+mod 'dl';
+
+fn getVersionAndPrintName(name: string) -> string {
+  writeln(name);
+  return '1.2.32';
+}
+
+let v = getVersionAndPrintName('deeton');
+writeln(v);
+
+let not$callable = 1;
+not$callable();
 ";
 
     ctx = DlRuntime.Run(source);

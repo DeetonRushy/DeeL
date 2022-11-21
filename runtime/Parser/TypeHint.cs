@@ -1,6 +1,7 @@
 ﻿
 
 using Runtime.Lexer;
+using System.Data.Common;
 
 namespace Runtime.Parser;
 
@@ -24,6 +25,11 @@ public class TypeHint
     {
         Name = name;
     }
+
+    public static bool operator ==(TypeHint a, TypeHint b)
+        => a.Name == b.Name;
+    public static bool operator !=(TypeHint a, TypeHint b)
+        => !(a == b);
 
     public static TypeHint HintFromTokenType(TokenType type)
     {

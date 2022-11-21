@@ -80,6 +80,19 @@ public class DParser
             var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
             var variableName = identifier.Lexeme;
 
+            TypeHint hint = TypeHint.Any;
+
+            if (Match(TokenType.Colon))
+            {
+                var colon = Advance();
+                if (!Match(TokenType.Identifier))
+                {
+                    Errors.CreateWithMessage(colon, "expected a type annotation after ':'");
+                }
+                else
+                    hint = new TypeHint(Advance().Lexeme);
+            }
+
             Consume(TokenType.Equals, DErrorCode.ExpEquals);
 
             if (Match(TokenType.ListOpen))
@@ -117,8 +130,7 @@ public class DParser
 
                 if (!DVariables.GlobalSymbolExists(contents))
                 {
-                    AddParseError(DErrorCode.UndefinedSymbol);
-                    return null!;
+                    return new Assignment(new Variable(contents, hint), new Variable(contents, TypeHint.Any));
                 }
 
                 /*
@@ -130,9 +142,18 @@ public class DParser
                  */
 
                 var (tok, inst) = DVariables.GetValueFor(contents);
-                var rt = TypeHint.HintFromTokenType(tok.Type);
+                var predicted = TypeHint.HintFromTokenType(tok.Type);
 
-                return new Assignment(new(variableName, rt), new Literal(tok, inst));
+                if (hint.Name != "any")
+                {
+                    if (hint != predicted)
+                    {
+                        Errors.CreateWithMessage(identifier, $"possible type-mismatch - assigning type '{predicted.Name}' to '{hint.Name}'");
+                    }
+                }
+                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+
+                return new Assignment(new(variableName, hint), new Literal(tok, inst));
             }
 
             var value = ParseStatement();
