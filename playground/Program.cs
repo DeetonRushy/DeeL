@@ -11,6 +11,8 @@ try
     var sw = Stopwatch.StartNew();
 
     var source = @"
+mod 'titties';
+
 fn doPrint(text) {
   writeln(text);
   return text;
@@ -18,6 +20,8 @@ fn doPrint(text) {
 
 let res = doPrint('hello, world');
 doPrint(res);
+let d = {'hello': 2};
+let l = [1, 2, 3, 4.92842];
 ";
 
     ctx = DlRuntime.Run(source);

@@ -22,35 +22,48 @@ There are 6 implicit data types in DeeL.
  3. Have a cool project!
 
 ## Examples
+
+### Set module name
 ```
- # optional use of `'` or `"`
-'string' = "string";
- # lists
-'values' = [
-    'string value',
-    69.6969, # decimal values
-    9223372036854775806 # integer values
-]; 
+mod 'module_name'; # <-- can be anything in a string
+
+fn someCodeInMyModule() {}
+```
+
+Support for import 'module_name' will be supported at some point.
+### Declare variables
+```
+let variable = 'value';
+let result = getResult(variable);
 ```
 
 ### User-defined functions
 ```
 fn myFunction(arg) {
     writeln(arg);
+    let inner = 'not available globally';
+    return inner;
 }
+writeln(inner); # <-- error: inner is not available in this scope
 
 myFunction('Hello, World!');
 ```
 
-### Dictionarys
+### Dictionarys & Lists
 Json set the standard, so they have to be included.
 ```
-'name-to-person' = {
+let people = {
     'deeton': {
-	    'age': 19,
-	    'country': 'England'
-	},
+	     'age': 19,
+	     'country': 'England'
+	   },
 };
+
+let countrys = [
+    'England',
+    'France',
+    'Peru'
+];
 ```
 
 ### Predefined variables
@@ -58,12 +71,8 @@ Json set the standard, so they have to be included.
 'working-directory' = $CurrentWorkingDirectory;
 ```
 
-These are defined in `DVariables.cs`, the identifier doesn't have to start with '$'.
-The dictionary called `Variables` contains key-value pairs. If the key matches the identifier, the token
-and value will replace the identifier token. This is all happens during parsing.
-
-I plan to add a way to add these from the commandline.
-
+These are parse-time variables, sort of like a preprocessor variable. Once the interpreter
+sees them, they are C# literals.
 ### Functions (builtin)
 
 Small builtin functions can provide cross-platform, dynamic values. They can also prevent
@@ -79,6 +88,17 @@ Checkout builtin docs [here](https://github.com/DeetonRushy/DeeL/blob/master/fun
 To implement your own interpreter, all you need to do is implement `ISyntaxTreeVisitor<T>`.
 
 You will need to implement your own way of working with a `FunctionCall`
+
+### Debugging
+
+When working on the runtime, there is a builtin statement called '__break' that, when hit, will
+cause a debugger to attach and break.
+
+#### Example
+```
+__break; # <-- causes a break, then the next step will be your code.
+my_new_feature_that_isnt_working()
+```
 
 ## This isn't too serious
 I'm making this to challenge myself. That being said, this isn't going to be the fastest, most reliable configuration language out there. However, it's been fun to work on up to now so it's worth it.
