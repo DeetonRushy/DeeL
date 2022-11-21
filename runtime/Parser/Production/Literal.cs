@@ -16,7 +16,7 @@ public record Literal(DToken Sentiment, object Object) : Statement
 
     public override string ToString()
     {
-        return Debug();
+        return Object.ToString() ?? "null";
     }
 
     public static Literal Undefined => 

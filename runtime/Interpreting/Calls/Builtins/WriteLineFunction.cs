@@ -10,14 +10,16 @@ namespace Runtime.Interpreting.Calls.Builtins;
 
 internal class WriteLineFunction : ICallable
 {
-    public int Arity => 1;
+    public int Arity => -1;
 
     public string Identifier => "writeln";
 
     public Literal Execute(Interpreter interpreter, params Literal[] args)
     {
-        var message = interpreter.VisitLiteral(args[0]);
-        interpreter.ModLog(message.ToString() ?? "null");
-        return new Literal(DToken.MakeVar(TokenType.Null), Interpreter.Undefined);
+        var sb = new StringBuilder();
+        foreach (var literal in args)
+            sb.Append($"{literal} ");
+        Console.WriteLine(sb.ToString());
+        return Literal.Undefined;
     }
 }

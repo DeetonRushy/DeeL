@@ -16,7 +16,7 @@ fn getName() -> string {
   return 'name';
 }
 
-writeln(getName());
+writeln(getName(), 'arg2');
 ";
 
     ctx = DlRuntime.Run(source);
