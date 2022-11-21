@@ -69,22 +69,30 @@ public class DErrorHandler
         Errors.Add(error);
     }
 
-    public void CreateWithMessage(DToken token, string message)
+    public string CreatePrettyErrorMessage(DToken token, string message)
     {
         var relevantContent = _contents.Skip(token.Line).FirstOrDefault();
         if (relevantContent is null)
         {
             throw new ParserException($"somehow there is no content at line {token.Line}?");
         }
+        var tokens = new DLexer(relevantContent) { MaintainWhitespaceTokens = true }.Lex();
+        var prettyContent = new SyntaxHighlighter(tokens).Output();
 
         var sb = new StringBuilder();
-        sb.AppendLine(relevantContent);
-        sb.AppendLine(new string('~', relevantContent.Length));
+        sb.AppendLine($"{token.Line} | {prettyContent}");
+        sb.AppendLine(new string('~', relevantContent.Length + 3));
         sb.Append("ERROR".Pastel(Color.Red));
         sb.Append(':');
         sb.AppendLine($" {message}");
 
-        Errors.Add(new DError() { Code = DErrorCode.Default, Message = sb.ToString() }); 
+        return sb.ToString();
+    }
+
+    public void CreateWithMessage(DToken token, string message)
+    {
+        var pretty = CreatePrettyErrorMessage(token, message);
+        Errors.Add(new DError() { Code = DErrorCode.Default, Message = pretty }); 
     }
 
     public void CreateDefaultWithToken(DErrorCode code, DToken token, string thrower, int callingLineNumber)
@@ -138,4 +146,55 @@ public class DErrorHandler
             Console.WriteLine(x.Message);
         });
     }
+}
+
+internal class SyntaxHighlighter
+{
+    private readonly List<DToken> tokens;
+
+    public SyntaxHighlighter(List<DToken> tokens)
+    {
+        this.tokens = tokens;
+    }
+
+    public string Output()
+    {
+        // We will take ';' as line breaks for this.
+        var sb = new StringBuilder();
+
+        foreach (var token in tokens)
+        {
+            var highlighted = (token.Type, token.Lexeme, token.Literal) switch
+            {
+                (TokenType.String, _, _) => Highlight($"'{token.Lexeme}'", Color.Orange),
+                (TokenType.Number, _, _) => Highlight($"{token.Lexeme}", Color.GreenYellow),
+                (TokenType.Boolean, _, _) => Highlight($"{token.Lexeme}", Color.LightBlue),
+                (TokenType.Decimal, _, _) => Highlight($"{token.Lexeme}", Color.GreenYellow),
+                (TokenType.LineBreak, _, _) => ";",
+                (TokenType.Equals, _, _) => "=",
+                (TokenType.Whitespace, _, _) => " ",
+                (TokenType.Newline, _, _) => "\n",
+                (TokenType.Colon, _, _) => ":",
+                (TokenType.LeftBrace, _, _) => "{",
+                (TokenType.RightBrace, _, _) => "}",
+                (TokenType.ListOpen, _, _) => "[",
+                (TokenType.ListClose, _, _) => "]",
+                (TokenType.LeftParen, _, _) => "(",
+                (TokenType.RightParen, _, _) => ")",
+                (TokenType.Comma, _, _) => ",",
+                (TokenType.Identifier, _, _) => Highlight($"{token.Lexeme}", Color.LightBlue),
+                (TokenType.Module, _, _) => Highlight($"mod", Color.Pink),
+                (TokenType.Comment, _, _) => Highlight($"#{token.Lexeme}", Color.Gray),
+                (TokenType.Let, _, _) => Highlight("let ", Color.Pink),
+                _ => token.Lexeme
+            };
+
+            sb.Append(highlighted);
+        }
+
+        return sb.ToString();
+    }
+
+    public string Highlight(string text, Color color)
+        => text.Pastel(color);
 }

@@ -1,7 +1,4 @@
-﻿using Runtime.Lexer;
-using Runtime.Parser;
-using Runtime.Interpreting;
-using Runtime;
+﻿using Runtime;
 using System.Diagnostics;
 
 DContext ctx = null!;
@@ -11,18 +8,7 @@ try
     var sw = Stopwatch.StartNew();
 
     var source = @"
-mod 'dl';
-
-fn getVersionAndPrintName(name: string) -> string {
-  writeln(name);
-  return '1.2.32';
-}
-
-let v = getVersionAndPrintName('deeton');
-writeln(v);
-
-let not$callable = 1;
-not$callable();
+let apple: integer = cwd;
 ";
 
     ctx = DlRuntime.Run(source);
