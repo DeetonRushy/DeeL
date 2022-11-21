@@ -4,8 +4,6 @@ namespace Runtime.Lexer;
 
 public static class DConstants
 {
-    internal static string Contents { get; set; } = null!;
-
     public static readonly Dictionary<string, TokenType> ReservedKeywords = new()
     {
         { "mod", TokenType.Module },
@@ -60,6 +58,14 @@ public static class DConstants
         "true",
         "false"
     };
+
+    public const char Minus = '-';
+    public const char Plus = '+';
+    public const char GreaterThan = '>';
+    public const char LesserThan = '<';
+    public const char Multipy = '*';
+    public const char Divide = '/';
+    public const char Modulo = '%';
 
     public static bool IsDLNumberCharacter(char ch)
     {

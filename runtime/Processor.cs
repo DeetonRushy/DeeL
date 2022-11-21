@@ -21,11 +21,16 @@ public class DlRuntime
     {
         var lexer = new DLexer(source);
         var tokens = lexer.Lex();
-        var parser = new DParser(tokens);
-        var ast = parser.Parse();
+        var parser = new DParser(tokens, source.Split('\n').ToList());
         var interpreter = new Interpreter();
 
-        interpreter.Interpret(ast);
+        try
+        {
+            var ast = parser.Parse();
+            interpreter.Interpret(ast);
+        }
+        catch
+        { }
 
         return new DContext(parser.Errors, interpreter);
     }

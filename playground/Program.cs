@@ -11,21 +11,15 @@ try
     var sw = Stopwatch.StartNew();
 
     var source = @"
-mod 'titties';
 
-fn doPrint(text) {
-  writeln(text);
-  return text;
+fn getName() -> string {
+  return 'name';
 }
 
-let res = doPrint('hello, world');
-doPrint(res);
-let d = {'hello': 2};
-let l = [1, 2, 3, 4.92842];
+writeln(getName());
 ";
 
     ctx = DlRuntime.Run(source);
-    ctx.ErrorHandler.DisplayErrors();
 
     sw.Stop();
     Console.WriteLine($"Total execution time: {sw.Elapsed} ({sw.ElapsedMilliseconds}ms)");
@@ -34,6 +28,8 @@ catch (Exception ex)
 {
     Console.WriteLine(ex.Message);
 }
+
+ctx.ErrorHandler.DisplayErrors();
 
 Console.WriteLine("**** GLOBALS ****\n");
 foreach (var g in ctx.Interpreter.Globals())

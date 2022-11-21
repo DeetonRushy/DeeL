@@ -15,11 +15,13 @@ public class DParser
     private bool IsAtEnd => Peek().Type == TokenType.Eof;
     private int _current = 0;
     private bool _wasError = false;
+    private List<string> _source;
 
-    public DParser(List<DToken> tokens)
+    public DParser(List<DToken> tokens, List<string> source)
     {
         _tokens = tokens;
-        Errors = new DErrorHandler(DConstants.Contents);
+        _source = source;
+        Errors = new DErrorHandler(_source);
         SetErrorLevel(DErrorLevel.All);
     }
 
@@ -83,14 +85,14 @@ public class DParser
             {
                 var list = ParseListDeclaration();
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                return new Assignment(new(variableName), list);
+                return new Assignment(new(variableName, TypeHint.List), list);
             }
 
             if (Match(TokenType.LeftBrace))
             {
                 var dict = ParseDictDeclaration();
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                return new Assignment(new(variableName), dict);
+                return new Assignment(new(variableName, TypeHint.Dict), dict);
             }
 
             if (Match(TokenType.Identifier))
@@ -107,7 +109,7 @@ public class DParser
 
                     _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
 
-                    return new Assignment(new(variableName), call);
+                    return new Assignment(new(variableName, TypeHint.Func), call);
                 }
 
                 var contents = rhsIdentifier.Lexeme;
@@ -127,14 +129,16 @@ public class DParser
                  */
 
                 var (tok, inst) = DVariables.GetValueFor(contents);
+                var rt = TypeHint.HintFromTokenType(tok.Type);
 
-                return new Assignment(new(variableName), new Literal(tok, inst));
+                return new Assignment(new(variableName, rt), new Literal(tok, inst));
             }
 
             // assume its a normal literal.
             var value = ParseLiteral();
             _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-            return new Assignment(new(variableName), value);
+            var assumedType = TypeHint.HintFromTokenType(value.Sentiment.Type);
+            return new Assignment(new(variableName,assumedType), value);
         }
 
         // parse top level function calls
@@ -170,15 +174,16 @@ public class DParser
                     // assigning pre-existing variable to already existing variables value
                     var right = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
                     _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                    return new Assignment(new(identifier, false), new Variable(right.Lexeme));
+                    return new Assignment(new(identifier, TypeHint.Any, false), new Variable(right.Lexeme, TypeHint.HintFromTokenType(right.Type)));
                 }
 
                 var lit = ParseLiteral();
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                return new Assignment(new(identifier), lit);
+                var rt = TypeHint.HintFromTokenType(lit.Sentiment.Type);
+                return new Assignment(new(identifier, rt), lit);
             }
 
-            return new Variable(identifier);
+            return new Variable(identifier, TypeHint.Any);
         }
 
         if (Match(TokenType.Return))
@@ -200,8 +205,7 @@ public class DParser
             return ParseFunctionDeclaration();
         }
 
-        AddParseError(DErrorCode.InvalidKey);
-        return null!;
+        return ParseLiteral();
     }
 
     private ModuleIdentity ParseModuleIdentifier()
@@ -229,10 +233,10 @@ public class DParser
 
         do
         {
-            var arg = ParseFunctionArgument();
+            var arg = ParseFunctionArgumentDeclaration();
             // only a variable declaration is allowed within a function
             // declarations argument list.
-            if (arg is not null && arg is Variable var)
+            if (arg is Variable @var)
             {
                 arguments.Add(var);
                 continue;
@@ -242,11 +246,26 @@ public class DParser
 
         _ = Consume(TokenType.RightParen, DErrorCode.ExpRightParen);
         // we are now here: fn name(arg1, arg2) <---
+        string? annotation = null;
+
+        if (Match(TokenType.Arrow))
+        {
+            var arrow = Advance(); // consume arrow
+            if (!Match(TokenType.Identifier))
+            {
+                Errors.CreateWithMessage(arrow, "expected a type hint."); 
+            }
+            else
+            {
+                annotation = Advance().Lexeme;
+            }
+        }
 
         // parse the block
         var body = ParseBlock();
+        var hint = annotation != null ? new(annotation) : TypeHint.Any;
 
-        return new FunctionDeclaration(identifier.Lexeme, arguments, body);
+        return new FunctionDeclaration(identifier.Lexeme, arguments, body, hint);
     }
 
     private Block ParseBlock()
@@ -410,6 +429,33 @@ public class DParser
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
     }
 
+    private Variable ParseFunctionArgumentDeclaration()
+    {
+        // specific for arguments inside a function declaration
+        // the only things allowed are identifiers & type annotations.
+
+        if (!Match(TokenType.Identifier))
+            return null!;
+
+        var identifier = Advance();
+        string? annotation = null;
+
+        if (Match(TokenType.Colon))
+        {
+            var colon = Advance(); // consume colon
+            if (!Match(TokenType.Identifier))
+            {
+                Errors.CreateWithMessage(colon, "expected a type annotation after ':'");
+            }
+            else
+                annotation = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier).Lexeme;
+        }
+
+        // FIXME:
+        var hint = annotation != null ? new TypeHint(annotation) : TypeHint.Any;
+        return new Variable(identifier.Lexeme, hint);
+    }
+
     private Statement ParseFunctionArgument()
     {
         if (Match(TokenType.Identifier))
@@ -427,7 +473,7 @@ public class DParser
 
             if (!DVariables.GlobalSymbolExists(contents))
             {
-                return new Variable(contents);
+                return new Variable(contents, TypeHint.Any);
             }
 
             var (tok, inst) = DVariables.GetValueFor(contents);

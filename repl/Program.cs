@@ -11,8 +11,9 @@ while (true)
 {
     var input = Console.ReadLine();
 
-    var tokens = new DLexer(input!).Lex();
-    var parser = new DParser(tokens);
+    var lexer = new DLexer(input!);
+    var tokens = lexer.Lex();
+    var parser = new DParser(tokens, input!.Split('\n').ToList());
     var ast = parser.Parse();
 
     var evalResult = interpreter.Interpret(ast);

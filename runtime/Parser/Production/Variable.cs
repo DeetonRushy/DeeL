@@ -1,7 +1,9 @@
 ﻿
+using Runtime.Lexer;
+
 namespace Runtime.Parser.Production;
 
-public record Variable(string Name, bool IsInitialization = true) : Statement
+public record Variable(string Name, TypeHint Type, bool IsInitialization = true) : Statement
 {
     public override string Debug()
     {

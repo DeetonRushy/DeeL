@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic;
 using Runtime.Lexer.Exceptions;
 
 namespace Runtime.Lexer;
@@ -15,11 +16,10 @@ public class DLexer
     /// </summary>
     public bool MaintainWhitespaceTokens { get; set; } = false;
 
-
     /// <summary>
     /// The source files contents in whole.
     /// </summary>
-    private readonly string _contents;
+    private readonly string FileContents;
 
     /// <summary>
     /// The resulting list of tokens after lexing.
@@ -48,8 +48,7 @@ public class DLexer
     /// <param name="contents">The source code to attempt to lex.</param>
     public DLexer(string contents)
     {
-        _contents = contents + '\0';
-        DConstants.Contents = _contents;
+        FileContents = contents + '\0';
         _tokens = new List<DToken>();
         //                                 -1 is needed.
         _lexeme = string.Empty;
@@ -93,6 +92,12 @@ public class DLexer
                 continue;
             }
 
+            if (token.Type == TokenType.Invalid)
+            {
+                _lexeme = "";
+                continue;
+            }
+
             _tokens.Add(token);
             _lexeme = string.Empty;
         }
@@ -106,28 +111,51 @@ public class DLexer
         // Dont inline, makes debugging near impossible.
         var ch = Advance();
 
-        return ch switch
+        switch (ch)
         {
-            DConstants.ListOpen =>  MakeToken(TokenType.ListOpen),
-            DConstants.ListClose => MakeToken(TokenType.ListClose),
-            DConstants.LeftBrace =>  MakeToken(TokenType.LeftBrace),
-            DConstants.RightBrace => MakeToken(TokenType.RightBrace),
-            DConstants.Comma =>     MakeToken(TokenType.Comma),
-            DConstants.LineBreak => MakeToken(TokenType.LineBreak),
-            DConstants.Comment =>   LexComment(),
-            DConstants.EOF =>       MakeToken(TokenType.Eof),
-            DConstants.Endline =>   MakeToken(TokenType.Newline),
-            DConstants.WindowsGarbage => null,
-            DConstants.Whitespace => MakeToken(TokenType.Whitespace),
-            DConstants.Equals => MakeToken(TokenType.Equals),
-            DConstants.Colon => MakeToken(TokenType.Colon),
-            DConstants.LeftParen => MakeToken(TokenType.LeftParen),
-            DConstants.RightParen => MakeToken(TokenType.RightParen),
-            var c when char.IsNumber(c) => LexGenericNumber(),
-            var c when DConstants.IsDLIdentifierChar(c) => LexIdentifier(),
-            var c when DConstants.StringDelims.Contains(c) => LexString(),
+            case DConstants.ListOpen:  
+                return MakeToken(TokenType.ListOpen);
+            case DConstants.ListClose: 
+                return MakeToken(TokenType.ListClose);
+            case DConstants.LeftBrace: 
+                return MakeToken(TokenType.LeftBrace);
+            case DConstants.RightBrace: 
+                return MakeToken(TokenType.RightBrace);
+            case DConstants.Comma: 
+                return MakeToken(TokenType.Comma);
+            case DConstants.LineBreak: 
+                return MakeToken(TokenType.LineBreak);
+            case DConstants.Comment: 
+                return LexComment();
+            case DConstants.EOF: 
+                return MakeToken(TokenType.Eof);
+            case DConstants.Endline: 
+                return MakeToken(TokenType.Newline);
+            case DConstants.WindowsGarbage: 
+                return null;
+            case DConstants.Whitespace: 
+                return MakeToken(TokenType.Whitespace);
+            case DConstants.Equals: 
+                return MakeToken(TokenType.Equals);
+            case DConstants.Colon: 
+                return MakeToken(TokenType.Colon);
+            case DConstants.LeftParen: 
+                return MakeToken(TokenType.LeftParen);
+            case DConstants.RightParen: 
+                return MakeToken(TokenType.RightParen);
+            case DConstants.Minus:
+                {
+                    if (Peek() == DConstants.GreaterThan) {
+                        return MakeToken(TokenType.Arrow);
+                    }
+                    return MakeToken(TokenType.Minus);
+                }
+            case var c when char.IsNumber(c): return LexGenericNumber();
+            case var c when DConstants.IsDLIdentifierChar(c): return LexIdentifier();
+            case var c when DConstants.StringDelims.Contains(c): return LexString();
             // assign the literal for debugging purposes
-            _ => new DToken { Literal = ch, Type = TokenType.Invalid }
+            default:
+                return new DToken { Literal = ch, Type = TokenType.Invalid };
         };
     }
 
@@ -246,7 +274,8 @@ public class DLexer
                     LexerException("unexpected end of file while lexing an identifier.");
             }
 
-            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF || Peek() is DConstants.LeftParen or DConstants.RightParen)
+            if (Peek() == DConstants.LineBreak || Peek() == DConstants.EOF || 
+                Peek() is DConstants.LeftParen or DConstants.RightParen or DConstants.Comma or DConstants.Colon or DConstants.LeftBrace)
                 break;
 
             ch = Advance();
@@ -301,20 +330,20 @@ public class DLexer
 
     private char Peek()
     {
-        var cond = ((_position + 1) > _contents.Length);
-        return cond ? DConstants.EOF : _contents[_position + 1];
+        var cond = ((_position + 1) > FileContents.Length);
+        return cond ? DConstants.EOF : FileContents[_position + 1];
     }
 
     private char Current()
     {
-        return _contents[_position];
+        return FileContents[_position];
     }
 
     private char Advance()
     {
-        return (++_position >= _contents.Length)
+        return (++_position >= FileContents.Length)
             ? DConstants.EOF
-            : _contents[_position];
+            : FileContents[_position];
     }
 
     private static void Expect(bool condition, string message)

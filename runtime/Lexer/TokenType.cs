@@ -139,4 +139,7 @@ public enum TokenType
     Return,
     Let,
     ForcedBreakPoint,
+    Arrow,
+
+    Minus
 }

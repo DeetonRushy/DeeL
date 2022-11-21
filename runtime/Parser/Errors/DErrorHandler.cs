@@ -1,4 +1,9 @@
 using Runtime.Lexer;
+using Runtime.Parser.Exceptions;
+using System.Text;
+
+using Pastel;
+using System.Drawing;
 
 namespace Runtime.Parser.Errors;
 
@@ -27,12 +32,12 @@ public class DErrorHandler
             { DErrorCode.ExpFnKeyword, (DErrorLevel.All, "expected `fn`") }
         };
 
-    private readonly string _contents;
+    private readonly List<string> _contents;
 
     public DErrorLevel Level { get; set; }
     public List<DError> Errors { get; private set; }
 
-    public DErrorHandler(string source)
+    public DErrorHandler(List<string> source)
     {
         _contents = source;
         Errors = new List<DError>();
@@ -62,6 +67,24 @@ public class DErrorHandler
         };
 
         Errors.Add(error);
+    }
+
+    public void CreateWithMessage(DToken token, string message)
+    {
+        var relevantContent = _contents.Skip(token.Line).FirstOrDefault();
+        if (relevantContent is null)
+        {
+            throw new ParserException($"somehow there is no content at line {token.Line}?");
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine(relevantContent);
+        sb.AppendLine(new string('~', relevantContent.Length));
+        sb.Append("ERROR".Pastel(Color.Red));
+        sb.Append(':');
+        sb.AppendLine($" {message}");
+
+        Errors.Add(new DError() { Code = DErrorCode.Default, Message = sb.ToString() }); 
     }
 
     public void CreateDefaultWithToken(DErrorCode code, DToken token, string thrower, int callingLineNumber)
