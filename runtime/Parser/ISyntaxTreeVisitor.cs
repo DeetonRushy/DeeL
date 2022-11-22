@@ -33,7 +33,8 @@ public interface ISyntaxTreeVisitor<T>
     public T VisitDivision(Division division);
     public T VisitStructDeclaration(StructDeclaration structDeclaration);
     public T VisitVariableAccess(VariableAccess variableAccess, out Scope? scope);
-    public T VisitIfStatement(Conditional conditional);
+    public T VisitIfStatement(IfStatement conditional);
     public T VisitIsEqualsComparison(IsEqual isEqual);
     public T VisitIsNotEquals(IsNotEqual isNotEqual);
+    public T VisitWhileLoop(WhileStatement whileStatement);
 }

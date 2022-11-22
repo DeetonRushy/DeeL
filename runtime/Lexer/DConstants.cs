@@ -14,7 +14,8 @@ public static class DConstants
         { "return", TokenType.Return },
         { "let", TokenType.Let },
         { "__break", TokenType.ForcedBreakPoint },
-        { "object", TokenType.Struct }
+        { "object", TokenType.Struct },
+        { "while", TokenType.While }
     };
 
     public const char EOF = '\0';

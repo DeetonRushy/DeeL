@@ -1,10 +1,6 @@
-﻿using Runtime.Lexer;
+﻿using Newtonsoft.Json;
 using Runtime.Parser.Production;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Runtime.Interpreting.Calls.Builtins;
 
@@ -18,7 +14,15 @@ internal class WriteLineFunction : ICallable
     {
         var sb = new StringBuilder();
         foreach (var literal in args)
-            sb.Append($"{literal} ");
+        {
+            if (literal.Object is Dictionary<object, object> or List<object>)
+            {
+                var json = JsonConvert.SerializeObject(literal.Object);
+                sb.Append(json);
+                continue;
+            }
+            sb.Append($"{literal.Object} ");
+        }
         if (interpreter.AllowsStdout)
             Console.WriteLine(sb.ToString());
         return Literal.Undefined;

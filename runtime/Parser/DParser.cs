@@ -6,6 +6,7 @@ using Runtime.Parser.Exceptions;
 using Runtime.Parser.Production;
 using Runtime.Interpreting;
 using Runtime.Parser.Production.Math;
+using Runtime.Parser.Production.Conditions;
 
 namespace Runtime.Parser;
 
@@ -76,94 +77,14 @@ public class DParser
         // the first node should be a declaration.
         // there is only declarations in DL.
 
+        if (Match(TokenType.LineBreak))
+            _ = Consume(TokenType.LineBreak, "");
+
         if (Match(
             TokenType.Let)
             )
         {
-            _ = Consume(TokenType.Let, DErrorCode.Default);
-
-            var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
-            var variableName = identifier.Lexeme;
-
-            TypeHint hint = TypeHint.Any;
-
-            if (Match(TokenType.Colon))
-            {
-                var colon = Advance();
-                if (!Match(TokenType.Identifier))
-                {
-                    Errors.CreateWithMessage(colon, "expected a type annotation after ':'");
-                }
-                else
-                    hint = new TypeHint(Advance().Lexeme);
-            }
-
-            Consume(TokenType.Equals, DErrorCode.ExpEquals);
-
-            if (Match(TokenType.ListOpen))
-            {
-                var list = ParseListDeclaration();
-                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                return new Assignment(new(variableName, TypeHint.List), list);
-            }
-
-            if (Match(TokenType.LeftBrace))
-            {
-                var dict = ParseDictDeclaration();
-                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                return new Assignment(new(variableName, TypeHint.Dict), dict);
-            }
-
-            if (Match(TokenType.Identifier))
-            {
-                var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
-
-                if (Peek().Type == TokenType.LeftParen)
-                {
-                    // this needs to return an `Assignment`.
-                    // The interpreter implementation can then handle actually calling
-                    // the function.
-
-                    var call = ParseFunction(rhsIdentifier);
-
-                    _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-
-                    return new Assignment(new(variableName, TypeHint.Func), call);
-                }
-
-                var contents = rhsIdentifier.Lexeme;
-
-                if (!DVariables.GlobalSymbolExists(contents))
-                {
-                    return new Assignment(new Variable(contents, hint), new Variable(contents, TypeHint.Any));
-                }
-
-                /*
-                 * DVariables have a new re-written token & object instance
-                 * in order to avoid confusing, drawn-out interpreting.
-                 * 
-                 * This will make adding variables from the commandline harder.
-                 * But it's worth it.
-                 */
-
-                var (tok, inst) = DVariables.GetValueFor(contents);
-                var predicted = TypeHint.HintFromTokenType(tok.Type);
-
-                if (hint.Name != "any")
-                {
-                    if (hint != predicted)
-                    {
-                        Errors.CreateWithMessage(identifier, $"possible type-mismatch - assigning type '{predicted.Name}' to '{hint.Name}'");
-                    }
-                }
-                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-
-                return new Assignment(new(variableName, hint), new Literal(tok, inst));
-            }
-
-            var value = ParseStatement();
-            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-            return new Assignment(new(variableName,hint), value);
+            return ParseLetStatement();
         }
 
         // parse top level function calls
@@ -179,48 +100,6 @@ public class DParser
         if (Match(TokenType.LeftParen))
         {
             return ParseGrouping();
-        }
-
-        if (Match(TokenType.Identifier))
-        {
-            if (Peek(1).Type == TokenType.Access)
-            {
-                return ParseVariableAccess();
-            }
-
-            var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier).Lexeme;
-
-            if (Peek().Type == TokenType.LeftParen)
-            {
-                var args = ParseFunctionArguments();
-                var call = new FunctionCall(identifier, args.ToArray());
-
-                // in this context its okay to consume the linebreak I suppose?
-                // I feel all right-hand assignees should be parsed seperate.
-                _ = Consume(TokenType.LineBreak, "Expected newline after function call");
-
-                return call;
-            }
-
-            if (Peek().Type == TokenType.Equals)
-            {
-                // assignment to already existing variable.
-                _ = Consume(TokenType.Equals, DErrorCode.ExpEquals);
-
-                if (Peek().Type == TokenType.Identifier) 
-                {
-                    // assigning pre-existing variable to already existing variables value
-                    var right = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
-                    _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                    return new Assignment(new(identifier, TypeHint.Any, false), new Variable(right.Lexeme, TypeHint.HintFromTokenType(right.Type)));
-                }
-
-                var lit = ParseStatement();
-                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                return new Assignment(new(identifier, TypeHint.Any), lit);
-            }
-
-            return new Variable(identifier, TypeHint.Any);
         }
 
         if (Match(TokenType.Return))
@@ -248,36 +127,210 @@ public class DParser
             return ParseIfStatement();
         }
 
+        if (Match(TokenType.While))
+        {
+            return ParseWhileStatement();
+        }
+
         if (Match(TokenType.Struct))
         {
             return ParseStructDeclaration();
         }
 
-        var literal = ParseLiteral();
+        if (Match(TokenType.ListOpen))
+        {
+            var list = ParseListDeclaration();
+            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+            return list;
+        }
+
+        if (Match(TokenType.LeftBrace))
+        {
+            var dict = ParseDictDeclaration();
+            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+            return dict;
+        }
+
+        var primary = ParsePrimary();
 
         if (Match(TokenType.Minus, TokenType.Star, TokenType.Plus, TokenType.Divide))
         {
-            var mathStatement = HalfParseMathStatement(literal);
+            var mathStatement = HalfParseMathStatement(primary);
             return mathStatement;
         }
 
-        return literal;
+        if (Match(TokenType.Equals))
+        {
+            _ = Consume(TokenType.Equals, "");
+            // assignment to an already existing variable.
+            var assignmentValue = ParseStatement();
+
+            if (primary is Variable @var)
+
+            return new Assignment(@var, assignmentValue);
+        }
+
+        if (primary is Literal literal)
+        {
+            if (literal.Object is not string identifier)
+                goto Skip;
+
+            if (Match(TokenType.Identifier))
+            {
+                if (Peek().Type == TokenType.Access)
+                {
+                    return ParseVariableAccess();
+                }
+
+                if (Peek().Type == TokenType.LeftParen)
+                {
+                    var args = ParseFunctionArguments();
+                    var call = new FunctionCall(identifier, args.ToArray());
+
+                    // in this context its okay to consume the linebreak I suppose?
+                    // I feel all right-hand assignees should be parsed seperate.
+                    _ = Consume(TokenType.LineBreak, "Expected newline after function call");
+
+                    return call;
+                }
+
+                if (Peek().Type == TokenType.Equals)
+                {
+                    _ = Consume(TokenType.Equals, "");
+                    var lit = ParseStatement();
+                    _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+                    if (lit is Variable var)
+                        return new Assignment(new(identifier, TypeHint.Any), var);
+                    return new Assignment(new(identifier, TypeHint.Any), lit);
+                }
+
+                return new Variable(identifier, TypeHint.Any);
+            }
+        }
+
+    Skip:
+
+        return primary;
     }
 
-    private Conditional ParseIfStatement()
+    private Statement ParseLetStatement()
+    {
+        _ = Consume(TokenType.Let, DErrorCode.Default);
+
+        var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+        var variableName = identifier.Lexeme;
+
+        TypeHint hint = TypeHint.Any;
+
+        if (Match(TokenType.Colon))
+        {
+            var colon = Advance();
+            if (!Match(TokenType.Identifier))
+            {
+                Errors.CreateWithMessage(colon, "expected a type annotation after ':'", true);
+            }
+            else
+                hint = new TypeHint(Advance().Lexeme);
+        }
+
+        Consume(TokenType.Equals, DErrorCode.ExpEquals);
+
+        if (Match(TokenType.Identifier))
+        {
+            var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+
+            if (Peek().Type == TokenType.LeftParen)
+            {
+                // this needs to return an `Assignment`.
+                // The interpreter implementation can then handle actually calling
+                // the function.
+
+                var call = ParseFunction(rhsIdentifier);
+
+                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+
+                return new Assignment(new(variableName, TypeHint.Func), call);
+            }
+
+            var contents = rhsIdentifier.Lexeme;
+
+            if (!DVariables.GlobalSymbolExists(contents))
+            {
+                return new Assignment(new Variable(contents, hint), new Variable(contents, TypeHint.Any));
+            }
+
+            /*
+             * DVariables have a new re-written token & object instance
+             * in order to avoid confusing, drawn-out interpreting.
+             * 
+             * This will make adding variables from the commandline harder.
+             * But it's worth it.
+             */
+
+            var (tok, inst) = DVariables.GetValueFor(contents);
+            var predicted = TypeHint.HintFromTokenType(tok.Type);
+
+            if (hint.Name != "any")
+            {
+                if (hint != predicted)
+                {
+                    Errors.CreateWithMessage(identifier, $"possible type-mismatch - assigning type '{predicted.Name}' to '{hint.Name}'", true);
+                }
+            }
+            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+
+            return new Assignment(new(variableName, hint), new Literal(tok, inst));
+        }
+
+        var value = ParsePrimary();
+        return new Assignment(new(variableName, hint), value);
+    }
+
+    private Statement ParseWhileStatement()
+    {
+        _ = Consume(TokenType.While, string.Empty); // unlikely
+        _ = Consume(TokenType.LeftParen, "expected '(' after 'while'");
+        var condition = ParseCondition();
+        _ = Consume(TokenType.RightParen, "expected ')' after condition");
+
+        var body = ParseBlock();
+
+        return new WhileStatement(condition, body);
+    }
+
+    private IfStatement ParseIfStatement()
     {
         var @if = Consume(TokenType.If, "expected `if`");
         _ = Consume(TokenType.LeftParen, "expected `(` after `if`");
 
-        var left = ParsePrimary();
-        var @operator = Advance();
-        var right = ParsePrimary();
-
-
+        var cond = ParseCondition();
 
         _ = Consume(TokenType.RightParen, "expected `)`");
+        var body = ParseBlock();
 
-        throw new NotImplementedException("");
+        if (!Match(TokenType.Else))
+        {
+            return new IfStatement(cond, body, null);
+        }
+
+        _ = Consume(TokenType.Else, string.Empty);
+        var fallbackBlock = ParseBlock();
+
+        return new IfStatement(cond, body, fallbackBlock);
+    }
+
+    private Condition ParseCondition()
+    {
+        var left = ParsePrimary();
+        var op = Advance();
+        var right = ParsePrimary();
+
+        return op.Type switch
+        {
+            TokenType.NotEqual => new IsNotEqual(left, right),
+            TokenType.EqualComparison => new IsEqual(left, right),
+            _ => throw new NotSupportedException($"the operator '{op.Type}' is not yet implemented.")
+        };
     }
 
     private Statement ParseStructDeclaration()
@@ -307,7 +360,7 @@ public class DParser
     private void Panic(string message)
     {
         var current = Peek();
-        Errors.CreateWithMessage(current, message);
+        Errors.CreateWithMessage(current, message, true);
 
     }
 
@@ -361,6 +414,8 @@ public class DParser
              * This will make adding variables from the commandline harder.
              * But it's worth it.
              */
+
+            return new Variable(contents, TypeHint.Any);
         }
 
         return ParseLiteral();
@@ -433,14 +488,14 @@ public class DParser
         _ = Consume(TokenType.Module, DErrorCode.ExpKeyword);
         var identifier = ParseLiteral();
 
-        if (identifier is null)
+        if (identifier is not Literal Id)
         {
             AddParseError(DErrorCode.ExpIdentifier);
             return null!;
         }
 
         _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-        return new ModuleIdentity(identifier);
+        return new ModuleIdentity(Id);
     }
 
     private FunctionDeclaration ParseFunctionDeclaration()
@@ -473,7 +528,7 @@ public class DParser
             var arrow = Advance(); // consume arrow
             if (!Match(TokenType.Identifier))
             {
-                Errors.CreateWithMessage(arrow, "expected a type hint."); 
+                Errors.CreateWithMessage(arrow, "expected a type hint.", true); 
             }
             else
             {
@@ -508,7 +563,7 @@ public class DParser
     private List ParseListDeclaration()
     {
         var open = Consume(TokenType.ListOpen, DErrorCode.ExpListOpen);
-        var elements = new List<Literal>();
+        var elements = new List<Statement>();
 
         do
         {
@@ -538,7 +593,11 @@ public class DParser
 
         do
         {
-            var key = ParseLiteral();
+            if (ParseLiteral() is not Literal key)
+            {
+                Panic("dict keys can only be literal values at the moment");
+                throw new Exception();
+            }
             var colon = Consume(TokenType.Colon, DErrorCode.ExpColonDictPair);
 
             if (Match(TokenType.LeftBrace))
@@ -557,7 +616,7 @@ public class DParser
             }
 
             // can only be a literal.
-            var value = ParseLiteral();
+            var value = ParsePrimary();
 
             if (value is null)
             {
@@ -575,7 +634,7 @@ public class DParser
         return new Dict(open, elements.ToArray(), close);
     }
 
-    private Literal ParseLiteral()
+    private Statement ParseLiteral()
     {
         // a literal in this context is a string, number or a decimal.
 
@@ -590,7 +649,8 @@ public class DParser
 
         if (value.Type == TokenType.Identifier)
         {
-            return new Literal(value, contents);
+            // FIXME: literal is reserved for literals, not identifiers?? retard
+            return new Variable(contents, TypeHint.Any, false);
         }
 
         if (value.Type == TokenType.Decimal)
@@ -665,7 +725,7 @@ public class DParser
             var colon = Advance(); // consume colon
             if (!Match(TokenType.Identifier))
             {
-                Errors.CreateWithMessage(colon, "expected a type annotation after ':'");
+                Errors.CreateWithMessage(colon, "expected a type annotation after ':'", true);
             }
             else
                 annotation = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier).Lexeme;
@@ -753,7 +813,7 @@ public class DParser
             return Advance();
         }
 
-        Errors.CreateWithMessage(Peek(), message);
+        Errors.CreateWithMessage(Peek(), message, true);
         return null!;
     }
 

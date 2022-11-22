@@ -226,4 +226,5 @@ public enum TokenType
     /// </summary>
     Struct,
     Access,
+    While,
 }

@@ -482,9 +482,25 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         return result ?? Undefined;
     }
 
-    public object VisitIfStatement(Conditional conditional)
+    public object VisitIfStatement(IfStatement conditional)
     {
-        throw new NotImplementedException();
+        var c = conditional.Condition.Take(this);
+
+        if (c is not bool condition)
+        {
+            throw new InterpreterException("Condition returned a value other than true/false...");
+        }
+
+        if (condition)
+        {
+            conditional.SuccessBlock.Take(this);
+        }
+        else
+        {
+            conditional.FallbackBlock?.Take(this);
+        }
+
+        return Undefined;
     }
 
     public object VisitIsEqualsComparison(IsEqual isEqual)
@@ -501,5 +517,28 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         var right = isNotEqual.Right.Take(this);
 
         return !left.Equals(right);
+    }
+
+    public object VisitWhileLoop(WhileStatement whileStatement)
+    {
+        bool condition;
+        bool firstSpin = true;
+        do
+        {
+            if (whileStatement.Condition.Take(this) is not bool nextResult)
+                throw new InterpreterException($"Condition returned non-bool value?");
+            condition = nextResult;
+
+            if (firstSpin)
+            {
+                firstSpin = false;
+                continue;
+            }
+
+            whileStatement.Body.Take(this);
+        }
+        while (condition);
+
+        return Undefined;
     }
 }

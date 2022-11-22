@@ -1,4 +1,5 @@
 ﻿using Runtime;
+using Runtime.Lexer;
 using System.Diagnostics;
 
 DContext ctx = null!;
@@ -10,13 +11,12 @@ try
     var source = @"
 mod 'DL';
 
-object User {
-  fn construct(self) {
-    self.name = 'dee';
-  }
-}
+let thing: number = 0;
 
-writeln('\nHello\n');
+while (thing != 5) {
+  writeln(thing);
+  thing = thing + 1;
+}
 ";
     ctx = DlRuntime.Run(source, false);
 

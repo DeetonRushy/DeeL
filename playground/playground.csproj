@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.json" Version="13.0.1" />
     <PackageReference Include="Pastel" Version="3.0.1" />
   </ItemGroup>
 

@@ -1,6 +1,6 @@
 using Microsoft.VisualBasic;
 using Runtime.Lexer.Exceptions;
-
+using Runtime.Parser.Errors;
 using static Runtime.Lexer.DConstants;
 
 namespace Runtime.Lexer;
@@ -43,6 +43,19 @@ public class DLexer
     /// </summary>
     private uint _line;
 
+    /// <summary>
+    /// The error handler of the lexer
+    /// </summary>
+    private DErrorHandler errorHandler;
+
+    private void LexerPanic(string message)
+    {
+        errorHandler.CreateWithMessage(new DToken { Line = (int)_line }, message, true);
+        errorHandler.DisplayErrors();
+
+        // For now
+        Environment.Exit(0);
+    }
 
     /// <summary>
     /// Initialize the lexer using a string literal.
@@ -55,6 +68,8 @@ public class DLexer
         //                                 -1 is needed.
         _lexeme = string.Empty;
         _position = -1;
+
+        errorHandler = new(contents.Split('\n').ToList());
     }
 
     /// <summary>
@@ -253,9 +268,15 @@ public class DLexer
             if (current == '\\')
             {
                 current = Advance();
+
+                if (current == ' ')
+                {
+                    LexerPanic("unrecognized escape sequence");
+                }
+
                 if (!EscapeCharacterMap.ContainsKey(current))
                 {
-                    throw new LexerException($"unknown escape character literal '{current}'");
+                    LexerPanic($"unknown character literal '{current}'");
                 }
 
                 _lexeme += EscapeCharacterMap[current];
@@ -302,8 +323,7 @@ public class DLexer
 
             if (ch == EOF)
             {
-                throw new 
-                    LexerException("unexpected end of file while lexing a number.");
+                LexerPanic("unexpected end of file while lexing a number.");
             }
 
             if (!IsDLNumberCharacter(Peek()))
@@ -322,7 +342,7 @@ public class DLexer
 
         if (!isLong && !isDecimal)
         {
-            throw new LexerException($"malformed number literal: {content}");
+            LexerPanic($"malformed number literal: {content}");
         }
 
         // clear extra whitespace. EDIT: Dont work.
@@ -348,8 +368,7 @@ public class DLexer
 
             if (ch == EOF)
             {
-                throw new
-                    LexerException("unexpected end of file while lexing an identifier.");
+                LexerPanic("unexpected end-of-file while lexing an identifier.");
             }
 
             if (Peek() == LineBreak || Peek() == EOF || 

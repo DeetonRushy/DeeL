@@ -39,7 +39,6 @@ internal class AccessFunction : ICallable
             return Literal.CreateFromRuntimeType(value);
         }
 
-        var firstArg = interpreter.VisitLiteral(args[1]);
         var previousOnes = new List<object>() { value };
 
         for (int i = 1, q = 0; i < args.Length; i++, q++)

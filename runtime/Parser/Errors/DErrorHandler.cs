@@ -69,18 +69,27 @@ public class DErrorHandler
         Errors.Add(error);
     }
 
-    public string CreatePrettyErrorMessage(DToken token, string message)
+    public string CreatePrettyErrorMessage(DToken token, string message, bool skipHighlight = false)
     {
         var relevantContent = _contents.Skip(token.Line).FirstOrDefault();
         if (relevantContent is null)
         {
             throw new ParserException($"somehow there is no content at line {token.Line}?");
         }
-        var tokens = new DLexer(relevantContent) { MaintainWhitespaceTokens = true }.Lex();
-        var prettyContent = new SyntaxHighlighter(tokens).Output();
+
+        string content = string.Empty;
+        if (skipHighlight)
+        {
+            content = relevantContent;
+        }
+        else
+        {
+            var tokens = new DLexer(relevantContent) { MaintainWhitespaceTokens = true }.Lex();
+            content = new SyntaxHighlighter(tokens).Output();
+        }
 
         var sb = new StringBuilder();
-        sb.AppendLine($"{token.Line} | {prettyContent}");
+        sb.AppendLine($"{token.Line} | {content}");
         sb.AppendLine(new string('~', relevantContent.Length + 3));
         sb.Append("ERROR".Pastel(Color.Red));
         sb.Append(':');
@@ -89,9 +98,9 @@ public class DErrorHandler
         return sb.ToString();
     }
 
-    public void CreateWithMessage(DToken token, string message)
+    public void CreateWithMessage(DToken token, string message, bool skipHighlight)
     {
-        var pretty = CreatePrettyErrorMessage(token, message);
+        var pretty = CreatePrettyErrorMessage(token, message, skipHighlight);
         Errors.Add(new DError() { Code = DErrorCode.Default, Message = pretty }); 
     }
 
@@ -119,10 +128,7 @@ public class DErrorHandler
             error = new()
             {
                 Code = code,
-                Message = string.Format(
-                    $"DL{(int)code} {code}: {message} [line {token.Line}]\n (originates from {thrower}:{callingLineNumber})",
-                    token.Lexeme
-                    )
+                Message = CreatePrettyErrorMessage(token, message)
             };
         }
         else
@@ -130,7 +136,7 @@ public class DErrorHandler
             error = new()
             {
                 Code = code,
-                Message = $"DL{(int)code} {code}: {message} [line {token.Line}]\n (originates from {thrower}:{callingLineNumber})"
+                Message = CreatePrettyErrorMessage(token, message) + $"\n({thrower}:{callingLineNumber})"
             };
         }
 
@@ -187,6 +193,10 @@ internal class SyntaxHighlighter
                 (TokenType.Comment, _, _) => Highlight($"#{token.Lexeme}", Color.Gray),
                 (TokenType.Let, _, _) => Highlight("let ", Color.Pink),
                 (TokenType.Access, _, _) => "::",
+                (TokenType.Plus, _, _) => "+",
+                (TokenType.Minus, _, _) => "-",
+                (TokenType.Divide, _, _) => "/",
+                (TokenType.Star, _, _) => "*",
                 _ => token.Lexeme
             };
 
