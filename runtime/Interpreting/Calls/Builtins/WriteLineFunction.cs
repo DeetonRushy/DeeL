@@ -19,7 +19,8 @@ internal class WriteLineFunction : ICallable
         var sb = new StringBuilder();
         foreach (var literal in args)
             sb.Append($"{literal} ");
-        Console.WriteLine(sb.ToString());
+        if (interpreter.AllowsStdout)
+            Console.WriteLine(sb.ToString());
         return Literal.Undefined;
     }
 }

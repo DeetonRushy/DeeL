@@ -250,6 +250,19 @@ public class DLexer
 
         while (!IsStringDelimeter(current))
         {
+            if (current == '\\')
+            {
+                current = Advance();
+                if (!EscapeCharacterMap.ContainsKey(current))
+                {
+                    throw new LexerException($"unknown escape character literal '{current}'");
+                }
+
+                _lexeme += EscapeCharacterMap[current];
+                current = Advance();
+                continue;
+            }
+
             _lexeme += current;
             current = Advance();
         }
@@ -259,6 +272,19 @@ public class DLexer
 
         return MakeToken(TokenType.String, _lexeme);
     }
+
+    private Dictionary<char, char> EscapeCharacterMap = new()
+    {
+        ['"'] = '"',
+        ['n'] = '\n',
+        ['r'] = '\r',
+        ['b'] = '\b',
+        ['t'] = '\t',
+        ['\''] = '\'',
+        ['v'] = '\v',
+        ['\\'] = '\\',
+        ['a'] = '\a'
+    };
 
     private DToken LexGenericNumber()
     {

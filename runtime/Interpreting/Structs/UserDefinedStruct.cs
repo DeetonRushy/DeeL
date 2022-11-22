@@ -27,4 +27,9 @@ public class UserDefinedStruct : Scope
     {
         return _structScope.GetValue(key);
     }
+
+    public override string ToString()
+    {
+        return $"<struct '{Name}'>";
+    }
 }

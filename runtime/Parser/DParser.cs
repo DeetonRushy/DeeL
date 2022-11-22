@@ -276,6 +276,8 @@ public class DParser
 
 
         _ = Consume(TokenType.RightParen, "expected `)`");
+
+        throw new NotImplementedException("");
     }
 
     private Statement ParseStructDeclaration()

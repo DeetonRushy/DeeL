@@ -3,6 +3,7 @@ using Runtime.Interpreting;
 using Runtime.Lexer;
 using Runtime.Parser;
 using Runtime.Parser.Errors;
+using System.Diagnostics;
 
 namespace Runtime;
 
@@ -27,7 +28,10 @@ public class DlRuntime
         try
         {
             var ast = parser.Parse();
+            var timeTakenToInterpret = Stopwatch.StartNew();
             interpreter.Interpret(ast);
+            timeTakenToInterpret.Stop();
+            Console.WriteLine($"Took {timeTakenToInterpret.ElapsedMilliseconds}ms to interpret.");
         }
         catch (Exception ex)
         {

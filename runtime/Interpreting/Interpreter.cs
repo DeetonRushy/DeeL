@@ -10,6 +10,7 @@ using System.Diagnostics;
 using Runtime.Parser.Production.Math;
 using Runtime.Interpreting.Extensions;
 using Runtime.Interpreting.Structs;
+using Runtime.Parser.Production.Conditions;
 
 namespace Runtime.Interpreting;
 
@@ -478,11 +479,27 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         }
 
         scope = current;
-        return result ?? Interpreter.Undefined;
+        return result ?? Undefined;
     }
 
     public object VisitIfStatement(Conditional conditional)
     {
         throw new NotImplementedException();
+    }
+
+    public object VisitIsEqualsComparison(IsEqual isEqual)
+    {
+        var left = isEqual.Left.Take(this);
+        var right = isEqual.Right.Take(this);
+
+        return left.Equals(right);
+    }
+
+    public object VisitIsNotEquals(IsNotEqual isNotEqual)
+    {
+        var left = isNotEqual.Left.Take(this);
+        var right = isNotEqual.Right.Take(this);
+
+        return !left.Equals(right);
     }
 }

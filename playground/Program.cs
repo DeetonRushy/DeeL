@@ -16,11 +16,8 @@ object User {
   }
 }
 
-# this number is very important
-let var: number = 10 * 29;
-writeln('hello, world!', var);
+writeln('\nHello\n');
 ";
-
     ctx = DlRuntime.Run(source, false);
 
     sw.Stop();
