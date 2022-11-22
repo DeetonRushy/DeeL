@@ -13,7 +13,8 @@ public static class DConstants
         { "fn", TokenType.Fn },
         { "return", TokenType.Return },
         { "let", TokenType.Let },
-        { "__break", TokenType.ForcedBreakPoint }
+        { "__break", TokenType.ForcedBreakPoint },
+        { "object", TokenType.Struct }
     };
 
     public const char EOF = '\0';

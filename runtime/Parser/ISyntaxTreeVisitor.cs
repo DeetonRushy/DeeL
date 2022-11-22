@@ -1,5 +1,6 @@
 ﻿using Runtime.Interpreting;
 using Runtime.Parser.Production;
+using Runtime.Parser.Production.Conditions;
 using Runtime.Parser.Production.Math;
 
 namespace Runtime.Parser;
@@ -30,4 +31,9 @@ public interface ISyntaxTreeVisitor<T>
     public T VisitSubtraction(Subtraction subtraction);
     public T VisitMultiplication(Multiplication multiplication);
     public T VisitDivision(Division division);
+    public T VisitStructDeclaration(StructDeclaration structDeclaration);
+    public T VisitVariableAccess(VariableAccess variableAccess, out Scope? scope);
+    public T VisitIfStatement(Conditional conditional);
+    public T VisitIsEqualsComparison(IsEqual isEqual);
+    public T VisitIsNotEquals(IsNotEqual isNotEqual);
 }

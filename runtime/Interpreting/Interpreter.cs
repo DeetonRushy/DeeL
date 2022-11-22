@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using Runtime.Parser.Production.Math;
 using Runtime.Interpreting.Extensions;
+using Runtime.Interpreting.Structs;
 
 namespace Runtime.Interpreting;
 
@@ -57,6 +58,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     public Interpreter()
     {
         _calls = new CallCenter();
+        
         _global = new RuntimeStorage("<global>");
     }
 
@@ -85,7 +87,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         {
             if (assignment.Variable.IsInitialization)
             {
-                // cannot assign to a variable with the same name as an outer scope.
+                // cannot assign to a variable with the same name as one in an outer scope.
                 throw new InterpreterException($"The variable `{name}` already exists in the scope `{_global.Name}`.");
             }
 
@@ -134,6 +136,22 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 return userFunction.Execute(this, call.Arguments.ToList());
             }
 
+            if (value is UserDefinedStruct structDecl)
+            {
+                var scopeId = Guid.NewGuid().ToString();
+
+                if (structDecl.GetValue("construct") is null)
+                {
+                    return new UserDefinedStruct(scopeId);
+                }
+
+                var @struct = new UserDefinedStruct(scopeId);
+                if (structDecl.GetValue("construct") is not StructMemberFunction constructor)
+                    throw new InterpreterException($"invalid instance inside of struct scope..");
+                _ = constructor.Execute(this, @struct, call.Arguments.ToList());
+                return @struct;
+            }
+
             throw new InterpreterException($"The variable `{call.Identifier}` is not callable. (it is of type `{value.GetType().Name}`)");
         }
 
@@ -164,6 +182,11 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 // builtin functions dont have their own scope.
                 var @var = GetFromEither(variable.Name);
                 arguments.Add(new Literal(DToken.MakeVar(TokenType.String), @var));
+            }
+
+            if (arg is VariableAccess access)
+            {
+                arguments.Add(new Literal(DToken.MakeVar(TokenType.String), access.Take(this)));
             }
         }
         return function.Execute(this, arguments.ToArray());
@@ -412,5 +435,54 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         }
 
         return result;
+    }
+
+    public object VisitStructDeclaration(StructDeclaration structDeclaration)
+    {
+        var declaration = new UserDefinedStruct(structDeclaration.Identifier);
+
+        foreach (var decl in structDeclaration.Declarations)
+        {
+            if (decl is FunctionDeclaration func)
+            {
+                var smf = new StructMemberFunction(func.Identifier,
+                    func.Body,
+                    func.Arguments);
+                declaration.Define(smf.Name, smf);
+            }
+        }
+
+        CurrentScope.Assign(declaration.Name, declaration);
+        return declaration;
+    }
+
+    public object VisitVariableAccess(VariableAccess variableAccess, out Scope? scope)
+    {
+        Scope? current = null;
+        object? result = null;
+
+        for (int i = 0; i < variableAccess.Tree.Count; i++)
+        {
+            object? it;
+
+            if (current is null)
+                it = variableAccess.Tree[i].Take(this);
+            else
+            {
+                var variable = variableAccess.Tree[i];
+                it = current.GetValue(variable.Name);
+            }
+
+            if ((i - 1) == variableAccess.Tree.Count && it is not Scope s)
+                break;
+        }
+
+        scope = current;
+        return result ?? Interpreter.Undefined;
+    }
+
+    public object VisitIfStatement(Conditional conditional)
+    {
+        throw new NotImplementedException();
     }
 }

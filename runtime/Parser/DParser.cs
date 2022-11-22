@@ -18,6 +18,8 @@ public class DParser
     private bool _wasError = false;
     private List<string> _source;
 
+    private bool _panicked = false;
+
     public DParser(List<DToken> tokens, List<string> source)
     {
         _tokens = tokens;
@@ -37,6 +39,9 @@ public class DParser
 
         while (!IsAtEnd && !_wasError)
         {
+            if (_panicked)
+                break;
+
             if (Match(TokenType.Comment))
             {
                 Advance();
@@ -158,7 +163,7 @@ public class DParser
 
             var value = ParseStatement();
             _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-            return new Assignment(new(variableName,TypeHint.Any), value);
+            return new Assignment(new(variableName,hint), value);
         }
 
         // parse top level function calls
@@ -178,6 +183,11 @@ public class DParser
 
         if (Match(TokenType.Identifier))
         {
+            if (Peek(1).Type == TokenType.Access)
+            {
+                return ParseVariableAccess();
+            }
+
             var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier).Lexeme;
 
             if (Peek().Type == TokenType.LeftParen)
@@ -185,7 +195,9 @@ public class DParser
                 var args = ParseFunctionArguments();
                 var call = new FunctionCall(identifier, args.ToArray());
 
-                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+                // in this context its okay to consume the linebreak I suppose?
+                // I feel all right-hand assignees should be parsed seperate.
+                _ = Consume(TokenType.LineBreak, "Expected newline after function call");
 
                 return call;
             }
@@ -203,10 +215,9 @@ public class DParser
                     return new Assignment(new(identifier, TypeHint.Any, false), new Variable(right.Lexeme, TypeHint.HintFromTokenType(right.Type)));
                 }
 
-                var lit = ParseLiteral();
+                var lit = ParseStatement();
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                var rt = TypeHint.HintFromTokenType(lit.Sentiment.Type);
-                return new Assignment(new(identifier, rt), lit);
+                return new Assignment(new(identifier, TypeHint.Any), lit);
             }
 
             return new Variable(identifier, TypeHint.Any);
@@ -232,6 +243,16 @@ public class DParser
             return ParseFunctionDeclaration();
         }
 
+        if (Match(TokenType.If))
+        {
+            return ParseIfStatement();
+        }
+
+        if (Match(TokenType.Struct))
+        {
+            return ParseStructDeclaration();
+        }
+
         var literal = ParseLiteral();
 
         if (Match(TokenType.Minus, TokenType.Star, TokenType.Plus, TokenType.Divide))
@@ -241,6 +262,106 @@ public class DParser
         }
 
         return literal;
+    }
+
+    private Conditional ParseIfStatement()
+    {
+        var @if = Consume(TokenType.If, "expected `if`");
+        _ = Consume(TokenType.LeftParen, "expected `(` after `if`");
+
+        var left = ParsePrimary();
+        var @operator = Advance();
+        var right = ParsePrimary();
+
+
+
+        _ = Consume(TokenType.RightParen, "expected `)`");
+    }
+
+    private Statement ParseStructDeclaration()
+    {
+        _ = Consume(TokenType.Struct, "Expected 'struct' keyword");
+        var identifier = Consume(TokenType.Identifier, "Expected struct identifier");
+
+        _ = Consume(TokenType.LeftBrace, $"Expected '{{' after {identifier.Lexeme}");
+        var declarations = new List<Declaration>();
+
+        while (!Match(TokenType.RightBrace))
+        {
+            var next = ParseStatement();
+            if (next is not FunctionDeclaration or Assignment)
+            {
+                Panic("declarations within a struct must be a function or member variable.");
+            }
+            declarations.Add((Declaration)next);
+        }
+
+        // } 
+        _ = Consume(TokenType.RightBrace, "Expected right brace after struct declaration");
+
+        return new StructDeclaration(identifier.Lexeme, declarations);
+    }
+
+    private void Panic(string message)
+    {
+        var current = Peek();
+        Errors.CreateWithMessage(current, message);
+
+    }
+
+    private Statement ParsePrimary()
+    {
+        if (Match(TokenType.ListOpen))
+        {
+            var list = ParseListDeclaration();
+            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+            return list;
+        }
+
+        if (Match(TokenType.LeftBrace))
+        {
+            var dict = ParseDictDeclaration();
+            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+            return dict;
+        }
+
+        if (Match(TokenType.Identifier))
+        {
+            if (Peek(1).Type == TokenType.Access)
+                return ParseVariableAccess();
+
+            var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+
+            if (Peek().Type == TokenType.LeftParen)
+            {
+                // this needs to return an `Assignment`.
+                // The interpreter implementation can then handle actually calling
+                // the function.
+
+                var call = ParseFunction(rhsIdentifier);
+
+                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+
+                return call;
+            }
+
+            var contents = rhsIdentifier.Lexeme;
+
+            if (!DVariables.GlobalSymbolExists(contents))
+            {
+                return new Variable(contents, TypeHint.Any);
+            }
+
+            /*
+             * DVariables have a new re-written token & object instance
+             * in order to avoid confusing, drawn-out interpreting.
+             * 
+             * This will make adding variables from the commandline harder.
+             * But it's worth it.
+             */
+        }
+
+        return ParseLiteral();
     }
 
     // FIXME: ParseMathStatement relies on there being a left and right operand.
@@ -553,10 +674,32 @@ public class DParser
         return new Variable(identifier.Lexeme, hint);
     }
 
+    private VariableAccess ParseVariableAccess()
+    {
+        List<Variable> allIdentifiers = new()
+        {
+            new(Consume(TokenType.Identifier, "expected identifier").Lexeme, TypeHint.Any, false)
+        };
+
+        while (Match(TokenType.Access))
+        {
+            _ = Consume(TokenType.Access, "expected accessor");
+            var next = Consume(TokenType.Identifier, "expected identifier after '::'");
+            if (next is null)
+                break;
+            allIdentifiers.Add(new Variable(next.Lexeme, TypeHint.Any, false));
+        }
+
+        return new VariableAccess(allIdentifiers);
+    }
+
     private Statement ParseFunctionArgument()
     {
         if (Match(TokenType.Identifier))
         {
+            if (Peek(1).Type == TokenType.Access)
+                return ParseVariableAccess();
+
             var identifier = Advance();
 
             // check if this is a function call.
@@ -682,8 +825,8 @@ public class DParser
         return Previous();
     }
 
-    private DToken Peek()
-        => _tokens[_current];
+    private DToken Peek(int amount = 0)
+        => _tokens[_current + amount];
 
     private DToken Previous()
     {

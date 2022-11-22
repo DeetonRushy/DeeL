@@ -17,7 +17,7 @@ public class DlRuntime
         return new DLexer(contents).Lex();
     }
 
-    public static DContext Run(string source)
+    public static DContext Run(string source, bool except)
     {
         var lexer = new DLexer(source);
         var tokens = lexer.Lex();
@@ -31,7 +31,10 @@ public class DlRuntime
         }
         catch (Exception ex)
         {
-            Console.WriteLine("exception: {0}", ex.Message);
+            if (except)
+                Console.WriteLine("exception: {0}", ex.Message);
+            else
+                throw;
         }
 
         return new DContext(parser.Errors, interpreter);

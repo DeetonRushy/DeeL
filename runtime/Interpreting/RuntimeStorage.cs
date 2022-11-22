@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections;
 
 namespace Runtime.Interpreting;
 
-public class RuntimeStorage : IEnumerable<KeyValuePair<object, object>>
+public interface Scope
+{
+    public string Assign(object key, object value);
+    public object GetValue(object key);
+}
+
+public class RuntimeStorage : IEnumerable<KeyValuePair<object, object>>, Scope
 {
     private IDictionary<object, object> _storage;
     public string Name { get; }
@@ -18,9 +19,9 @@ public class RuntimeStorage : IEnumerable<KeyValuePair<object, object>>
         this.Name = Name;
     }
 
-    public string Assign(object key, object value)
+    public string Assign(object key, object? value)
     {
-        _storage[key] = value;
+        _storage[key] = value ?? 0;
         return $"{{ {key}: {value} }}";
     }
 

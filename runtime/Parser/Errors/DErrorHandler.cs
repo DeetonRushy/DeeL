@@ -186,6 +186,7 @@ internal class SyntaxHighlighter
                 (TokenType.Module, _, _) => Highlight($"mod", Color.Pink),
                 (TokenType.Comment, _, _) => Highlight($"#{token.Lexeme}", Color.Gray),
                 (TokenType.Let, _, _) => Highlight("let ", Color.Pink),
+                (TokenType.Access, _, _) => "::",
                 _ => token.Lexeme
             };
 

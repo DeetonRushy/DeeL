@@ -155,8 +155,15 @@ public class DLexer
                     }
                     return MakeToken(TokenType.Not);
                 }
-            case Colon: 
-                return MakeToken(TokenType.Colon);
+            case Colon:
+                {
+                    if (Peek() == Colon)
+                    {
+                        _ = Advance();
+                        return MakeToken(TokenType.Access);
+                    }
+                    return MakeToken(TokenType.Colon);
+                }
             case LeftParen: 
                 return MakeToken(TokenType.LeftParen);
             case RightParen: 

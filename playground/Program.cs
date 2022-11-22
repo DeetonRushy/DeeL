@@ -8,17 +8,28 @@ try
     var sw = Stopwatch.StartNew();
 
     var source = @"
-let apple: integer = cwd;
+mod 'DL';
+
+object User {
+  fn construct(self) {
+    self.name = 'dee';
+  }
+}
+
+# this number is very important
+let var: number = 10 * 29;
+writeln('hello, world!', var);
 ";
 
-    ctx = DlRuntime.Run(source);
+    ctx = DlRuntime.Run(source, false);
 
     sw.Stop();
-    Console.WriteLine($"Total execution time: {sw.Elapsed} ({sw.ElapsedMilliseconds}ms)");
+    Console.WriteLine($"\n\nTotal execution time: {sw.Elapsed} ({sw.ElapsedMilliseconds}ms)");
 }
 catch (Exception ex)
 {
     Console.WriteLine("exception: " + ex.Message);
+    throw;
 }
 
 ctx.ErrorHandler.DisplayErrors();

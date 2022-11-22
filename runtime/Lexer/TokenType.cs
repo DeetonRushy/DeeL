@@ -220,4 +220,10 @@ public enum TokenType
     /// The '!' operator
     /// </summary>
     Not,
+
+    /// <summary>
+    /// The `struct` keyword.
+    /// </summary>
+    Struct,
+    Access,
 }
