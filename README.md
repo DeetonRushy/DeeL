@@ -9,12 +9,12 @@ or make it extendable right now.
 # Information
 There are 6 implicit data types in DeeL. 
 
- - Strings: just a string. They can be optionally delimited by a ' or ".
- - Numbers: a number, represented by a 64 bit integer.
- - Decimals: a floating point value.
- - Lists: an array of any of the above data types.
- - Booleans: true or false.
- - Dictionarys: an array of key-value pairs. Keys must be a String, Number or Decimal. Values can be any of the above, including nested dictionary's. 
+ - Strings: just a string. They can be optionally delimited by a ' or "
+ - Numbers: a number, represented by a 64 bit integer
+ - Decimals: a floating point value
+ - Lists: an array of any of the above data types
+ - Booleans: true or false
+ - Dictionarys: an array of key-value pairs
 
 ## Goals
 
@@ -23,7 +23,7 @@ There are 6 implicit data types in DeeL.
 
 ## Examples
 
-### Set module name
+### Module identifiers
 ```
 mod 'module_name'; # <-- can be anything in a string
 
@@ -33,7 +33,7 @@ fn someCodeInMyModule() {}
 Support for import 'module_name' will be supported at some point.
 ### Declare variables
 ```
-let variable = 'value';
+let variable: string = 'value';
 let result = getResult(variable);
 ```
 
@@ -41,7 +41,7 @@ let result = getResult(variable);
 ```
 fn myFunction(arg) {
     writeln(arg);
-    let inner = 'not available globally';
+    let inner: string = 'not available globally';
     return inner;
 }
 writeln(inner); # <-- error: inner is not available in this scope
@@ -58,7 +58,9 @@ object Person {
     }
 }
 ```
-Very barebones right now, and `self.name = name` wont work.
+Assign to `self` within `self`. Other entities will not be able to assign to `self` (that is the plan
+, but may still work in some cases)
+
 
 ### Conditional Logic
 ```
