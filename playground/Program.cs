@@ -10,18 +10,19 @@ try
     var source = @"
 mod 'DL';
 
-fn read_file(path: string) -> string {
-  return __Io::read(path);
-}
-
-let contents: string = read_file('contents.txt');
-writeln(contents);
-
 object Class {
-  fn App(self) {}
+  fn App(self) { writeln('hello, from App!'); }
   fn Another(self) {}
   fn ANOTHER(self) {}
 }
+
+fn make_class() -> Class {
+  return Class();
+}
+
+let class: Class = make_class();
+writeln(class);
+class::App();
 ";
     ctx = DlRuntime.Run(source, false);
 

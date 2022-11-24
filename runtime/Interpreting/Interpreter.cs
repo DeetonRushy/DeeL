@@ -46,6 +46,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     internal RuntimeStorage? _activeScope;
 
     internal RuntimeStorage CurrentScope => _activeScope != null ? _activeScope : _global;
+
     // dont look..
     internal object GetFromEither(object key)
         => _global.Contains(key) 
@@ -140,9 +141,9 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     public object VisitFunctionCall(FunctionCall call)
     {
         // see if the call is user-defined.
-        if (CurrentScope.Contains(call.Identifier))
+        if (CurrentScope.Contains(call.Identifier) || GlobalScope().Contains(call.Identifier))
         {
-            var value = CurrentScope.GetValue(call.Identifier);
+            var value = GetFromEither(call.Identifier);
 
             if (value is UserDefinedFunction userFunction)
             {

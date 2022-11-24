@@ -49,6 +49,10 @@ public class UserDefinedFunction
                 returnValue = new ReturnValue(ret.Value);
             }
         }
+        else if (result is Statement s)
+        {
+            returnValue = new ReturnValue(s.Take(interpreter));
+        }
 
         interpreter._activeScope = prevScope;
 

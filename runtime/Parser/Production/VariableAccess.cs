@@ -12,7 +12,7 @@ public record VariableAccess(List<Statement> Tree) : Statement
 
     public override string Debug()
     {
-        throw new NotImplementedException();
+        return $"{string.Join("::", Tree.Select(x => x.Debug()))}";
     }
 
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)

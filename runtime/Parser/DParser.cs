@@ -100,7 +100,6 @@ public class DParser
             _ = Consume(TokenType.Return, DErrorCode.Default);
             // return could be used to just return..
             var value = ParseExpression();
-            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return new ReturnValue(value);
         }
 
