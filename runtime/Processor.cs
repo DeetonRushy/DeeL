@@ -29,7 +29,6 @@ public class DlRuntime
         try
         {
             var ast = parser.Parse();
-            ast.Select(x => x.Debug()).ToList().ForEach(Console.WriteLine);
             var timeTakenToInterpret = Stopwatch.StartNew();
             interpreter.Interpret(ast);
             timeTakenToInterpret.Stop();

@@ -3,7 +3,7 @@ using Runtime.Lexer;
 
 namespace Runtime.Parser.Production;
 
-public record Variable(string Name, TypeHint Type, bool IsInitialization = true) : Statement
+public record Variable(string Name, TypeHint Type, bool IsInitialization = true): Declaration(Name, Type)
 {
     public override string Debug()
     {

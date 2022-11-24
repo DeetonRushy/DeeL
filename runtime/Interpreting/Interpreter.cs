@@ -92,15 +92,27 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     public object VisitAssignment(Assignment assignment)
     {
-        var name = assignment.Variable.Name;
+        var name = assignment.Declaration.Name;
         var value = assignment.Statement.Take(this);
+
+        if (value is Declaration decl)
+        {
+            if (assignment.Declaration.Type != decl.Type)
+            {
+                throw new InterpreterException($"cannot assign an instance of '{decl.Type}' to '{assignment.Declaration.Type}'");
+            }
+            // OK!
+        }
 
         if (value is ReturnValue @return)
             value = @return.Value;
 
         if (_activeScope != null && _global.Contains(name))
         {
-            if (assignment.Variable.IsInitialization)
+            if (assignment.Declaration is not Variable var)
+                throw new NotImplementedException("Handle the assignment not being a variable.");
+
+            if (var.IsInitialization)
             {
                 // cannot assign to a variable with the same name as one in an outer scope.
                 throw new InterpreterException($"The variable `{name}` already exists in the scope `{_global.Name}`.");
@@ -525,13 +537,14 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             {
                 if (variableAccess.Tree[i] is not Variable variable)
                     throw new InterpreterException("cannot access a non-scoped type.");
-                it = current.GetValue(variable.Name);
-            }
+                result = current.GetValue(variable.Name);
 
-            if (!lastIteration && it is IScope s)
-            {
-                current = s;
-                continue;
+                if (result is IScope s)
+                {
+                    current = s;
+                    continue;
+                }
+                break;
             }
             break;
         }
@@ -600,4 +613,27 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         return Undefined;
     }
+
+    public object VisitVariableAccessAssignment(VariableAccessAssignment variableAccessAssignment)
+    {
+        _ = VisitVariableAccess(variableAccessAssignment.Access, out IScope? scope);
+
+        if (scope is null)
+            throw new NotImplementedException("Variable accesses scope is null...");
+
+        var variableName = variableAccessAssignment.Access.Tree.Last();
+
+        if (variableName is not Variable var)
+        {
+            // The value being assigned to is not a variable.
+            throw new NotImplementedException("create real error message");
+        }
+
+        scope.Assign(var.Name, Visit(variableAccessAssignment.Operand));
+
+        return scope.GetValue(variableName);
+    }
+
+    public object Visit(Statement st)
+        => st.Take(this);
 }

@@ -1,7 +1,7 @@
 ﻿
 namespace Runtime.Parser.Production;
 
-public record FunctionDeclaration(string Identifier, List<Variable> Arguments, Block Body, TypeHint TypeHint): Declaration
+public record FunctionDeclaration(string Identifier, List<Variable> Arguments, Block Body, TypeHint TypeHint): Declaration(Identifier, TypeHint)
 {
     public override string Debug()
     {

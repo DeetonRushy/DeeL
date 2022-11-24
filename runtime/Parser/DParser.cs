@@ -223,6 +223,10 @@ public class DParser
             else
                 hint = new TypeHint(Advance().Lexeme);
         }
+        else
+        {
+            Errors.CreateWithMessage(identifier, $"expected type annotation after '{identifier.Lexeme}'", false);
+        }
 
         Consume(TokenType.Equals, DErrorCode.ExpEquals);
 
@@ -381,7 +385,14 @@ public class DParser
         if (Match(TokenType.Identifier))
         {
             if (Peek(1).Type == TokenType.Access)
-                return ParseVariableAccess();
+            {
+                var accessExpression = ParseVariableAccess();
+                if (!Match(TokenType.Equals))
+                    return accessExpression;
+                _ = Consume(TokenType.Equals, "");
+                var rhs = ParseExpression();
+                return new VariableAccessAssignment(accessExpression, rhs);
+            }
 
             var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
 
@@ -517,7 +528,7 @@ public class DParser
             break; // no args
         } while (MatchAndAdvance(TokenType.Comma));
 
-        _ = Consume(TokenType.RightParen, DErrorCode.ExpRightParen);
+        var paren = Consume(TokenType.RightParen, DErrorCode.ExpRightParen);
         // we are now here: fn name(arg1, arg2) <---
         string? annotation = null;
 
@@ -532,6 +543,10 @@ public class DParser
             {
                 annotation = Advance().Lexeme;
             }
+        }
+        else
+        {
+            Errors.CreateWithMessage(paren, "expected type annotation after function arguments.", false);
         }
 
         // parse the block

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Runtime.Parser.Production;
 
-public record Declaration : Statement
+public record Declaration(string Name, TypeHint Type) : Statement
 {
     public override string Debug()
     {

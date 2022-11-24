@@ -10,19 +10,21 @@ try
     var source = @"
 mod 'DL';
 
-object Class {
-  fn App(self) { writeln('hello, from App!'); }
-  fn Another(self) {}
-  fn ANOTHER(self) {}
+object Other {
+  fn construct(self) -> void {
+    self::age = 19;
+  }
 }
 
-fn make_class() -> Class {
-  return Class();
+object User {
+  fn construct(self) -> void {
+    self::name = 'deeton';
+    self::other = Other();
+  }
 }
 
-let class: Class = make_class();
-writeln(class);
-class::App();
+let me: User = User();
+writeln(me::other::age);
 ";
     ctx = DlRuntime.Run(source, false);
 

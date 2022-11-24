@@ -29,7 +29,7 @@ public class ParserTests
         var ass = ast[0] as Assignment;
         Assert.IsNotNull(ass);
 
-        Assert.AreEqual("src", ass.Variable.Name);
+        Assert.AreEqual("src", ass.Declaration.Name);
         Assert.AreEqual(ass.Statement.GetType(), typeof(Literal));
 
         var literal = ass.Statement as Literal;
@@ -49,8 +49,8 @@ public class ParserTests
         var ass = ast[0] as Assignment;
         Assert.IsNotNull(ass);
 
-        Assert.AreEqual(ass.Variable.Type.Name, TypeHint.String.Name);
-        Assert.AreEqual(ass.Variable.Name, "src");
+        Assert.AreEqual(ass.Declaration.Type.Name, TypeHint.String.Name);
+        Assert.AreEqual(ass.Declaration.Name, "src");
 
         var literal = ass.Statement as Literal;
         Assert.IsNotNull(literal);
