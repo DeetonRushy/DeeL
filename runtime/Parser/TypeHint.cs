@@ -14,6 +14,7 @@ public class TypeHint
     public static TypeHint Dict => new("dict");
     public static TypeHint List => new("list");
     public static TypeHint Func => new("function");
+    public static TypeHint Void => new("void");
     public static TypeHint Any => new("any");
 
     public string Name { get; set; }

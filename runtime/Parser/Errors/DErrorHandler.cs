@@ -73,7 +73,7 @@ public class DErrorHandler
         var relevantContent = SourceLines.Skip(token.Line).FirstOrDefault();
         if (relevantContent is null)
         {
-            throw new ParserException($"somehow there is no content at line {token.Line}?");
+            throw new ParserException($"somehow there is no content at line {token.Line}? (msg: {message})");
         }
 
         string content = string.Empty;

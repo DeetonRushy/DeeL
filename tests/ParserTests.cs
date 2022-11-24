@@ -20,7 +20,7 @@ public class ParserTests
     [TestMethod]
     public void TestLetWithString()
     {
-        string src = "let src = 'src';";
+        string src = "let src: string = 'src';";
         var ast = GetAst(src);
 
         Assert.AreNotEqual(0, ast.Count);
