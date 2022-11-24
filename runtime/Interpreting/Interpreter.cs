@@ -493,7 +493,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 else
                 {
                     var id = current?.GetValue(call.Identifier);
-                    if (id is not IStructFunction smf) 
+                    if (id is not IStructFunction smf || current is null) 
                     {
                         throw new InterpreterException("extreme confusion");
                     }

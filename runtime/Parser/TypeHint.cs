@@ -33,18 +33,33 @@ public class TypeHint
 
     public static TypeHint HintFromTokenType(TokenType type)
     {
-        switch (type)
+        return type switch
         {
-            case TokenType.String:
-                return String;
-            case TokenType.Boolean: 
-                return Boolean;
-            case TokenType.Number:
-                return Integer; 
-            case TokenType.Decimal: 
-                return Decimal;
-            default:
-                return Any;
+            TokenType.String => String,
+            TokenType.Boolean => Boolean,
+            TokenType.Number => Integer,
+            TokenType.Decimal => Decimal,
+            _ => Any,
+        };
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(this, obj))
+        {
+            return true;
         }
+
+        if (obj is null)
+        {
+            return false;
+        }
+
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return Name.GetHashCode();
     }
 }

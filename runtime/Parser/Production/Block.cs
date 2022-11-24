@@ -11,7 +11,7 @@ public record Block(List<Statement> Statements) : Statement
 {
     public override string Debug()
     {
-        throw new NotImplementedException();
+        return $"  ^^ (...{Statements.Count} lines of code)";
     }
 
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)

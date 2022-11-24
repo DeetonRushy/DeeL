@@ -16,6 +16,12 @@ fn read_file(path: string) -> string {
 
 let contents: string = read_file('contents.txt');
 writeln(contents);
+
+object Class {
+  fn App(self) {}
+  fn Another(self) {}
+  fn ANOTHER(self) {}
+}
 ";
     ctx = DlRuntime.Run(source, false);
 

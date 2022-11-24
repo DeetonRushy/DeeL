@@ -298,7 +298,7 @@ public class DParser
 
     private IfStatement ParseIfStatement()
     {
-        var @if = Consume(TokenType.If, "expected `if`");
+        _ = Consume(TokenType.If, "expected `if`");
         _ = Consume(TokenType.LeftParen, "expected `(` after `if`");
 
         var cond = ParseCondition();
@@ -341,6 +341,7 @@ public class DParser
 
         while (!Match(TokenType.RightBrace))
         {
+            // parse expression when parsing a declaration?
             var next = ParseExpression();
             if (next is not FunctionDeclaration or Assignment)
             {
@@ -811,7 +812,7 @@ public class DParser
         return literals;
     }
 
-    private DToken Consume(TokenType type, string message, [CallerMemberName] string m = "", [CallerLineNumber] int l = 0)
+    private DToken Consume(TokenType type, string message)
     {
         if (Check(type))
         {

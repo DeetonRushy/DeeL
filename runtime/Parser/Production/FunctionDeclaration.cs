@@ -5,7 +5,7 @@ public record FunctionDeclaration(string Identifier, List<Variable> Arguments, B
 {
     public override string Debug()
     {
-        return "FunctionDecl";
+        return $"FunctionDecl({Identifier}, {Arguments.Count} args)\n{Body.Debug()}";
     }
 
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
