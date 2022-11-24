@@ -1,8 +1,14 @@
 ﻿using Runtime.Parser.Production;
+using System.Collections;
 
 namespace Runtime.Interpreting.Structs;
 
-public class UserDefinedStruct : Scope
+public interface IStruct : IScope
+{
+    string Name { get; }
+}
+
+public class UserDefinedStruct : IStruct
 {
     public string Name { get; private set; }
     private readonly RuntimeStorage _structScope;
@@ -18,6 +24,14 @@ public class UserDefinedStruct : Scope
         _structScope.Assign(Identifier, Value);
     }
 
+    public void Populate(IStruct other)
+    {
+        foreach (var member in other)
+        {
+            Assign(member.Key, member.Value);
+        }
+    }
+
     public string Assign(object key, object value)
     {
         return _structScope.Assign(key, value);
@@ -31,5 +45,20 @@ public class UserDefinedStruct : Scope
     public override string ToString()
     {
         return $"<struct '{Name}'>";
+    }
+
+    public IScope GetScope()
+    {
+        return this;
+    }
+
+    public IEnumerator<KeyValuePair<object, object>> GetEnumerator()
+    {
+        return _structScope.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

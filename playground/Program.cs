@@ -1,5 +1,4 @@
 ﻿using Runtime;
-using Runtime.Lexer;
 using System.Diagnostics;
 
 DContext ctx = null!;
@@ -11,12 +10,12 @@ try
     var source = @"
 mod 'DL';
 
-let thing: number = 0;
-
-while (thing != 5) {
-  writeln(thing);
-  thing = thing + 1;
+fn read_file(path: string) -> string {
+  return __Io::read(path);
 }
+
+let contents: string = read_file('contents.txt');
+writeln(contents);
 ";
     ctx = DlRuntime.Run(source, false);
 

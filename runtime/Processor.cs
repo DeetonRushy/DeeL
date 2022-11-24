@@ -12,6 +12,7 @@ namespace Runtime;
 /// </summary>
 public class DlRuntime
 {
+    public static string Version { get; } = "0.3";
 
     public static List<DToken> ViewTokens(string contents)
     {

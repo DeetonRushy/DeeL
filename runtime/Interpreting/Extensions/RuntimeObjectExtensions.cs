@@ -22,5 +22,5 @@ public static class RuntimeObjectExtensions
         => obj is string;
 
     public static bool IsDLObject(this object obj)
-        => obj.GetType().FullName?.Contains("Runtime") ?? true;
+        => obj?.GetType()?.FullName?.Contains("Runtime") ?? false;
 }

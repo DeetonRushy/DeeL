@@ -4,7 +4,15 @@ using Runtime.Parser.Production;
 
 namespace Runtime.Interpreting.Structs;
 
-public class StructMemberFunction
+public interface IStructFunction
+{
+    public string Name { get; }
+    public bool IsStatic { get; }
+
+    public ReturnValue Execute(Interpreter interpreter, IStruct instance, List<Statement> args);
+}
+
+public class StructMemberFunction : IStructFunction
 {
     public string Name { get; private set; }
     public bool IsStatic { get; private set; } = true;
@@ -24,7 +32,7 @@ public class StructMemberFunction
         Name = identifier;
     }
 
-    public ReturnValue Execute(Interpreter interpreter, UserDefinedStruct instance, List<Statement> args)
+    public ReturnValue Execute(Interpreter interpreter, IStruct instance, List<Statement> args)
     {
         var prev = interpreter._activeScope;
         interpreter._activeScope = new RuntimeStorage(Name);
@@ -41,7 +49,7 @@ public class StructMemberFunction
 
         // populate function scope, dont assign to self.
 
-        for (int i = 0; i < _expectedArguments.Count; ++i)
+        for (int i = 0; i < _expectedArguments.Count - 1; ++i)
         {
             if (i == 0 && !IsStatic)
                 continue;

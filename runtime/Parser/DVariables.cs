@@ -14,7 +14,8 @@ public static class DVariables
             { "cwd", (DToken.MakeVar(TokenType.String), Directory.GetCurrentDirectory()) },
             // TODO: add some sort of pre-compilation directive that defines version
             { "version", (DToken.MakeVar(TokenType.String), "0.1.1") },
-            { "undefined", (DToken.MakeVar(TokenType.String), "undefined") }
+            { "undefined", (DToken.MakeVar(TokenType.String), "undefined") },
+            { "__version__", (DToken.MakeVar(TokenType.String), DlRuntime.Version) }
         };
 
     public static (DToken, object) GetValueFor(string identifier)

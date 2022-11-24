@@ -42,8 +42,8 @@ public class UserDefinedFunction
 
         if (result is ReturnValue ret)
         {
-            if (ret.Value is Variable or Literal)
-                returnValue = new ReturnValue((ret.Value as Statement)!.Take(interpreter));
+            if (ret.Value is Statement s)
+                returnValue = new ReturnValue(s.Take(interpreter));
             else
             {
                 returnValue = new ReturnValue(ret.Value);

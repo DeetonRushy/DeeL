@@ -2,13 +2,15 @@
 
 namespace Runtime.Interpreting;
 
-public interface Scope
+public interface IScope : IEnumerable<KeyValuePair<object, object>>
 {
     public string Assign(object key, object value);
     public object GetValue(object key);
+
+    public IScope GetScope();
 }
 
-public class RuntimeStorage : IEnumerable<KeyValuePair<object, object>>, Scope
+public class RuntimeStorage : IEnumerable<KeyValuePair<object, object>>, IScope
 {
     private IDictionary<object, object> _storage;
     public string Name { get; }
@@ -29,7 +31,7 @@ public class RuntimeStorage : IEnumerable<KeyValuePair<object, object>>, Scope
     {
         if (!_storage.ContainsKey(key))
         {
-            return "undefined";
+            return Interpreter.Undefined;
         }
         return _storage[key];
     }
@@ -56,5 +58,10 @@ public class RuntimeStorage : IEnumerable<KeyValuePair<object, object>>, Scope
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    public IScope GetScope()
+    {
+        return this;
     }
 }

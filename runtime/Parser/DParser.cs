@@ -49,7 +49,11 @@ public class DParser
                 continue;
             }
 
-            var decl = ParseStatement();
+            var decl = ParseExpression();
+
+            if (decl is null)
+                continue;
+
             result.Add(decl);
         }
 
@@ -63,20 +67,8 @@ public class DParser
         return call;
     }
 
-    /*
-     * Consume line breaks ';' within here.
-     * 
-     * Dictionary's can parse other dictionary's within itself, so if
-     * they all require a ';' at the end it would be awful.
-     * 
-     * Each declaration requires a line break, not literals, lists or dicts.
-     */
-
-    public Statement ParseStatement()
+    public Statement ParseExpression()
     {
-        // the first node should be a declaration.
-        // there is only declarations in DL.
-
         if (Match(TokenType.LineBreak))
             _ = Consume(TokenType.LineBreak, "");
 
@@ -107,7 +99,7 @@ public class DParser
             // the next token IS a return statement, no error code
             _ = Consume(TokenType.Return, DErrorCode.Default);
             // return could be used to just return..
-            var value = ParseStatement();
+            var value = ParseExpression();
             _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return new ReturnValue(value);
         }
@@ -163,7 +155,7 @@ public class DParser
         {
             _ = Consume(TokenType.Equals, "");
             // assignment to an already existing variable.
-            var assignmentValue = ParseStatement();
+            var assignmentValue = ParseExpression();
 
             if (primary is Variable @var)
 
@@ -197,7 +189,7 @@ public class DParser
                 if (Peek().Type == TokenType.Equals)
                 {
                     _ = Consume(TokenType.Equals, "");
-                    var lit = ParseStatement();
+                    var lit = ParseExpression();
                     _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
                     if (lit is Variable var)
                         return new Assignment(new(identifier, TypeHint.Any), var);
@@ -237,6 +229,12 @@ public class DParser
 
         if (Match(TokenType.Identifier))
         {
+            if (Peek(1).Type == TokenType.Access)
+            {
+                var access = ParseVariableAccess();
+                return new Assignment(new Variable(identifier.Lexeme, hint), access);
+            }
+
             var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
 
             if (Peek().Type == TokenType.LeftParen)
@@ -343,7 +341,7 @@ public class DParser
 
         while (!Match(TokenType.RightBrace))
         {
-            var next = ParseStatement();
+            var next = ParseExpression();
             if (next is not FunctionDeclaration or Assignment)
             {
                 Panic("declarations within a struct must be a function or member variable.");
@@ -449,7 +447,7 @@ public class DParser
 
     private MathStatement ParseMathStatement()
     {
-        var left = ParseStatement();
+        var left = ParseExpression();
         return HalfParseMathStatement(left);
     }
 
@@ -550,7 +548,7 @@ public class DParser
 
         while (!Match(TokenType.RightBrace))
         {
-            var statement = ParseStatement();
+            var statement = ParseExpression();
             if (statement is not null)
                 statements.Add(statement);
             else
@@ -738,9 +736,9 @@ public class DParser
 
     private VariableAccess ParseVariableAccess()
     {
-        List<Variable> allIdentifiers = new()
+        List<Statement> allIdentifiers = new()
         {
-            new(Consume(TokenType.Identifier, "expected identifier").Lexeme, TypeHint.Any, false)
+            new Variable(Consume(TokenType.Identifier, "expected identifier").Lexeme, TypeHint.Any, false)
         };
 
         while (Match(TokenType.Access))
@@ -749,6 +747,13 @@ public class DParser
             var next = Consume(TokenType.Identifier, "expected identifier after '::'");
             if (next is null)
                 break;
+            if (Match(TokenType.LeftParen))
+            {
+                // TODO: handle function calls within the chain of instance accesses
+                // example: File::open('content.txt')::read_all();
+                allIdentifiers.Add(ParseFunction(next));
+                continue;
+            }
             allIdentifiers.Add(new Variable(next.Lexeme, TypeHint.Any, false));
         }
 

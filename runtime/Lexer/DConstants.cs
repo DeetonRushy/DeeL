@@ -7,7 +7,6 @@ public static class DConstants
     public static readonly Dictionary<string, TokenType> ReservedKeywords = new()
     {
         { "mod", TokenType.Module },
-        { "end", TokenType.End },
         { "if", TokenType.If },
         { "else", TokenType.Else },
         { "fn", TokenType.Fn },

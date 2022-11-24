@@ -11,6 +11,7 @@ using Runtime.Parser.Production.Math;
 using Runtime.Interpreting.Extensions;
 using Runtime.Interpreting.Structs;
 using Runtime.Parser.Production.Conditions;
+using System.Reflection;
 
 namespace Runtime.Interpreting;
 
@@ -20,7 +21,7 @@ using Pair = KeyValuePair<object, object>;
 
 public class Interpreter : ISyntaxTreeVisitor<object>
 {
-    public static readonly object Undefined = "undefined";
+    public const string Undefined = "undefined";
     public string Identity { get; internal set; } = "<anon>";
     public readonly Dictionary<string, bool> ModuleFlags = new()
     {
@@ -58,9 +59,21 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     public Interpreter()
     {
-        _calls = new CallCenter();
-        
+        _calls = new CallCenter();        
         _global = new RuntimeStorage("<global>");
+
+        // initialize all types (other than itself) that inherit from IStruct.
+        // then populate the global scope with them.
+
+        Assembly.GetExecutingAssembly().GetTypes().ToList().ForEach(x =>
+        {
+            if (typeof(IStruct) != x && typeof(UserDefinedStruct) != x && x.IsAssignableTo(typeof(IStruct)))
+            {
+                var instance = Activator.CreateInstance(x) as IStruct;
+                if (instance is not null)
+                    _global.Assign(instance.Name, instance);
+            }
+        });
     }
 
     public object Interpret(List<Statement> nodes)
@@ -137,17 +150,20 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 return userFunction.Execute(this, call.Arguments.ToList());
             }
 
-            if (value is UserDefinedStruct structDecl)
+            if (value is IStruct structDecl)
             {
                 var scopeId = Guid.NewGuid().ToString();
 
-                if (structDecl.GetValue("construct") is null)
+                if (structDecl.GetValue("construct") is Undefined)
                 {
-                    return new UserDefinedStruct(scopeId);
+                    var result = new UserDefinedStruct(scopeId);
+                    result.Populate(structDecl);
+                    return result;
                 }
 
                 var @struct = new UserDefinedStruct(scopeId);
-                if (structDecl.GetValue("construct") is not StructMemberFunction constructor)
+                @struct.Populate(structDecl);
+                if (structDecl.GetValue("construct") is not IStructFunction constructor)
                     throw new InterpreterException($"invalid instance inside of struct scope..");
                 _ = constructor.Execute(this, @struct, call.Arguments.ToList());
                 return @struct;
@@ -457,25 +473,66 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         return declaration;
     }
 
-    public object VisitVariableAccess(VariableAccess variableAccess, out Scope? scope)
+    public object VisitVariableAccess(VariableAccess variableAccess, out IScope? scope)
     {
-        Scope? current = null;
+        IScope? current = null;
         object? result = null;
 
-        for (int i = 0; i < variableAccess.Tree.Count; i++)
+        for (int i = 0; i <= variableAccess.Tree.Count; i++)
         {
             object? it;
+            bool lastIteration = (i + 1 >= variableAccess.Tree.Count);
+            bool firstIteration = (i == 0);
+
+            if (variableAccess.Tree[i] is FunctionCall @call)
+            {
+                object? val;
+
+                if (firstIteration)
+                    val = call.Take(this);
+                else
+                {
+                    var id = current?.GetValue(call.Identifier);
+                    if (id is not IStructFunction smf) 
+                    {
+                        throw new InterpreterException("extreme confusion");
+                    }
+                    val = smf.Execute(this, (IStruct)current, call.Arguments.ToList());
+                }
+
+                if (val is not IScope _scope)
+                {
+                    if (lastIteration)
+                    {
+                        result = val;
+                        break;
+                    }
+                    throw new InterpreterException($"The function `{call.Identifier}` returns a value that is not accessable. (cannot `::` an instance of `{val.GetType()}`)");
+                }
+                current = _scope;
+                continue;
+            }
 
             if (current is null)
+            {
                 it = variableAccess.Tree[i].Take(this);
+                if (it is IScope nextScope)
+                    current = nextScope;
+                continue;
+            }
             else
             {
-                var variable = variableAccess.Tree[i];
+                if (variableAccess.Tree[i] is not Variable variable)
+                    throw new InterpreterException("cannot access a non-scoped type.");
                 it = current.GetValue(variable.Name);
             }
 
-            if ((i - 1) == variableAccess.Tree.Count && it is not Scope s)
-                break;
+            if (!lastIteration && it is IScope s)
+            {
+                current = s;
+                continue;
+            }
+            break;
         }
 
         scope = current;
@@ -528,7 +585,8 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             if (whileStatement.Condition.Take(this) is not bool nextResult)
                 throw new InterpreterException($"Condition returned non-bool value?");
             condition = nextResult;
-
+            if (!condition)
+                break;
             if (firstSpin)
             {
                 firstSpin = false;
