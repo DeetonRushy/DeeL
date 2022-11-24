@@ -49,6 +49,25 @@ writeln(inner); # <-- error: inner is not available in this scope
 myFunction('Hello, World!');
 ```
 
+### Objects
+Define a class/struct
+```
+object Person {
+    fn construct(self, name: string) -> void {
+        self.name = name;
+    }
+}
+```
+Very barebones right now, and `self.name = name` wont work.
+
+### Conditional Logic
+```
+let num: number = get_some_number();
+if (num == 69) {
+    writeln("nice!");
+}
+```
+
 ### Dictionarys & Lists
 Json set the standard, so they have to be included.
 ```
