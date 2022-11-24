@@ -21,16 +21,19 @@ public class DlRuntime
 
     public static DContext Run(string source, bool except)
     {
+        DErrorHandler.SourceLines = source.Split('\n').ToList();
+
         var lexer = new DLexer(source);
         var tokens = lexer.Lex();
-        var parser = new DParser(tokens, source.Split('\n').ToList());
-        var interpreter = new Interpreter();
+        var parser = new DParser(tokens);
+        Interpreter? interpreter = null;
 
         try
         {
             var ast = parser.Parse();
+            interpreter = new Interpreter(ast);
             var timeTakenToInterpret = Stopwatch.StartNew();
-            interpreter.Interpret(ast);
+            interpreter.Interpret();
             timeTakenToInterpret.Stop();
             Console.WriteLine($"Took {timeTakenToInterpret.ElapsedMilliseconds}ms to interpret.");
         }
@@ -42,6 +45,6 @@ public class DlRuntime
                 throw;
         }
 
-        return new DContext(parser.Errors, interpreter);
+        return new DContext(parser.Errors, interpreter!);
     }
 }

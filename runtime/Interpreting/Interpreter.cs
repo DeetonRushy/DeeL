@@ -12,6 +12,7 @@ using Runtime.Interpreting.Extensions;
 using Runtime.Interpreting.Structs;
 using Runtime.Parser.Production.Conditions;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace Runtime.Interpreting;
 
@@ -21,6 +22,8 @@ using Pair = KeyValuePair<object, object>;
 
 public class Interpreter : ISyntaxTreeVisitor<object>
 {
+    private DErrorHandler Errors;
+
     public const string Undefined = "undefined";
     public string Identity { get; internal set; } = "<anon>";
     public readonly Dictionary<string, bool> ModuleFlags = new()
@@ -47,6 +50,9 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     internal RuntimeStorage CurrentScope => _activeScope != null ? _activeScope : _global;
 
+    private List<Statement> Statements { get; }
+    private int Position { get; set; } = 0;
+
     // dont look..
     internal object GetFromEither(object key)
         => _global.Contains(key) 
@@ -58,10 +64,21 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     internal RuntimeStorage GlobalScope() => _global;
     internal RuntimeStorage? ActiveScope() => _activeScope;
 
-    public Interpreter()
+    private Statement Peek()
+        => Statements[Position];
+
+    private void Panic(string message)
+    {
+        Errors.CreateWithMessage(new DToken { Line = Peek().Line }, message, true);
+        Errors.DisplayErrors();
+        Environment.Exit(-1);
+    }
+
+    public Interpreter(List<Statement> ast)
     {
         _calls = new CallCenter();        
         _global = new RuntimeStorage("<global>");
+        Statements = ast;
 
         // initialize all types (other than itself) that inherit from IStruct.
         // then populate the global scope with them.
@@ -75,12 +92,16 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                     _global.Assign(instance.Name, instance);
             }
         });
+
+        Errors = new DErrorHandler();
     }
 
-    public object Interpret(List<Statement> nodes)
+    public object Interpret()
     {
-        foreach (var node in nodes)
+        for (; Position < Statements.Count; ++Position)
         {
+            var node = Statements[Position];
+
             if (node is null)
                 throw new InterpreterException("internal: parser problem... null node?");
 
@@ -92,14 +113,23 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     public object VisitAssignment(Assignment assignment)
     {
-        var name = assignment.Declaration.Name;
+        var name = assignment.Decl.Name;
         var value = assignment.Statement.Take(this);
 
         if (value is Declaration decl)
         {
-            if (assignment.Declaration.Type != decl.Type)
+            if (assignment.Decl.Type != decl.Type)
             {
-                throw new InterpreterException($"cannot assign an instance of '{decl.Type}' to '{assignment.Declaration.Type}'");
+                Panic($"cannot assign an instance of '{decl.Type}' to '{assignment.Decl.Type}'");
+            }
+            // OK!
+        }
+
+        if (value is IStruct @struct)
+        {
+            if (assignment.Decl.Type.Name != @struct.Name)
+            {
+                Panic($"cannot assign an instance of '{@struct.Name}' to '{assignment.Decl.Type}'");
             }
             // OK!
         }
@@ -109,13 +139,13 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         if (_activeScope != null && _global.Contains(name))
         {
-            if (assignment.Declaration is not Variable var)
+            if (assignment.Decl is not Variable var)
                 throw new NotImplementedException("Handle the assignment not being a variable.");
 
             if (var.IsInitialization)
             {
                 // cannot assign to a variable with the same name as one in an outer scope.
-                throw new InterpreterException($"The variable `{name}` already exists in the scope `{_global.Name}`.");
+                Panic($"The variable `{name}` already exists in the scope `{_global.Name}`.");
             }
 
             return _global.Assign(name, value);
@@ -165,7 +195,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
             if (value is IStruct structDecl)
             {
-                var scopeId = Guid.NewGuid().ToString();
+                var scopeId = structDecl.Name;
 
                 if (structDecl.GetValue("construct") is Undefined)
                 {
@@ -182,7 +212,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 return @struct;
             }
 
-            throw new InterpreterException($"The variable `{call.Identifier}` is not callable. (it is of type `{value.GetType().Name}`)");
+            Panic($"The variable `{call.Identifier}` is not callable. (it is of type `{value.GetType().Name}`)");
         }
 
         if (!_calls.TryGetDefinition(call.Identifier, out ICallable function))
@@ -200,7 +230,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             {
                 var result = paramCall.Take(this);
                 // FIXME: not all functions may return a string...
-                var literal = new Literal(DToken.MakeVar(TokenType.String), result);
+                var literal = new Literal(DToken.MakeVar(TokenType.String), TypeHint.String, result);
                 arguments.Add(literal);
             }
 
@@ -211,12 +241,12 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             {
                 // builtin functions dont have their own scope.
                 var @var = GetFromEither(variable.Name);
-                arguments.Add(new Literal(DToken.MakeVar(TokenType.String), @var));
+                arguments.Add(new Literal(DToken.MakeVar(TokenType.String), TypeHint.String, @var));
             }
 
             if (arg is VariableAccess access)
             {
-                arguments.Add(new Literal(DToken.MakeVar(TokenType.String), access.Take(this)));
+                arguments.Add(new Literal(DToken.MakeVar(TokenType.String), TypeHint.String, access.Take(this)));
             }
         }
         return function.Execute(this, arguments.ToArray());
@@ -277,17 +307,6 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         return id;
     }
 
-    public object VisitSingleEvaluation(SingleEval evaluation)
-    {
-        var identifier = VisitLiteral(evaluation.identifier);
-        if (!_global.Contains(identifier))
-        {
-            DisplayErr($"cannot evaluate '{identifier}', it does not exist.");
-            return Undefined;
-        }
-        return _global.GetValue(identifier);
-    }
-
     public object VisitVariable(Variable variable)
     {
         var global = _global;
@@ -303,7 +322,8 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             return global.GetValue(variable.Name);
         }
 
-        throw new InterpreterException($"The variable `{variable.Name}` does not exist in any scope.");
+        Panic($"The variable `{variable.Name}` does not exist in any scope.");
+        return null!;
     }
 
     public object VisitFunctionDeclaration(FunctionDeclaration functionDeclaration)
@@ -388,7 +408,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         if (!left.IsIntegral() || !right.IsIntegral())
         {
-            throw new InterpreterException($"cannot perform addition between `{left}` and `{right}`");
+            Panic($"cannot perform addition between `{left}` and `{right}`");
         }
 
         if (left is decimal lDec && right is decimal rDec) return lDec + rDec;
@@ -406,7 +426,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         if (!left.IsIntegral() || !right.IsIntegral())
         {
-            throw new InterpreterException($"cannot perform subtraction between `{left}` and `{right}`");
+            Panic($"cannot perform subtraction between `{left}` and `{right}`");
         }
 
         if (left is decimal lDec && right is decimal rDec) return lDec - rDec;
@@ -424,7 +444,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         if (!left.IsIntegral() || !right.IsIntegral())
         {
-            throw new InterpreterException($"cannot perform multiplaction between `{left}` and `{right}`");
+            Panic($"cannot perform multiplaction between `{left}` and `{right}`");
         }
 
         if (left is decimal lDec && right is decimal rDec) return lDec * rDec;
@@ -442,7 +462,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         if (!left.IsIntegral() || !right.IsIntegral())
         {
-            throw new InterpreterException($"cannot perform division between `{left}` and `{right}`");
+            Panic($"cannot perform division between `{left}` and `{right}`");
         }
 
         if (left is decimal lDec && right is decimal rDec) return lDec / rDec;
@@ -520,7 +540,9 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                         result = val;
                         break;
                     }
-                    throw new InterpreterException($"The function `{call.Identifier}` returns a value that is not accessable. (cannot `::` an instance of `{val.GetType()}`)");
+                    Panic($"The function `{call.Identifier}` returns a value that is not accessable. (cannot `::` an instance of `{val.GetType()}`)");
+                    scope = null;
+                    return null!;
                 }
                 current = _scope;
                 continue;
@@ -546,7 +568,6 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 }
                 break;
             }
-            break;
         }
 
         scope = current;
@@ -626,7 +647,8 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         if (variableName is not Variable var)
         {
             // The value being assigned to is not a variable.
-            throw new NotImplementedException("create real error message");
+            Panic($"Cannot assign to {variableName}");
+            return null!;
         }
 
         scope.Assign(var.Name, Visit(variableAccessAssignment.Operand));

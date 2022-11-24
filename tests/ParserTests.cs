@@ -13,7 +13,7 @@ public class ParserTests
         var lexer = new DLexer(src);
         var tokens = lexer.Lex();
 
-        var parser = new DParser(tokens, src.Split('\n').ToList());
+        var parser = new DParser(tokens);
         return parser.Parse();
     }
 
@@ -29,7 +29,7 @@ public class ParserTests
         var ass = ast[0] as Assignment;
         Assert.IsNotNull(ass);
 
-        Assert.AreEqual("src", ass.Declaration.Name);
+        Assert.AreEqual("src", ass.Decl.Name);
         Assert.AreEqual(ass.Statement.GetType(), typeof(Literal));
 
         var literal = ass.Statement as Literal;
@@ -49,8 +49,8 @@ public class ParserTests
         var ass = ast[0] as Assignment;
         Assert.IsNotNull(ass);
 
-        Assert.AreEqual(ass.Declaration.Type.Name, TypeHint.String.Name);
-        Assert.AreEqual(ass.Declaration.Name, "src");
+        Assert.AreEqual(ass.Decl.Type.Name, TypeHint.String.Name);
+        Assert.AreEqual(ass.Decl.Name, "src");
 
         var literal = ass.Statement as Literal;
         Assert.IsNotNull(literal);

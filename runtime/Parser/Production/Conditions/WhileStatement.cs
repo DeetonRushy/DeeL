@@ -1,7 +1,7 @@
 ﻿
 namespace Runtime.Parser.Production.Conditions;
 
-public record WhileStatement(Condition Condition, Block Body): Statement
+public record WhileStatement(Condition Condition, Block Body, int Line) : Statement(Line)
 {
     public override string Debug()
     {

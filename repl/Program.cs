@@ -5,7 +5,6 @@ using Runtime.Parser;
 // REPL version.
 
 Console.WriteLine("DL REPL -- v1.0.0\n");
-var interpreter = new Interpreter();
 
 while (true)
 {
@@ -13,10 +12,11 @@ while (true)
 
     var lexer = new DLexer(input!);
     var tokens = lexer.Lex();
-    var parser = new DParser(tokens, input!.Split('\n').ToList());
+    var parser = new DParser(tokens);
     var ast = parser.Parse();
+    var interpreter = new Interpreter(ast);
 
-    var evalResult = interpreter.Interpret(ast);
+    var evalResult = interpreter.Interpret();
     Console.WriteLine($"Result: {evalResult}");
 
     var errs = parser.Errors;

@@ -8,7 +8,7 @@ namespace Runtime.Parser.Production.Conditions;
 
 public record IsNotEqual : Condition
 {
-    public IsNotEqual(Statement Left, Statement Right) : base(Left, Right)
+    public IsNotEqual(Statement Left, Statement Right, int Line) : base(Left, Right, Line)
     {
     }
 

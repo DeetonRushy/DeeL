@@ -8,7 +8,7 @@ namespace Runtime.Parser.Production.Math;
 
 public record Addition : MathStatement
 {
-    public Addition(Statement Left, Statement Right) : base(Left, Right)
+    public Addition(Statement Left, Statement Right, int Line) : base(Left, Right, Line)
     {
     }
 

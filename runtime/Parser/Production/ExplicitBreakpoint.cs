@@ -1,7 +1,7 @@
 ﻿
 namespace Runtime.Parser.Production;
 
-public record ExplicitBreakpoint : Statement
+public record ExplicitBreakpoint(int Line) : Statement(Line)
 {
     public override string Debug()
     {

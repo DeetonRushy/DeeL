@@ -1,7 +1,7 @@
 ﻿
 namespace Runtime.Parser.Production.Conditions;
 
-public record Condition(Statement Left, Statement Right) : Statement
+public record Condition(Statement Left, Statement Right, int Line) : Statement(Line)
 {
     public override string Debug()
     {

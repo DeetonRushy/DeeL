@@ -4,7 +4,7 @@ using Runtime.Parser.Production;
 
 namespace Runtime.Interpreting;
 
-public record ReturnValue(object? Value) : Statement
+public record ReturnValue(object? Value, int Line) : Statement(Line)
 {
     public override string Debug()
     {

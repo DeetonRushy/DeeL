@@ -28,6 +28,6 @@ internal class DisallowFunction : ICallable
             unit.ModuleFlags[arg.ToString()!] = false;
         }
 
-        return new Literal(DToken.MakeVar(TokenType.Number), args.Length);
+        return new Literal(DToken.MakeVar(TokenType.Number), TypeHint.Integer, args.Length);
     }
 }

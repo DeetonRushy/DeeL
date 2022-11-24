@@ -9,6 +9,8 @@ namespace Runtime.Parser.Errors;
 
 public class DErrorHandler
 {
+    internal static List<string> SourceLines { get; set; } = new List<string>();
+
     private readonly IDictionary<DErrorCode, (DErrorLevel, string)> _defaultLevels
         = new Dictionary<DErrorCode, (DErrorLevel, string)>()
         {
@@ -32,14 +34,11 @@ public class DErrorHandler
             { DErrorCode.ExpFnKeyword, (DErrorLevel.All, "expected `fn`") }
         };
 
-    private readonly List<string> _contents;
-
     public DErrorLevel Level { get; set; }
     public List<DError> Errors { get; private set; }
 
-    public DErrorHandler(List<string> source)
+    public DErrorHandler()
     {
-        _contents = source;
         Errors = new List<DError>();
     }
 
@@ -71,7 +70,7 @@ public class DErrorHandler
 
     public string CreatePrettyErrorMessage(DToken token, string message, bool skipHighlight = false)
     {
-        var relevantContent = _contents.Skip(token.Line).FirstOrDefault();
+        var relevantContent = SourceLines.Skip(token.Line).FirstOrDefault();
         if (relevantContent is null)
         {
             throw new ParserException($"somehow there is no content at line {token.Line}?");

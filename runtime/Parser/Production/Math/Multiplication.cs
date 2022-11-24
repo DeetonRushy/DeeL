@@ -3,7 +3,7 @@ namespace Runtime.Parser.Production.Math;
 
 public record Multiplication : MathStatement
 {
-    public Multiplication(Statement Left, Statement Right) : base(Left, Right)
+    public Multiplication(Statement Left, Statement Right, int Line) : base(Left, Right, Line)
     {
     }
 

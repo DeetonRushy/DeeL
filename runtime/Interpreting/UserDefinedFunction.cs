@@ -43,20 +43,21 @@ public class UserDefinedFunction
         if (result is ReturnValue ret)
         {
             if (ret.Value is Statement s)
-                returnValue = new ReturnValue(s.Take(interpreter));
+                returnValue = new ReturnValue(s.Take(interpreter), s.Line);
             else
             {
-                returnValue = new ReturnValue(ret.Value);
+                // how??? to???? get???? Line?????
+                returnValue = new ReturnValue(ret.Value, 0);
             }
         }
         else if (result is Statement s)
         {
-            returnValue = new ReturnValue(s.Take(interpreter));
+            returnValue = new ReturnValue(s.Take(interpreter), s.Line);
         }
 
         interpreter._activeScope = prevScope;
 
-        return returnValue ?? new ReturnValue(Literal.Undefined);
+        return returnValue ?? new ReturnValue(Literal.Undefined, 0);
     }
 
     public override string ToString()

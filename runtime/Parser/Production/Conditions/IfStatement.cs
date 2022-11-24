@@ -1,6 +1,6 @@
 ﻿namespace Runtime.Parser.Production.Conditions;
 
-public record IfStatement(Statement Condition, Block SuccessBlock, Block? FallbackBlock) : Statement
+public record IfStatement(Statement Condition, Block SuccessBlock, Block? FallbackBlock, int Line) : Statement(Line)
 {
     public override string Debug()
     {

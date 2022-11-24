@@ -24,6 +24,7 @@ namespace Runtime.Interpreting.Calls.Builtins
             }
 
             return new Literal(DToken.MakeVar(TokenType.String),
+                TypeHint.String,
                 "0x" + Value.ToString("X8"));
         }
     }

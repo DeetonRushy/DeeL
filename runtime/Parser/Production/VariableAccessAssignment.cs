@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 
 namespace Runtime.Parser.Production;
 
-public record VariableAccessAssignment(VariableAccess Access, Statement Operand) : Statement
+public record VariableAccessAssignment(VariableAccess Access, TypeHint Hint, Statement Operand, int Line): Statement(Line)
 {
     public override string Debug()
     {

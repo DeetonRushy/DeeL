@@ -17,16 +17,19 @@ public class DParser
     private bool IsAtEnd => Peek().Type == TokenType.Eof;
     private int _current = 0;
     private bool _wasError = false;
-    private List<string> _source;
 
     private bool _panicked = false;
 
-    public DParser(List<DToken> tokens, List<string> source)
+    private readonly IDictionary<string, TypeHint> _staticHints;
+    private TypeHint GetTypeHintFor(string name) => _staticHints[name];
+
+    public DParser(List<DToken> tokens)
     {
         _tokens = tokens;
-        _source = source;
-        Errors = new DErrorHandler(_source);
+        Errors = new DErrorHandler();
         SetErrorLevel(DErrorLevel.All);
+
+        _staticHints = new Dictionary<string, TypeHint>();
     }
 
     public void SetErrorLevel(DErrorLevel level)
@@ -63,7 +66,7 @@ public class DParser
     private FunctionCall ParseFunction(DToken identifier)
     {
         var args = ParseFunctionArguments();
-        var call = new FunctionCall(identifier.Lexeme, args.ToArray());
+        var call = new FunctionCall(identifier.Lexeme, args.ToArray(), identifier.Line);
         return call;
     }
 
@@ -83,9 +86,9 @@ public class DParser
 
         if (Match(TokenType.ForcedBreakPoint))
         {
-            _ = Consume(TokenType.ForcedBreakPoint, DErrorCode.Default);
+            var @break = Consume(TokenType.ForcedBreakPoint, DErrorCode.Default);
             _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-            return new ExplicitBreakpoint();
+            return new ExplicitBreakpoint(@break.Line);
         }
 
         // grouping -- (190 * (92042 + 424))
@@ -100,7 +103,7 @@ public class DParser
             _ = Consume(TokenType.Return, DErrorCode.Default);
             // return could be used to just return..
             var value = ParseExpression();
-            return new ReturnValue(value);
+            return new ReturnValue(value, value.Line);
         }
 
         if (Match(TokenType.Module))
@@ -176,26 +179,27 @@ public class DParser
                 if (Peek().Type == TokenType.LeftParen)
                 {
                     var args = ParseFunctionArguments();
-                    var call = new FunctionCall(identifier, args.ToArray());
 
                     // in this context its okay to consume the linebreak I suppose?
                     // I feel all right-hand assignees should be parsed seperate.
-                    _ = Consume(TokenType.LineBreak, "Expected newline after function call");
+                    var @break = Consume(TokenType.LineBreak, "Expected newline after function call");
+                    var call = new FunctionCall(identifier, args.ToArray(),@break.Line);
+
 
                     return call;
                 }
 
                 if (Peek().Type == TokenType.Equals)
                 {
-                    _ = Consume(TokenType.Equals, "");
+                    var eq = Consume(TokenType.Equals, "");
                     var lit = ParseExpression();
                     _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
                     if (lit is Variable var)
-                        return new Assignment(new(identifier, TypeHint.Any), var);
-                    return new Assignment(new(identifier, TypeHint.Any), lit);
+                        return new Assignment(new(identifier, TypeHint.Any, eq.Line), var);
+                    return new Assignment(new(identifier, TypeHint.Any, eq.Line), lit);
                 }
 
-                return new Variable(identifier, TypeHint.Any);
+                throw new NotImplementedException("what even is this case..");
             }
         }
 
@@ -221,21 +225,24 @@ public class DParser
                 Errors.CreateWithMessage(colon, "expected a type annotation after ':'", true);
             }
             else
+            {
                 hint = new TypeHint(Advance().Lexeme);
+                _staticHints[identifier.Lexeme] = hint;
+            }
         }
         else
         {
             Errors.CreateWithMessage(identifier, $"expected type annotation after '{identifier.Lexeme}'", false);
         }
 
-        Consume(TokenType.Equals, DErrorCode.ExpEquals);
+        var _eq = Consume(TokenType.Equals, DErrorCode.ExpEquals);
 
         if (Match(TokenType.Identifier))
         {
             if (Peek(1).Type == TokenType.Access)
             {
                 var access = ParseVariableAccess();
-                return new Assignment(new Variable(identifier.Lexeme, hint), access);
+                return new Assignment(new Variable(identifier.Lexeme, hint, _eq.Line), access);
             }
 
             var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
@@ -247,17 +254,22 @@ public class DParser
                 // the function.
 
                 var call = ParseFunction(rhsIdentifier);
+                var lineBreak = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+                var returnType = GetTypeHintFor(call.Identifier);
 
-                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+                if (hint != returnType)
+                {
+                    Panic($"The call to '{call.Identifier}' returns `{returnType}`. The hint specified is `{hint}`. These do not match.");
+                }
 
-                return new Assignment(new(variableName, TypeHint.Func), call);
+                return new Assignment(new(variableName, hint, lineBreak.Line), call);
             }
 
             var contents = rhsIdentifier.Lexeme;
 
             if (!DVariables.GlobalSymbolExists(contents))
             {
-                return new Assignment(new Variable(contents, hint), new Variable(contents, TypeHint.Any));
+                return new Assignment(new Variable(contents, hint, rhsIdentifier.Line), new Variable(contents, TypeHint.Any, rhsIdentifier.Line));
             }
 
             /*
@@ -271,20 +283,18 @@ public class DParser
             var (tok, inst) = DVariables.GetValueFor(contents);
             var predicted = TypeHint.HintFromTokenType(tok.Type);
 
-            if (hint.Name != "any")
+            if (hint != predicted)
             {
-                if (hint != predicted)
-                {
-                    Errors.CreateWithMessage(identifier, $"possible type-mismatch - assigning type '{predicted.Name}' to '{hint.Name}'", true);
-                }
+                Errors.CreateWithMessage(identifier, $"possible type-mismatch - assigning type '{predicted.Name}' to '{hint.Name}'", true);
             }
-            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
 
-            return new Assignment(new(variableName, hint), new Literal(tok, inst));
+            var @break = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+
+            return new Assignment(new(variableName, hint, @break.Line), new Literal(tok, hint, inst));
         }
 
         var value = ParsePrimary();
-        return new Assignment(new(variableName, hint), value);
+        return new Assignment(new(variableName, hint, _eq.Line), value);
     }
 
     private Statement ParseWhileStatement()
@@ -296,7 +306,7 @@ public class DParser
 
         var body = ParseBlock();
 
-        return new WhileStatement(condition, body);
+        return new WhileStatement(condition, body, condition.Line);
     }
 
     private IfStatement ParseIfStatement()
@@ -311,13 +321,13 @@ public class DParser
 
         if (!Match(TokenType.Else))
         {
-            return new IfStatement(cond, body, null);
+            return new IfStatement(cond, body, null, cond.Line);
         }
 
-        _ = Consume(TokenType.Else, string.Empty);
+        var @else = Consume(TokenType.Else, string.Empty);
         var fallbackBlock = ParseBlock();
 
-        return new IfStatement(cond, body, fallbackBlock);
+        return new IfStatement(cond, body, fallbackBlock, @else.Line);
     }
 
     private Condition ParseCondition()
@@ -328,8 +338,8 @@ public class DParser
 
         return op.Type switch
         {
-            TokenType.NotEqual => new IsNotEqual(left, right),
-            TokenType.EqualComparison => new IsEqual(left, right),
+            TokenType.NotEqual => new IsNotEqual(left, right, op.Line),
+            TokenType.EqualComparison => new IsEqual(left, right, op.Line),
             _ => throw new NotSupportedException($"the operator '{op.Type}' is not yet implemented.")
         };
     }
@@ -355,8 +365,8 @@ public class DParser
 
         // } 
         _ = Consume(TokenType.RightBrace, "Expected right brace after struct declaration");
-
-        return new StructDeclaration(identifier.Lexeme, declarations);
+        _staticHints[identifier.Lexeme] = new TypeHint(identifier.Lexeme);
+        return new StructDeclaration(identifier.Lexeme, declarations, identifier.Line);
     }
 
     private void Panic(string message)
@@ -389,9 +399,9 @@ public class DParser
                 var accessExpression = ParseVariableAccess();
                 if (!Match(TokenType.Equals))
                     return accessExpression;
-                _ = Consume(TokenType.Equals, "");
+                var eq = Consume(TokenType.Equals, "");
                 var rhs = ParseExpression();
-                return new VariableAccessAssignment(accessExpression, rhs);
+                return new VariableAccessAssignment(accessExpression, GetHintFromOperand(rhs), rhs, eq.Line);
             }
 
             var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
@@ -413,7 +423,7 @@ public class DParser
 
             if (!DVariables.GlobalSymbolExists(contents))
             {
-                return new Variable(contents, TypeHint.Any);
+                return new Variable(contents, TypeHint.Any, rhsIdentifier.Line);
             }
 
             /*
@@ -424,17 +434,27 @@ public class DParser
              * But it's worth it.
              */
 
-            return new Variable(contents, TypeHint.Any);
+            return new Variable(contents, TypeHint.Any, rhsIdentifier.Line);
         }
 
         return ParseLiteral();
+    }
+
+    private TypeHint GetHintFromOperand(Statement operand)
+    {
+        if (operand is Declaration decl)
+            return decl.Type;
+        if (operand is Literal literal)
+            return literal.Type;
+
+        return TypeHint.Any;
     }
 
     // FIXME: ParseMathStatement relies on there being a left and right operand.
     // This causes it to try and consume parens and shit.
     private Grouping ParseGrouping()
     {
-        _ = Consume(TokenType.LeftParen, "Expected grouping opener.");
+        var start = Consume(TokenType.LeftParen, "Expected grouping opener.");
         var statements = new List<Statement>();
 
         while (!Match(TokenType.RightParen))
@@ -453,7 +473,7 @@ public class DParser
         }
 
         _ = Consume(TokenType.RightParen, "expected end of grouping.");
-        return new Grouping(statements);
+        return new Grouping(statements, start.Line);
     }
 
     private MathStatement ParseMathStatement()
@@ -475,26 +495,28 @@ public class DParser
             if (Match(TokenType.LeftParen))
                 statement = ParseFunction(identifier: identifier!);
             else
-                statement = new Variable(identifier.Lexeme, TypeHint.Any);
+                statement = new Variable(identifier.Lexeme, TypeHint.Any, identifier.Line);
         }
         else if (Match(TokenType.LeftParen))
             statement = ParseGrouping();
         else
             statement = ParseLiteral();
 
+        var line = statement.Line;
+
         return op.Type switch
         {
-            TokenType.Plus => new Addition(left, statement!),
-            TokenType.Minus => new Subtraction(left, statement!),
-            TokenType.Star => new Multiplication(left, statement!),
-            TokenType.Divide => new Division(left, statement!),
+            TokenType.Plus => new Addition(left, statement!, line),
+            TokenType.Minus => new Subtraction(left, statement!, line),
+            TokenType.Star => new Multiplication(left, statement!, line),
+            TokenType.Divide => new Division(left, statement!, line),
             _ => throw new ParserException($"unhandled math operator '{op.Type}'")
         };
     }
 
     private ModuleIdentity ParseModuleIdentifier()
     {
-        _ = Consume(TokenType.Module, DErrorCode.ExpKeyword);
+        var mod = Consume(TokenType.Module, DErrorCode.ExpKeyword);
         var identifier = ParseLiteral();
 
         if (identifier is not Literal Id)
@@ -504,7 +526,7 @@ public class DParser
         }
 
         _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-        return new ModuleIdentity(Id);
+        return new ModuleIdentity(Id, mod.Line);
     }
 
     private FunctionDeclaration ParseFunctionDeclaration()
@@ -553,7 +575,9 @@ public class DParser
         var body = ParseBlock();
         var hint = annotation != null ? new(annotation) : TypeHint.Any;
 
-        return new FunctionDeclaration(identifier.Lexeme, arguments, body, hint);
+        _staticHints[identifier.Lexeme] = hint;
+
+        return new FunctionDeclaration(identifier.Lexeme, arguments, body, hint, paren.Line);
     }
 
     private Block ParseBlock()
@@ -595,7 +619,8 @@ public class DParser
             open,
             // hacky fix to sort the above loop adding an extra null element..
             elements.ToArray(), 
-            close);
+            close,
+            open.Line);
     }
 
     private Statement ParseDictDeclaration()
@@ -617,14 +642,14 @@ public class DParser
             {
                 // recursive, need to be careful about this.
                 var dict = ParseDictDeclaration();
-                elements.Add(new DictAssignment(key, colon, dict));
+                elements.Add(new DictAssignment(key, colon, dict, dict.Line));
                 continue;
             }
 
             if (Match(TokenType.ListOpen))
             {
                 var list = ParseListDeclaration();
-                elements.Add(new DictAssignment(key, colon, list));
+                elements.Add(new DictAssignment(key, colon, list, list.Line));
                 continue;
             }
 
@@ -639,12 +664,12 @@ public class DParser
                 return null!;
             }
 
-            elements.Add(new DictAssignment(key, colon, value));
+            elements.Add(new DictAssignment(key, colon, value, value.Line));
 
         } while (MatchAndAdvance(TokenType.Comma));
 
         var close = Consume(TokenType.RightBrace, DErrorCode.ExpRightBrace);
-        return new Dict(open, elements.ToArray(), close);
+        return new Dict(open, elements.ToArray(), close, close.Line);
     }
 
     private Statement ParseLiteral()
@@ -663,14 +688,14 @@ public class DParser
         if (value.Type == TokenType.Identifier)
         {
             // FIXME: literal is reserved for literals, not identifiers?? retard
-            return new Variable(contents, TypeHint.Any, false);
+            return new Variable(contents, TypeHint.Any, value.Line, false);
         }
 
         if (value.Type == TokenType.Decimal)
         {
             if (value.Literal is decimal dec)
             {
-                return new Literal(value, dec);
+                return new Literal(value, TypeHint.Decimal, dec);
             }
 
             // wasn't set in the lexer, attempt to convert it here.
@@ -681,14 +706,14 @@ public class DParser
                     ParserException("decimal literal could not be parsed.");
             }
 
-            return new Literal(value, dec2);
+            return new Literal(value, TypeHint.Decimal, dec2);
         }
 
         if (value.Type == TokenType.Number)
         {
             if (value.Literal is long l)
             {
-                return new Literal(value, l);
+                return new Literal(value, TypeHint.Integer, l);
             }
 
             // wasnt set in the lexer, attempt to convert it here.
@@ -699,7 +724,7 @@ public class DParser
                     ParserException("number literal could not be parsed.");
             }
 
-            return new Literal(value, l2);
+            return new Literal(value, TypeHint.Integer, l2);
         }
 
         if (value.Type == TokenType.Boolean)
@@ -710,13 +735,13 @@ public class DParser
                     ParserException("boolean literal could not be parsed.");
             }
 
-            return new Literal(value, b);
+            return new Literal(value, TypeHint.Boolean, b);
         }
 
         if (value.Type == TokenType.String)
         {
             var str = value.Lexeme;
-            return new Literal(value, str);
+            return new Literal(value, TypeHint.String, str);
         }
 
         throw new ParserException($"literal is of type {value.Type}, which has not been implemented in DParser.ParseLiteral()");
@@ -746,19 +771,21 @@ public class DParser
 
         // FIXME:
         var hint = annotation != null ? new TypeHint(annotation) : TypeHint.Any;
-        return new Variable(identifier.Lexeme, hint);
+        return new Variable(identifier.Lexeme, hint, identifier.Line);
     }
 
     private VariableAccess ParseVariableAccess()
     {
+        var first = Consume(TokenType.Identifier, "expected identifier");
+
         List<Statement> allIdentifiers = new()
         {
-            new Variable(Consume(TokenType.Identifier, "expected identifier").Lexeme, TypeHint.Any, false)
+            new Variable(first.Lexeme, TypeHint.Any, first.Line, false)
         };
 
         while (Match(TokenType.Access))
         {
-            _ = Consume(TokenType.Access, "expected accessor");
+            var accessor = Consume(TokenType.Access, "expected accessor");
             var next = Consume(TokenType.Identifier, "expected identifier after '::'");
             if (next is null)
                 break;
@@ -769,10 +796,10 @@ public class DParser
                 allIdentifiers.Add(ParseFunction(next));
                 continue;
             }
-            allIdentifiers.Add(new Variable(next.Lexeme, TypeHint.Any, false));
+            allIdentifiers.Add(new Variable(next.Lexeme, TypeHint.Any, accessor.Line, false));
         }
 
-        return new VariableAccess(allIdentifiers);
+        return new VariableAccess(allIdentifiers, first.Line);
     }
 
     private Statement ParseFunctionArgument()
@@ -795,11 +822,11 @@ public class DParser
 
             if (!DVariables.GlobalSymbolExists(contents))
             {
-                return new Variable(contents, TypeHint.Any);
+                return new Variable(contents, TypeHint.Any, identifier.Line);
             }
 
             var (tok, inst) = DVariables.GetValueFor(contents);
-            return new Literal(DToken.MakeVar(tok.Type), inst);
+            return new Literal(DToken.MakeVar(tok.Type), TypeHint.HintFromTokenType(tok.Type), inst);
         }
 
         return ParseLiteral();

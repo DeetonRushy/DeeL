@@ -2,7 +2,7 @@ using Runtime.Lexer;
 
 namespace Runtime.Parser.Production;
 
-public record Assignment(Declaration Declaration, Statement Statement) : Statement
+public record Assignment(Declaration Decl, Statement Statement) : Statement(Decl.Line)
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {
@@ -11,6 +11,6 @@ public record Assignment(Declaration Declaration, Statement Statement) : Stateme
 
     public override string Debug()
     {
-        return $"Variable(Name: '{Declaration.Name}')";
+        return $"Variable(Name: '{Decl.Name}')";
     }
 }

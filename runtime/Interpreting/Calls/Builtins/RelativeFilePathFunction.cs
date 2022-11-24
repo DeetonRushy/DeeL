@@ -29,6 +29,7 @@ public class RelativeFilePathFunction : ICallable
 
         return new Literal(
             new Lexer.DToken { Type = Lexer.TokenType.String, Lexeme = relative },
+            TypeHint.String,
             relative
             );
     }

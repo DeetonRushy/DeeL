@@ -69,7 +69,7 @@ public class DLexer
         _lexeme = string.Empty;
         _position = -1;
 
-        errorHandler = new(contents.Split('\n').ToList());
+        errorHandler = new();
     }
 
     /// <summary>

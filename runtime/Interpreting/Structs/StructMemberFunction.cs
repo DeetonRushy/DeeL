@@ -64,13 +64,14 @@ public class StructMemberFunction : IStructFunction
         {
             if (@return.Value is Variable or Literal)
             {
-                returnValue = new ReturnValue((@return.Value as Statement)!.Take(interpreter));
+                returnValue = new ReturnValue((@return.Value as Statement)!.Take(interpreter), (@return.Value as Statement)!.Line);
             }
             else
                 returnValue = @return;
         }
 
         interpreter._activeScope = prev;
-        return returnValue ?? new ReturnValue(Interpreter.Undefined);
+        // how to get line info..
+        return returnValue ?? new ReturnValue(Interpreter.Undefined, 0);
     }
 }

@@ -28,10 +28,11 @@ public class IncludeFunction : ICallable
 
         if (!File.Exists(path))
         {
-            return new Literal(DToken.MakeVar(TokenType.Boolean), false);
+            return new Literal(DToken.MakeVar(TokenType.String), TypeHint.String,  "undefined");
         }
 
         return new Literal(DToken.MakeVar(TokenType.String),
+            TypeHint.String,
             File.ReadAllText(path));
     }
 }
