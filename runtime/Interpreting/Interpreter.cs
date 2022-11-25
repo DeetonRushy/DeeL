@@ -67,7 +67,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     private Statement Peek()
         => Statements[Position];
 
-    private void Panic(string message)
+    internal void Panic(string message)
     {
         Errors.CreateWithMessage(new DToken { Line = Peek().Line }, message, true);
         Errors.DisplayErrors();
@@ -444,7 +444,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         if (!left.IsIntegral() || !right.IsIntegral())
         {
-            Panic($"cannot perform multiplaction between `{left}` and `{right}`");
+            Panic($"cannot perform multiplication between `{left}` and `{right}`");
         }
 
         if (left is decimal lDec && right is decimal rDec) return lDec * rDec;

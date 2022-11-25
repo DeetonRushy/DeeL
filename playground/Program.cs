@@ -10,21 +10,14 @@ try
     var source = @"
 mod 'DL';
 
-object Other {
-  fn construct(self) -> void {
-    self::age = 19;
-  }
-}
-
 object User {
-  fn construct(self) -> void {
-    self::name = 'deeton';
-    self::other = Other();
+  fn construct(self: User) -> void {
+    self::name = 'user';
   }
 }
 
-let me: User = User();
-writeln(me::other::age);
+let user: User = User('hello');
+writeln(user::name);
 ";
     ctx = DlRuntime.Run(source, false);
 

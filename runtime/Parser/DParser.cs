@@ -1,4 +1,3 @@
-using Microsoft.VisualBasic;
 using System.Runtime.CompilerServices;
 using Runtime.Lexer;
 using Runtime.Parser.Errors;
@@ -147,12 +146,6 @@ public class DParser
 
         var primary = ParsePrimary();
 
-        if (Match(TokenType.Minus, TokenType.Star, TokenType.Plus, TokenType.Divide))
-        {
-            var mathStatement = HalfParseMathStatement(primary);
-            return mathStatement;
-        }
-
         if (Match(TokenType.Equals))
         {
             _ = Consume(TokenType.Equals, "");
@@ -184,7 +177,6 @@ public class DParser
                     // I feel all right-hand assignees should be parsed seperate.
                     var @break = Consume(TokenType.LineBreak, "Expected newline after function call");
                     var call = new FunctionCall(identifier, args.ToArray(),@break.Line);
-
 
                     return call;
                 }
@@ -236,6 +228,7 @@ public class DParser
         }
 
         var _eq = Consume(TokenType.Equals, DErrorCode.ExpEquals);
+        var variable = new Variable(identifier.Lexeme, hint, identifier.Line, true);
 
         if (Match(TokenType.Identifier))
         {
@@ -246,6 +239,12 @@ public class DParser
             }
 
             var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+
+            if (Match(TokenType.Minus, TokenType.Star, TokenType.Plus, TokenType.Divide))
+            {
+                var mathStatement = HalfParseMathStatement(new Variable(rhsIdentifier.Lexeme, TypeHint.Integer, rhsIdentifier.Line, false));
+                return new Assignment(variable, mathStatement);
+            }
 
             if (Peek().Type == TokenType.LeftParen)
             {
@@ -288,9 +287,7 @@ public class DParser
                 Errors.CreateWithMessage(identifier, $"possible type-mismatch - assigning type '{predicted.Name}' to '{hint.Name}'", true);
             }
 
-            var @break = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-
-            return new Assignment(new(variableName, hint, @break.Line), new Literal(tok, hint, inst));
+            return new Assignment(new(variableName, hint, rhsIdentifier.Line), new Literal(tok, hint, inst));
         }
 
         var value = ParsePrimary();
@@ -356,7 +353,7 @@ public class DParser
         {
             // parse expression when parsing a declaration?
             var next = ParseExpression();
-            if (next is not FunctionDeclaration or Assignment)
+            if (next is not FunctionDeclaration)
             {
                 Panic("declarations within a struct must be a function or member variable.");
             }
@@ -371,9 +368,10 @@ public class DParser
 
     private void Panic(string message)
     {
-        var current = Peek();
+        var current = Peek(-1);
         Errors.CreateWithMessage(current, message, true);
-
+        Errors.DisplayErrors();
+        Environment.Exit(-1);
     }
 
     private Statement ParsePrimary()
@@ -399,12 +397,18 @@ public class DParser
                 var accessExpression = ParseVariableAccess();
                 if (!Match(TokenType.Equals))
                     return accessExpression;
-                var eq = Consume(TokenType.Equals, "");
+                var eq = Consume(TokenType.Equals, $"Expected `=`");
                 var rhs = ParseExpression();
                 return new VariableAccessAssignment(accessExpression, GetHintFromOperand(rhs), rhs, eq.Line);
             }
 
             var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
+
+            if (Match(TokenType.Minus, TokenType.Star, TokenType.Plus, TokenType.Divide))
+            {
+                var mathStatement = HalfParseMathStatement(new Variable(rhsIdentifier.Lexeme, TypeHint.Integer, rhsIdentifier.Line, false));
+                return mathStatement;
+            }
 
             if (Peek().Type == TokenType.LeftParen)
             {
@@ -437,7 +441,15 @@ public class DParser
             return new Variable(contents, TypeHint.Any, rhsIdentifier.Line);
         }
 
-        return ParseLiteral();
+        var literal = ParseLiteral();
+
+        if (Match(TokenType.Minus, TokenType.Star, TokenType.Plus, TokenType.Divide))
+        {
+            var mathStatement = HalfParseMathStatement(literal);
+            return mathStatement;
+        }
+
+        return literal;
     }
 
     private TypeHint GetHintFromOperand(Statement operand)
@@ -860,7 +872,7 @@ public class DParser
             return Advance();
         }
 
-        Errors.CreateWithMessage(Peek(), message, true);
+        Panic(message);
         return null!;
     }
 

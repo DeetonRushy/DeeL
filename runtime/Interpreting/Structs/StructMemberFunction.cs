@@ -43,7 +43,7 @@ public class StructMemberFunction : IStructFunction
 
             if (args.Count != (_expectedArguments.Count - 1))
             {
-                throw new Exceptions.InterpreterException($"function `{instance.Name}::{Name}` expects {_expectedArguments.Count} argument(s), but got {args.Count}.");
+                interpreter.Panic($"function `{instance.Name}::{Name}` expects {_expectedArguments.Count - 1} argument(s), but got {args.Count}.");
             }
         }
 
