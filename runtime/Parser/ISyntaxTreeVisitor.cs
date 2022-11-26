@@ -37,4 +37,5 @@ public interface ISyntaxTreeVisitor<T>
     public T VisitIsNotEquals(IsNotEqual isNotEqual);
     public T VisitWhileLoop(WhileStatement whileStatement);
     public T VisitVariableAccessAssignment(VariableAccessAssignment variableAccessAssignment);
+    public T VisitEntityIndex(EntityIndex entityIndex);
 }

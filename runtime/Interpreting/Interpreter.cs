@@ -658,4 +658,53 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     public object Visit(Statement st)
         => st.Take(this);
+
+    public object VisitEntityIndex(EntityIndex entityIndex)
+    {
+        var entity = Visit(entityIndex.Entity);
+
+        if (entity is not IDictionary<object, object> or IList<object>)
+        {
+            Panic($"cannot index an entity of type {entity.GetType()}");
+        }
+
+        object? current = null;
+        for (int i = 0; i < entityIndex.Indices.Count; i++)
+        {
+            var index = Visit(entityIndex.Indices[i]);
+
+            if (current == null)
+            {
+                current = IndexEntity(entity, index);
+            }
+            else
+            {
+                current = IndexEntity(current, index);
+            }
+        }
+
+        return current ?? Undefined;
+    }
+
+    public object IndexEntity(object entity, object accessor)
+    {
+        if (entity is List<object> list)
+        {
+            if (accessor is not long l)
+            {
+                Panic($"cannot access type `list` with `{accessor.GetType()}`");
+                return null!;
+            }
+
+            return list[(int)l];
+        }
+
+        if (entity is Dictionary<object, object> dict)
+        {
+            return dict[accessor];
+        }
+
+        Panic("Type is not able to indexed");
+        return null!;
+    }
 }
