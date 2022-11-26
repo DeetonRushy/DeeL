@@ -25,9 +25,9 @@ namespace Runtime.Interpreting.Calls.Builtins
                 throw new BadArgumentsException("environment variable names can only be a string.");
             }
 
-            var value = Environment.GetEnvironmentVariable(variable??"");
+            var value = Environment.GetEnvironmentVariable(variable ?? "");
 
-            return new  Literal(DToken.MakeVar(TokenType.String),
+            return new Literal(DToken.MakeVar(TokenType.String),
                 TypeHint.String, value ?? Interpreter.Undefined);
         }
     }

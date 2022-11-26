@@ -1,18 +1,15 @@
-using Runtime.Parser.Errors;
 using Runtime.Interpreting.Calls;
 using Runtime.Interpreting.Exceptions;
-using Runtime.Lexer;
-using Runtime.Parser;
-using Runtime.Parser.Production;
-using System.Runtime.InteropServices.ObjectiveC;
-using System.Runtime.CompilerServices;
-using System.Diagnostics;
-using Runtime.Parser.Production.Math;
 using Runtime.Interpreting.Extensions;
 using Runtime.Interpreting.Structs;
+using Runtime.Lexer;
+using Runtime.Parser;
+using Runtime.Parser.Errors;
+using Runtime.Parser.Production;
 using Runtime.Parser.Production.Conditions;
+using Runtime.Parser.Production.Math;
+using System.Diagnostics;
 using System.Reflection;
-using System.Xml.Linq;
 
 namespace Runtime.Interpreting;
 
@@ -55,9 +52,9 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     // dont look..
     internal object GetFromEither(object key)
-        => _global.Contains(key) 
-            ? _global.GetValue(key) 
-            : _activeScope != null 
+        => _global.Contains(key)
+            ? _global.GetValue(key)
+            : _activeScope != null
                ? _activeScope.Contains(key) ? _activeScope.GetValue(key) : Undefined
                : Undefined;
 
@@ -76,7 +73,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     public Interpreter(List<Statement> ast)
     {
-        _calls = new CallCenter();        
+        _calls = new CallCenter();
         _global = new RuntimeStorage("<global>");
         Statements = ast;
 
@@ -151,7 +148,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             return _global.Assign(name, value);
         }
 
-        return _activeScope != null 
+        return _activeScope != null
             ? _activeScope.Assign(name, value)
             : _global.Assign(name, value);
     }
@@ -296,7 +293,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     public object VisitModuleIdentity(ModuleIdentity moduleIdentity)
     {
         var identifier = moduleIdentity.ModuleName.Take(this);
-        
+
         if (identifier is not string id)
         {
             DisplayErr($"failed to set module identity to '{identifier}', name must be a string.");
@@ -369,7 +366,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     internal void ModLog(string message)
     {
-        if (AllowsStdout) 
+        if (AllowsStdout)
         {
             Console.WriteLine($"({Identity}): {message}");
         }
@@ -526,7 +523,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 else
                 {
                     var id = current?.GetValue(call.Identifier);
-                    if (id is not IStructFunction smf || current is null) 
+                    if (id is not IStructFunction smf || current is null)
                     {
                         throw new InterpreterException("extreme confusion");
                     }
@@ -704,7 +701,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             return dict[accessor];
         }
 
-        Panic("Type is not able to indexed");
+        Panic("Type is not able to be indexed");
         return null!;
     }
 }

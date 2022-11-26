@@ -1,5 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using Runtime.Lexer;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Runtime.Parser;
 
@@ -8,7 +8,7 @@ public static class DVariables
     /// <summary>
     /// All globally defined symbols must be inserted here in order to be processed.
     /// </summary>
-    public static readonly IDictionary<string, (DToken, object)> Variables 
+    public static readonly IDictionary<string, (DToken, object)> Variables
         = new Dictionary<string, (DToken, object)>()
         {
             { "cwd", (DToken.MakeVar(TokenType.String), Directory.GetCurrentDirectory()) },

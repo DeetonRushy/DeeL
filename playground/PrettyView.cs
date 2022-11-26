@@ -1,8 +1,8 @@
 ﻿
-using Runtime.Lexer;
-using System.Text;
 using Pastel;
+using Runtime.Lexer;
 using System.Drawing;
+using System.Text;
 
 namespace playground;
 

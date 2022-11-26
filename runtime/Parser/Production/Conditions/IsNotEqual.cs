@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Runtime.Parser.Production.Conditions;
+﻿namespace Runtime.Parser.Production.Conditions;
 
 public record IsNotEqual : Condition
 {

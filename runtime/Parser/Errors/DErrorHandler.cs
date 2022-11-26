@@ -1,9 +1,8 @@
+using Pastel;
 using Runtime.Lexer;
 using Runtime.Parser.Exceptions;
-using System.Text;
-
-using Pastel;
 using System.Drawing;
+using System.Text;
 
 namespace Runtime.Parser.Errors;
 
@@ -45,7 +44,7 @@ public class DErrorHandler
     public void CreateDefault(DErrorCode code, int line = -1)
     {
         if (!_defaultLevels.TryGetValue(code, out var defaults))
-            throw new 
+            throw new
                 NotImplementedException(
                 $"please implement DErrorCode.{code} in {nameof(DErrorHandler)}.{nameof(_defaultLevels)}");
 
@@ -59,7 +58,7 @@ public class DErrorHandler
 
         // display default message.
 
-        DError error = new ()
+        DError error = new()
         {
             Code = code,
             Message = $"DL{(int)code} {code}: {message} [line {line}]"
@@ -100,7 +99,7 @@ public class DErrorHandler
     public void CreateWithMessage(DToken token, string message, bool skipHighlight)
     {
         var pretty = CreatePrettyErrorMessage(token, message, skipHighlight);
-        Errors.Add(new DError() { Code = DErrorCode.Default, Message = pretty }); 
+        Errors.Add(new DError() { Code = DErrorCode.Default, Message = pretty });
     }
 
     public void CreateDefaultWithToken(DErrorCode code, DToken token, string thrower, int callingLineNumber)

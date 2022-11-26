@@ -1,4 +1,3 @@
-using Microsoft.VisualBasic;
 using Runtime.Lexer.Exceptions;
 using Runtime.Parser.Errors;
 using static Runtime.Lexer.DConstants;
@@ -78,7 +77,7 @@ public class DLexer
     /// <param name="info">The file to attempt to read the source contents from</param>
     public DLexer(FileInfo info)
         : this(File.ReadAllText(info.FullName))
-    {}
+    { }
 
     public List<DToken> Lex()
     {
@@ -122,7 +121,7 @@ public class DLexer
         _tokens.Add(new DToken { Type = TokenType.Eof });
         return _tokens;
     }
-    
+
     private DToken? LexSingle()
     {
         // Dont inline, makes debugging near impossible.
@@ -130,27 +129,27 @@ public class DLexer
 
         switch (ch)
         {
-            case ListOpen:  
+            case ListOpen:
                 return MakeToken(TokenType.ListOpen);
-            case ListClose: 
+            case ListClose:
                 return MakeToken(TokenType.ListClose);
-            case LeftBrace: 
+            case LeftBrace:
                 return MakeToken(TokenType.LeftBrace);
-            case RightBrace: 
+            case RightBrace:
                 return MakeToken(TokenType.RightBrace);
-            case Comma: 
+            case Comma:
                 return MakeToken(TokenType.Comma);
-            case LineBreak: 
+            case LineBreak:
                 return MakeToken(TokenType.LineBreak);
-            case Comment: 
+            case Comment:
                 return LexComment();
-            case EOF: 
+            case EOF:
                 return MakeToken(TokenType.Eof);
-            case Endline: 
+            case Endline:
                 return MakeToken(TokenType.Newline);
-            case WindowsGarbage: 
+            case WindowsGarbage:
                 return null;
-            case Whitespace: 
+            case Whitespace:
                 return MakeToken(TokenType.Whitespace);
             case DConstants.Equals:
                 {
@@ -179,13 +178,14 @@ public class DLexer
                     }
                     return MakeToken(TokenType.Colon);
                 }
-            case LeftParen: 
+            case LeftParen:
                 return MakeToken(TokenType.LeftParen);
-            case RightParen: 
+            case RightParen:
                 return MakeToken(TokenType.RightParen);
             case Minus:
                 {
-                    if (Peek() == GreaterThan) {
+                    if (Peek() == GreaterThan)
+                    {
                         _ = Advance();
                         return MakeToken(TokenType.Arrow);
                     }
@@ -371,7 +371,7 @@ public class DLexer
                 LexerPanic("unexpected end-of-file while lexing an identifier.");
             }
 
-            if (Peek() == LineBreak || Peek() == EOF || 
+            if (Peek() == LineBreak || Peek() == EOF ||
                 Peek() is LeftParen or RightParen or Comma or Colon or LeftBrace)
                 break;
 
@@ -403,7 +403,7 @@ public class DLexer
 
     DToken MakeToken(TokenType type)
     {
-        var res = new DToken ()
+        var res = new DToken()
         {
             Lexeme = _lexeme,
             Type = type,

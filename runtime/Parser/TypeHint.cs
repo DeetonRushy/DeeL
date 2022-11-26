@@ -1,13 +1,12 @@
 ﻿
 
 using Runtime.Lexer;
-using System.Data.Common;
 
 namespace Runtime.Parser;
 
 public class TypeHint
 {
-    public static TypeHint String => new ("string") { IsString = true };
+    public static TypeHint String => new("string") { IsString = true };
     public static TypeHint Boolean => new("boolean");
     public static TypeHint Integer => new("integer") { IsIntegral = true };
     public static TypeHint Decimal => new("float") { IsIntegral = true };

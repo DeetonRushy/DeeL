@@ -28,7 +28,7 @@ public class UserDefinedFunction
         }
 
         // populate the local scope with the arguments
-        for(int i = 0; i < ExpectedArguments.Count; ++i)
+        for (int i = 0; i < ExpectedArguments.Count; ++i)
         {
             var value = receivedArguments[i].Take(interpreter);
             interpreter._activeScope.Assign(ExpectedArguments[i].Name, value);

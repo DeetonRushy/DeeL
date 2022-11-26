@@ -1,5 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
-
 namespace Runtime.Lexer;
 
 public static class DConstants
@@ -19,19 +17,19 @@ public static class DConstants
 
     public const char EOF = '\0';
 
-    public const char LeftBrace =   '{';
-    public const char RightBrace =  '}';
+    public const char LeftBrace = '{';
+    public const char RightBrace = '}';
 
-    public const char Comma =      ',';
+    public const char Comma = ',';
     public new const char Equals = '=';
 
-    public const char ListOpen =   '[';
-    public const char ListClose =  ']';
+    public const char ListOpen = '[';
+    public const char ListClose = ']';
 
-    public const char LeftParen =   '(';
-    public const char RightParen =  ')';
+    public const char LeftParen = '(';
+    public const char RightParen = ')';
 
-    public const char Colon =      ':';
+    public const char Colon = ':';
 
     public const string Null = "null";
 
@@ -46,13 +44,13 @@ public static class DConstants
     /// Attempt to work this into the source, in a way that would allow this to be changed to '\n'
     /// without many problems.
     /// </summary>
-    public const char Endline =        '\n';
-    public const char LineBreak =      ';';
+    public const char Endline = '\n';
+    public const char LineBreak = ';';
 
     public const char WindowsGarbage = '\r';
-    public const char Whitespace =     ' ';
+    public const char Whitespace = ' ';
 
-    public const char Comment =        '#';
+    public const char Comment = '#';
 
     public static readonly List<string> BooleanValues = new()
     {

@@ -1,9 +1,6 @@
-﻿
-using System.Linq.Expressions;
+﻿namespace Runtime.Parser.Production;
 
-namespace Runtime.Parser.Production;
-
-public record VariableAccessAssignment(VariableAccess Access, TypeHint Hint, Statement Operand, int Line): Statement(Line)
+public record VariableAccessAssignment(VariableAccess Access, TypeHint Hint, Statement Operand, int Line) : Statement(Line)
 {
     public override string Debug()
     {

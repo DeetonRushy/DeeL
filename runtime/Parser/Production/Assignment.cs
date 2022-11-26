@@ -1,5 +1,3 @@
-using Runtime.Lexer;
-
 namespace Runtime.Parser.Production;
 
 public record Assignment(Declaration Decl, Statement Statement) : Statement(Decl.Line)

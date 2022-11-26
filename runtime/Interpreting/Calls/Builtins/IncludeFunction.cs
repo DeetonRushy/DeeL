@@ -1,4 +1,3 @@
-using Runtime.Interpreting.Calls;
 using Runtime.Interpreting.Exceptions;
 using Runtime.Lexer;
 using Runtime.Parser;
@@ -28,7 +27,7 @@ public class IncludeFunction : ICallable
 
         if (!File.Exists(path))
         {
-            return new Literal(DToken.MakeVar(TokenType.String), TypeHint.String,  "undefined");
+            return new Literal(DToken.MakeVar(TokenType.String), TypeHint.String, "undefined");
         }
 
         return new Literal(DToken.MakeVar(TokenType.String),

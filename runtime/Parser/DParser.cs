@@ -1,11 +1,11 @@
-using System.Runtime.CompilerServices;
+using Runtime.Interpreting;
 using Runtime.Lexer;
 using Runtime.Parser.Errors;
 using Runtime.Parser.Exceptions;
 using Runtime.Parser.Production;
-using Runtime.Interpreting;
-using Runtime.Parser.Production.Math;
 using Runtime.Parser.Production.Conditions;
+using Runtime.Parser.Production.Math;
+using System.Runtime.CompilerServices;
 
 namespace Runtime.Parser;
 
@@ -154,7 +154,7 @@ public class DParser
 
             if (primary is Variable @var)
 
-            return new Assignment(@var, assignmentValue);
+                return new Assignment(@var, assignmentValue);
         }
 
         if (primary is Literal literal)
@@ -176,7 +176,7 @@ public class DParser
                     // in this context its okay to consume the linebreak I suppose?
                     // I feel all right-hand assignees should be parsed seperate.
                     var @break = Consume(TokenType.LineBreak, "Expected newline after function call");
-                    var call = new FunctionCall(identifier, args.ToArray(),@break.Line);
+                    var call = new FunctionCall(identifier, args.ToArray(), @break.Line);
 
                     return call;
                 }
@@ -571,7 +571,7 @@ public class DParser
             var arrow = Advance(); // consume arrow
             if (!Match(TokenType.Identifier))
             {
-                Errors.CreateWithMessage(arrow, "expected a type hint.", true); 
+                Errors.CreateWithMessage(arrow, "expected a type hint.", true);
             }
             else
             {
@@ -630,7 +630,7 @@ public class DParser
         return new List(
             open,
             // hacky fix to sort the above loop adding an extra null element..
-            elements.ToArray(), 
+            elements.ToArray(),
             close,
             open.Line);
     }
@@ -714,7 +714,7 @@ public class DParser
 
             if (!decimal.TryParse(contents, out decimal dec2))
             {
-                throw new 
+                throw new
                     ParserException("decimal literal could not be parsed.");
             }
 

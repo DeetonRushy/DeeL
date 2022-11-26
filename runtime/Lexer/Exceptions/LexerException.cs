@@ -9,7 +9,7 @@ public class LexerException : Exception
     public LexerException(string message, Exception inner) : base(message, inner) { }
     protected LexerException(
         System.Runtime.Serialization.SerializationInfo info,
-        System.Runtime.Serialization.StreamingContext context) 
-    : base(info, context) 
-    {}
+        System.Runtime.Serialization.StreamingContext context)
+    : base(info, context)
+    { }
 }

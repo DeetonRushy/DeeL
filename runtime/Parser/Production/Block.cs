@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Runtime.Parser.Production;
+﻿namespace Runtime.Parser.Production;
 
 // a block is not a statement, this wording is fucked
 // line zero because each statement will be processed individually.

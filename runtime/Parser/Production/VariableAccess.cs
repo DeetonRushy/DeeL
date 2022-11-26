@@ -7,7 +7,7 @@ namespace Runtime.Parser.Production;
  Tree must be in order, start to finish.
  */
 
-public record VariableAccess(List<Statement> Tree, int Line): Statement(Line)
+public record VariableAccess(List<Statement> Tree, int Line) : Statement(Line)
 {
     public override string Debug()
     {
@@ -16,6 +16,6 @@ public record VariableAccess(List<Statement> Tree, int Line): Statement(Line)
 
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {
-        return visitor.VisitVariableAccess(this ,out _);
+        return visitor.VisitVariableAccess(this, out _);
     }
 }

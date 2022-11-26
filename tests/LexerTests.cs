@@ -1,5 +1,3 @@
-using Runtime.Lexer;
-
 namespace Runtime.Tests
 {
     [TestClass]

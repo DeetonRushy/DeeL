@@ -50,7 +50,7 @@ public class BaseBuiltinStructDefinition : IStruct
 
     public void DefineBuiltinFunction(string Name, bool isStatic, BuiltinStructFunctionDelegate callback)
     {
-        Assign(Name, new BuiltinStructFunctionDefinition(Name,isStatic, callback));
+        Assign(Name, new BuiltinStructFunctionDefinition(Name, isStatic, callback));
     }
 
     public virtual string Name { get; internal set; } = "<internal>";

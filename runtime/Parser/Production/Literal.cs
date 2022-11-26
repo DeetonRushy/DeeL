@@ -2,7 +2,7 @@ using Runtime.Lexer;
 
 namespace Runtime.Parser.Production;
 
-public record Literal(DToken Sentiment, TypeHint Type, object Object): Statement(Sentiment.Line)
+public record Literal(DToken Sentiment, TypeHint Type, object Object) : Statement(Sentiment.Line)
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {
@@ -19,7 +19,7 @@ public record Literal(DToken Sentiment, TypeHint Type, object Object): Statement
         return Object.ToString() ?? "null";
     }
 
-    public static Literal Undefined => 
+    public static Literal Undefined =>
         new(DToken.MakeVar(TokenType.Null), TypeHint.Any, "undefined");
 
     public static Literal True =>
