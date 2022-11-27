@@ -5,25 +5,30 @@ namespace Runtime.Interpreting.Structs.Builtin;
 
 public class Interop : BaseBuiltinStructDefinition
 {
+    static Interop()
+    {
+        Configuration.RegisterDefaultOption("interop-modules",
+            "mscorelib.dll",
+            "runtime.dll");
+    }
+
     public Interop()
         : base("interop")
     {
         DefineBuiltinFunction("get_native_function", true, ExecuteNativeCall);
     }
 
-    public override string Name => "interop";
-    private static Assembly? _executingAssembly;
+    public override string Name => "CSharp";
+    private static Type[]? _assemblyTypes;
 
     private static ReturnValue ExecuteNativeCall(Interpreter interpreter, IStruct self, List<Statement> args)
     {
         // TODO: add configuration options that specify paths of DLL's to load symbols from.
-        
-        _executingAssembly ??= Assembly.GetExecutingAssembly();
-        
-        var classSig = args.First().Take(interpreter) as string;
-        var types = _executingAssembly.GetTypes();
+        _assemblyTypes ??= LoadAllTypes(interpreter);
 
-        var match = types.Where(x => x.FullName == classSig);
+        var classSig = args.First().Take(interpreter) as string;
+
+        var match = _assemblyTypes.Where(x => x.FullName == classSig);
 
         var enumerable = match.ToList();
         if (!enumerable.Any())
@@ -49,5 +54,29 @@ public class Interop : BaseBuiltinStructDefinition
          */
 
         return new ReturnValue(actualMethod, 0);
+    }
+
+    private static Type[] LoadAllTypes(Interpreter i)
+    {
+        var results = new List<Type>();
+        var options = Configuration.GetOption("interop-modules")
+                      ?? throw new NullReferenceException("config flag interop-modules is not set..");
+
+        foreach (var option in options)
+        {
+            try
+            {
+                var mod = Assembly.LoadFrom(option);
+                results.AddRange(mod.GetTypes());
+                i.ModLog($"loaded module '{option}'");
+            }
+            catch (IOException exception)
+            {
+                // TODO: handle exceptions, output to log?
+                i.ModLog(exception.Message);
+            }
+        }
+
+        return results.ToArray();
     }
 }

@@ -75,4 +75,12 @@ public class BaseBuiltinStructDefinition : IStruct
     {
         return GetEnumerator();
     }
+
+    public override string ToString()
+    {
+        var name = GetType().Name;
+        // prefix with '__' to signal that the objects implementation details 
+        // are internal.
+        return $"__{name}";
+    }
 }
