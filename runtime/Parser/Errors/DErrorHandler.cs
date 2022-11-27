@@ -45,7 +45,7 @@ public class DErrorHandler
     {
         if (!_defaultLevels.TryGetValue(code, out var defaults))
             throw new
-                NotImplementedException(
+                InvalidOperationException(
                 $"please implement DErrorCode.{code} in {nameof(DErrorHandler)}.{nameof(_defaultLevels)}");
 
         var (level, message) = defaults;
@@ -106,7 +106,7 @@ public class DErrorHandler
     {
         if (!_defaultLevels.TryGetValue(code, out var defaults))
             throw new
-                NotImplementedException(
+                InvalidOperationException(
                 $"please implement DErrorCode.{code} in {nameof(DErrorHandler)}.{nameof(_defaultLevels)}");
 
         var (level, message) = defaults;

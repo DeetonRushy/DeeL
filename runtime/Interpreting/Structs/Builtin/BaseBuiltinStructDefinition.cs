@@ -43,9 +43,9 @@ public class BaseBuiltinStructDefinition : IStruct
 {
     private readonly RuntimeStorage _storage;
 
-    public BaseBuiltinStructDefinition()
+    protected BaseBuiltinStructDefinition(string scopeName)
     {
-        _storage = new RuntimeStorage(Guid.NewGuid().ToString());
+        _storage = new RuntimeStorage(scopeName);
     }
 
     public void DefineBuiltinFunction(string Name, bool isStatic, BuiltinStructFunctionDelegate callback)

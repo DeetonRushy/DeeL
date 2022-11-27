@@ -9,18 +9,20 @@ public interface IStruct : IScope
 
 public class UserDefinedStruct : IStruct
 {
-    public string Name { get; private set; }
+    public string Name { get; }
     private readonly RuntimeStorage _structScope;
+    private readonly bool _isStaticInstance;
 
-    public UserDefinedStruct(string identifier)
+    public UserDefinedStruct(string identifier, bool isStaticInstance)
     {
         _structScope = new RuntimeStorage(identifier);
         Name = identifier;
+        _isStaticInstance = isStaticInstance;
     }
 
-    public void Define(string Identifier, object? Value)
+    public void Define(string identifier, object? value)
     {
-        _structScope.Assign(Identifier, Value);
+        _structScope.Assign(identifier, value);
     }
 
     public void Populate(IStruct other)
@@ -43,7 +45,7 @@ public class UserDefinedStruct : IStruct
 
     public override string ToString()
     {
-        return $"<struct '{Name}'>";
+        return $"<{(_isStaticInstance ? "static" : "instanceof")} struct '{Name}'>";
     }
 
     public IScope GetScope()

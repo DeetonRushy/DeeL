@@ -5,7 +5,7 @@ public record Condition(Statement Left, Statement Right, int Line) : Statement(L
 {
     public override string Debug()
     {
-        throw new NotImplementedException();
+        return $"Conditional(Left: {Left.Debug()}, Right: {Right.Debug()})";
     }
 
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)

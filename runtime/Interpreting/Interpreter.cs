@@ -10,6 +10,7 @@ using Runtime.Parser.Production.Conditions;
 using Runtime.Parser.Production.Math;
 using System.Diagnostics;
 using System.Reflection;
+using Runtime.Interpreting.Structs.Builtin;
 
 namespace Runtime.Interpreting;
 
@@ -82,11 +83,14 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         Assembly.GetExecutingAssembly().GetTypes().ToList().ForEach(x =>
         {
-            if (typeof(IStruct) != x && typeof(UserDefinedStruct) != x && x.IsAssignableTo(typeof(IStruct)))
+            if (typeof(IStruct) != x && typeof(UserDefinedStruct) != x && typeof(BaseBuiltinStructDefinition) != x)
             {
-                var instance = Activator.CreateInstance(x) as IStruct;
-                if (instance is not null)
-                    _global.Assign(instance.Name, instance);
+                if (x.IsAssignableTo(typeof(IStruct)))
+                {
+                    var instance = Activator.CreateInstance(x) as IStruct;
+                    if (instance is not null)
+                        _global.Assign(instance.Name, instance);
+                }
             }
         });
 
@@ -196,12 +200,12 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
                 if (structDecl.GetValue("construct") is Undefined)
                 {
-                    var result = new UserDefinedStruct(scopeId);
+                    var result = new UserDefinedStruct(scopeId, false);
                     result.Populate(structDecl);
                     return result;
                 }
 
-                var @struct = new UserDefinedStruct(scopeId);
+                var @struct = new UserDefinedStruct(scopeId, false);
                 @struct.Populate(structDecl);
                 if (structDecl.GetValue("construct") is not IStructFunction constructor)
                     throw new InterpreterException($"invalid instance inside of struct scope..");
@@ -486,7 +490,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     public object VisitStructDeclaration(StructDeclaration structDeclaration)
     {
-        var declaration = new UserDefinedStruct(structDeclaration.Identifier);
+        var declaration = new UserDefinedStruct(structDeclaration.Identifier, true);
 
         foreach (var decl in structDeclaration.Declarations)
         {

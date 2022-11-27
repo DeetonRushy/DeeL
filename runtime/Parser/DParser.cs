@@ -14,10 +14,10 @@ public class DParser
     private readonly List<DToken> _tokens;
     public readonly DErrorHandler Errors;
     private bool IsAtEnd => Peek().Type == TokenType.Eof;
-    private int _current = 0;
-    private bool _wasError = false;
+    private int _current;
+    private bool _wasError;
 
-    private bool _panicked = false;
+    private bool _panicked;
 
     private readonly IDictionary<string, TypeHint> _staticHints;
     private TypeHint GetTypeHintFor(string name) => _staticHints[name];
@@ -31,7 +31,7 @@ public class DParser
         _staticHints = new Dictionary<string, TypeHint>();
     }
 
-    public void SetErrorLevel(DErrorLevel level)
+    private void SetErrorLevel(DErrorLevel level)
     {
         Errors.Level = level;
     }
@@ -69,7 +69,7 @@ public class DParser
         return call;
     }
 
-    public Statement ParseExpression()
+    private Statement ParseExpression()
     {
         if (Match(TokenType.LineBreak))
             _ = Consume(TokenType.LineBreak, "");
@@ -174,28 +174,29 @@ public class DParser
                     var args = ParseFunctionArguments();
 
                     // in this context its okay to consume the linebreak I suppose?
-                    // I feel all right-hand assignees should be parsed seperate.
+                    // I feel all right-hand assignees should be parsed separate.
                     var @break = Consume(TokenType.LineBreak, "Expected newline after function call");
                     var call = new FunctionCall(identifier, args.ToArray(), @break.Line);
 
                     return call;
                 }
 
-                if (Peek().Type == TokenType.Equals)
+                if (Peek().Type != TokenType.Equals)
                 {
-                    var eq = Consume(TokenType.Equals, "");
-                    var lit = ParseExpression();
-                    _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-                    if (lit is Variable var)
-                        return new Assignment(new(identifier, TypeHint.Any, eq.Line), var);
-                    return new Assignment(new(identifier, TypeHint.Any, eq.Line), lit);
+                    Panic($"expected `=` after `{identifier}`");
                 }
+                var eq = Consume(TokenType.Equals, "");
+                var lit = ParseExpression();
+                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+                if (lit is Variable var)
+                    return new Assignment(new Variable(identifier, TypeHint.Any, eq.Line), var);
+                return new Assignment(new Variable(identifier, TypeHint.Any, eq.Line), lit);
 
-                throw new NotImplementedException("what even is this case..");
             }
         }
 
-    Skip:
+        // ReSharper disable once BadControlBracesIndent
+        Skip:
 
         return primary;
     }
@@ -227,15 +228,15 @@ public class DParser
             Errors.CreateWithMessage(identifier, $"expected type annotation after '{identifier.Lexeme}'", false);
         }
 
-        var _eq = Consume(TokenType.Equals, DErrorCode.ExpEquals);
-        var variable = new Variable(identifier.Lexeme, hint, identifier.Line, true);
+        var equalSymbol = Consume(TokenType.Equals, DErrorCode.ExpEquals);
+        var variable = new Variable(identifier.Lexeme, hint, identifier.Line);
 
         if (Match(TokenType.Identifier))
         {
             if (Peek(1).Type == TokenType.Access)
             {
                 var access = ParseVariableAccess();
-                return new Assignment(new Variable(identifier.Lexeme, hint, _eq.Line), access);
+                return new Assignment(new Variable(identifier.Lexeme, hint, equalSymbol.Line), access);
             }
 
             var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
@@ -291,7 +292,7 @@ public class DParser
         }
 
         var value = ParsePrimary();
-        return new Assignment(new(variableName, hint, _eq.Line), value);
+        return new Assignment(new(variableName, hint, equalSymbol.Line), value);
     }
 
     private Statement ParseWhileStatement()
@@ -371,6 +372,7 @@ public class DParser
         var current = Peek(-1);
         Errors.CreateWithMessage(current, message, true);
         Errors.DisplayErrors();
+        _panicked = true;
         Environment.Exit(-1);
     }
 
@@ -505,7 +507,7 @@ public class DParser
         {
             var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
             if (Match(TokenType.LeftParen))
-                statement = ParseFunction(identifier: identifier!);
+                statement = ParseFunction(identifier: identifier);
             else
                 statement = new Variable(identifier.Lexeme, TypeHint.Any, identifier.Line);
         }
@@ -518,10 +520,10 @@ public class DParser
 
         return op.Type switch
         {
-            TokenType.Plus => new Addition(left, statement!, line),
-            TokenType.Minus => new Subtraction(left, statement!, line),
-            TokenType.Star => new Multiplication(left, statement!, line),
-            TokenType.Divide => new Division(left, statement!, line),
+            TokenType.Plus => new Addition(left, statement, line),
+            TokenType.Minus => new Subtraction(left, statement, line),
+            TokenType.Star => new Multiplication(left, statement, line),
+            TokenType.Divide => new Division(left, statement, line),
             _ => throw new ParserException($"unhandled math operator '{op.Type}'")
         };
     }
@@ -531,14 +533,14 @@ public class DParser
         var mod = Consume(TokenType.Module, DErrorCode.ExpKeyword);
         var identifier = ParseLiteral();
 
-        if (identifier is not Literal Id)
+        if (identifier is not Literal id)
         {
             AddParseError(DErrorCode.ExpIdentifier);
             return null!;
         }
 
         _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-        return new ModuleIdentity(Id, mod.Line);
+        return new ModuleIdentity(id, mod.Line);
     }
 
     private FunctionDeclaration ParseFunctionDeclaration()
@@ -554,7 +556,7 @@ public class DParser
             var arg = ParseFunctionArgumentDeclaration();
             // only a variable declaration is allowed within a function
             // declarations argument list.
-            if (arg is Variable @var)
+            if (arg is { } var)
             {
                 arguments.Add(var);
                 continue;
@@ -616,10 +618,9 @@ public class DParser
 
         do
         {
-            var literal = ParseLiteral();
+            var literal = ParseExpression();
             if (literal is null)
             {
-                // TODO: verify last literal wasn't just invalid.
                 continue;
             }
             elements.Add(literal);
@@ -728,7 +729,7 @@ public class DParser
                 return new Literal(value, TypeHint.Integer, l);
             }
 
-            // wasnt set in the lexer, attempt to convert it here.
+            // wasn't set in the lexer, attempt to convert it here.
 
             if (!long.TryParse(contents, out long l2))
             {

@@ -62,9 +62,9 @@ public class StructMemberFunction : IStructFunction
         ReturnValue? returnValue = null;
         if (result is ReturnValue @return)
         {
-            if (@return.Value is Variable or Literal)
+            if (@return.Value is Statement val)
             {
-                returnValue = new ReturnValue((@return.Value as Statement)!.Take(interpreter), (@return.Value as Statement)!.Line);
+                returnValue = new ReturnValue(val.Take(interpreter), val.Line);
             }
             else
                 returnValue = @return;

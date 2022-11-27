@@ -6,18 +6,10 @@ DContext ctx = null!;
 try
 {
     var sw = Stopwatch.StartNew();
-
     var source = @"
 mod 'DL';
 
-object User {
-  fn construct(self: User) -> void {
-    self::name = 'user';
-  }
-}
-
-let user: User = User('hello');
-writeln(user::name);
+let value: integer = interop::get_native_function('System.Environment', 'GetEnvironmentVariable');
 ";
     ctx = DlRuntime.Run(source, false);
 
