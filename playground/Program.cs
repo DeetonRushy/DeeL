@@ -54,6 +54,8 @@ if (results::verbose) {
 
     const string new_source = @"
 from 'std' import {*};
+
+writeln(std);
 ";
     ctx = DlRuntime.Run(new_source, false);
 
