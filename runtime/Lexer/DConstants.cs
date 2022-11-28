@@ -12,7 +12,9 @@ public static class DConstants
         { "let", TokenType.Let },
         { "__break", TokenType.ForcedBreakPoint },
         { "object", TokenType.Struct },
-        { "while", TokenType.While }
+        { "while", TokenType.While },
+        { "from", TokenType.From },
+        { "import", TokenType.Import }
     };
 
     public const char EOF = '\0';

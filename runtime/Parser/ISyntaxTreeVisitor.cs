@@ -38,4 +38,5 @@ public interface ISyntaxTreeVisitor<out T>
     public T VisitWhileLoop(WhileStatement whileStatement);
     public T VisitVariableAccessAssignment(VariableAccessAssignment variableAccessAssignment);
     public T VisitEntityIndex(EntityIndex entityIndex);
+    public T VisitModuleImport(ModuleImport import);
 }

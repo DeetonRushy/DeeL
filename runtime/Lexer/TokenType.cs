@@ -225,6 +225,20 @@ public enum TokenType
     /// The `struct` keyword.
     /// </summary>
     Struct,
+    /// <summary>
+    /// The assigned scope accessor.
+    /// </summary>
     Access,
+    /// <summary>
+    /// The while keyword.
+    /// </summary>
     While,
+    /// <summary>
+    /// The from keyword.
+    /// </summary>
+    From,
+    /// <summary>
+    /// The import keyword.
+    /// </summary>
+    Import
 }

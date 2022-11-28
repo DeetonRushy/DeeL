@@ -81,6 +81,11 @@ public class DParser
             return ParseLetStatement();
         }
 
+        if (Match(TokenType.From))
+        {
+            return ParseSpecificModuleImport();
+        }
+
         // parse top level function calls
 
         if (Match(TokenType.ForcedBreakPoint))
@@ -199,6 +204,41 @@ public class DParser
         Skip:
 
         return primary;
+    }
+
+    /// <summary>
+    /// Handle loading specific members from a module.
+    /// </summary>
+    /// <returns></returns>
+    private Statement ParseSpecificModuleImport()
+    {
+        _ = Consume(TokenType.From, "expected `from`");
+        var mod = Consume(TokenType.String, "expected filename to import.");
+
+        _ = Consume(TokenType.Import, "expected `import` after module name");
+        _ = Consume(TokenType.LeftBrace, "expected `{` after `import`");
+
+        if (Match(TokenType.Star))
+        {
+            // wildcard to import all.
+            _ = Advance();
+            _ = Consume(TokenType.RightBrace, "importing `*` will cause all definitions to be loaded.\n" + 
+                                              "there is no point specifying other definitions while a `*` is present.");
+
+            return new ModuleImport(mod.Lexeme, new[] { "*" }, mod.Line);
+        }
+        
+        // parse identifiers until a right brace.
+        var identifiers = new List<string>();
+
+        do
+        {
+            var tok = Consume(TokenType.Identifier, "expected identifier");
+            identifiers.Add(tok.Lexeme);
+        } while (!Match(TokenType.Comma));
+
+        _ = Consume(TokenType.RightBrace, "expected `}`");
+        return new ModuleImport(mod.Lexeme, identifiers.ToArray(), mod.Line);
     }
 
     private Statement ParseLetStatement()

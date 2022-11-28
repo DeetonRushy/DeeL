@@ -10,6 +10,7 @@ using Runtime.Parser.Production.Conditions;
 using Runtime.Parser.Production.Math;
 using System.Diagnostics;
 using System.Reflection;
+using Microsoft.VisualBasic;
 using Runtime.Interpreting.Structs.Builtin;
 
 namespace Runtime.Interpreting;
@@ -785,6 +786,90 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         }
 
         return current ?? Undefined;
+    }
+
+    private Dictionary<string, string>? KnownModules;
+
+    private Dictionary<string, string> InitializeModuleLookupTableIfNeeded()
+    {
+        if (KnownModules is not null) return KnownModules;
+        
+        // check if all available files have been loaded yet or not.
+        if (Configuration.GetOption("module-paths") is not { } paths)
+        {
+            Panic("No module paths are loaded! This means imports cannot be used.\n" + 
+                  "Use Configuration.RegisterDefaultOptions with the option `module-paths` to add some.");
+            return new Dictionary<string, string>();
+        }
+
+        KnownModules = new Dictionary<string, string>();
+        var cwd = Directory.GetCurrentDirectory();    
+        
+        foreach (var path in paths)
+        {
+            var directory = path;
+            
+            if (!Path.IsPathRooted(path))
+            {
+                directory = $"{cwd}/{path}";
+            }
+            
+            if (!Directory.Exists(directory))
+            {
+                ModLog($"path within module-paths does not exist. [{directory}]");
+                continue;
+            }
+
+            var files = Directory.GetFiles(directory).ToList();
+            // remove .dl from the files
+
+            files.ForEach(x =>
+            {
+                var info = new FileInfo(x);
+                KnownModules.Add(info.Name.Replace(".dl", ""), info.FullName);
+            });
+        }
+
+        return KnownModules;
+    }
+    
+    public object VisitModuleImport(ModuleImport import)
+    {
+        KnownModules ??= InitializeModuleLookupTableIfNeeded();
+
+        if (!KnownModules.ContainsKey(import.FileName))
+        {
+            Panic($"No such file `{import.FileName}` in any lookup path.");
+            return Undefined;
+        }
+        
+        // initialize a new interpreter to parse the file.
+        var moduleInterpreter = new Interpreter(KnownModules[import.FileName]);
+        
+        // If this code is executing, it means that lexing, parsing and interpreting didn't go wrong.
+        // Lets check if it's a wildcard.
+
+        if (import.Members.Contains("*"))
+        {
+            // Simply join it's global scope with ours.
+            _global.Combine(moduleInterpreter.GlobalScope());
+            return Undefined;
+        }
+        
+        // We need to siv through it's scope ourself to find each requested thing.
+        foreach (var expected in import.Members)
+        {
+            var value = moduleInterpreter.GlobalScope().GetValue(expected);
+            if (value is null or Undefined)
+            {
+                Panic($"The module `{import.FileName}` contains no member `{expected}`");
+                return null!;
+            }
+
+            _global.Assign(expected, value);
+        }
+
+        return Undefined;
     }
 
     public object IndexEntity(object entity, object accessor)

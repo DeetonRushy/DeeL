@@ -16,8 +16,8 @@ public static class Configuration
         // import.
         
         RegisterDefaultOption("module-paths", 
-            "/stl", // DL should ship with a directory named `stl` within its own CWD
-            "/src" // default /src folder for any custom source files made by the user. (to be included globally)
+            "stl", // DL should ship with a directory named `stl` within its own CWD
+            "src" // default /src folder for any custom source files made by the user. (to be included globally)
             ); 
     }
     
