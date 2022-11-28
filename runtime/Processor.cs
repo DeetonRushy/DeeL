@@ -11,7 +11,13 @@ namespace Runtime;
 /// </summary>
 public class DlRuntime
 {
-    public static string Version => "0.3";
+    public static void AddOption(string option, params string[] opts)
+        => Configuration.RegisterDefaultOption(option, opts);
+
+    public static void AddFlag(string flag, bool value)
+        => Configuration.RegisterDefaultFlag(flag, value);
+    
+    public static string Version => "0.4";
 
     public static List<DToken> ViewTokens(string contents)
     {

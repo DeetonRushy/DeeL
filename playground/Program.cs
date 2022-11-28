@@ -52,8 +52,9 @@ if (results::verbose) {
 
 ";
 
-    var new_source = @"
+    const string new_source = @"
 let b: any = CSharp::get_native_function('Runtime.Configuration', 'RegisterDefaultFlag');
+writeln(__version__);
 ";
     ctx = DlRuntime.Run(new_source, false);
 

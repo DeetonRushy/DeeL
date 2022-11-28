@@ -19,8 +19,8 @@ public class UserDefinedFunction
 
     public ReturnValue Execute(Interpreter interpreter, List<Statement> receivedArguments)
     {
-        var prevScope = interpreter._activeScope;
-        interpreter._activeScope = new RuntimeStorage($"<fn {Name}>");
+        var prevScope = interpreter.ActiveScope;
+        interpreter.ActiveScope = new RuntimeStorage($"<fn {Name}>");
 
         if (receivedArguments.Count != ExpectedArguments.Count)
         {
@@ -31,7 +31,7 @@ public class UserDefinedFunction
         for (int i = 0; i < ExpectedArguments.Count; ++i)
         {
             var value = receivedArguments[i].Take(interpreter);
-            interpreter._activeScope.Assign(ExpectedArguments[i].Name, value);
+            interpreter.ActiveScope.Assign(ExpectedArguments[i].Name, value);
         }
 
         var result = Body.Take(interpreter);
@@ -55,7 +55,7 @@ public class UserDefinedFunction
             returnValue = new ReturnValue(s.Take(interpreter), s.Line);
         }
 
-        interpreter._activeScope = prevScope;
+        interpreter.ActiveScope = prevScope;
 
         return returnValue ?? new ReturnValue(Literal.Undefined, 0);
     }
