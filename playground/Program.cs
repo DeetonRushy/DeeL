@@ -52,8 +52,8 @@ if (results::verbose) {
 
 ";
 
-    var new_source = @"
-let b: any = CSharp::get_native_function('Runtime.Configuration', 'RegisterDefaultFlag');
+    const string new_source = @"
+from 'std' import {*};
 ";
     ctx = DlRuntime.Run(new_source, false);
 

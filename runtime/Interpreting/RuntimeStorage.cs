@@ -50,6 +50,11 @@ public class RuntimeStorage : IEnumerable<KeyValuePair<object, object>>, IScope
         return new RuntimeStorage(Name) { _storage = dict };
     }
 
+    public void Combine(RuntimeStorage other)
+    {
+        _storage = Merge(other)._storage;
+    }
+
     public IEnumerator<KeyValuePair<object, object>> GetEnumerator()
     {
         return _storage.GetEnumerator();

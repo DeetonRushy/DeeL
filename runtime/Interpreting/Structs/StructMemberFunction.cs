@@ -34,8 +34,8 @@ public class StructMemberFunction : IStructFunction
 
     public ReturnValue Execute(Interpreter interpreter, IStruct instance, List<Statement> args)
     {
-        var prev = interpreter._activeScope;
-        interpreter._activeScope = new RuntimeStorage(Name);
+        var prev = interpreter.ActiveScope;
+        interpreter.ActiveScope = new RuntimeStorage(Name);
 
         if (!IsStatic)
         {
@@ -70,7 +70,7 @@ public class StructMemberFunction : IStructFunction
                 returnValue = @return;
         }
 
-        interpreter._activeScope = prev;
+        interpreter.ActiveScope = prev;
         // how to get line info..
         return returnValue ?? new ReturnValue(Interpreter.Undefined, 0);
     }

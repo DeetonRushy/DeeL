@@ -10,6 +10,15 @@ public static class Configuration
     {
         SFlags = new Dictionary<string, bool>();
         SOptions = new Dictionary<string, IEnumerable<string>>();
+        
+        // add default directory's to search through for DL modules.
+        // these are to be used when searching for a file during an
+        // import.
+        
+        RegisterDefaultOption("module-paths", 
+            "stl", // DL should ship with a directory named `stl` within its own CWD
+            "src" // default /src folder for any custom source files made by the user. (to be included globally)
+            ); 
     }
     
     /// <summary>

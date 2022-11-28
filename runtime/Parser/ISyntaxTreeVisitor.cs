@@ -11,7 +11,7 @@ namespace Runtime.Parser;
 /// An interface that, when implemented, represents an interpreter.
 /// </summary>
 /// <typeparam name="T">The type each visit should return.</typeparam>
-public interface ISyntaxTreeVisitor<T>
+public interface ISyntaxTreeVisitor<out T>
 {
     public T VisitAssignment(Assignment assignment);
     public T VisitLiteral(Literal literal);
@@ -38,4 +38,5 @@ public interface ISyntaxTreeVisitor<T>
     public T VisitWhileLoop(WhileStatement whileStatement);
     public T VisitVariableAccessAssignment(VariableAccessAssignment variableAccessAssignment);
     public T VisitEntityIndex(EntityIndex entityIndex);
+    public T VisitModuleImport(ModuleImport import);
 }
