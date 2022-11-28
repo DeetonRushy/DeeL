@@ -820,7 +820,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 continue;
             }
 
-            var files = Directory.GetFiles(directory).ToList();
+            var files = Directory.GetFiles(directory, "*.dl", SearchOption.AllDirectories).ToList();
             // remove .dl from the files
 
             files.ForEach(x =>
