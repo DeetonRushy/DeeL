@@ -9,6 +9,10 @@ using System.Runtime.CompilerServices;
 
 namespace Runtime.Parser;
 
+/*
+ * TODO: add a function called `ParseExpression` that only attempts to parse expressions.
+ */
+
 public class DParser
 {
     private readonly List<DToken> _tokens;
@@ -51,7 +55,7 @@ public class DParser
                 continue;
             }
 
-            var decl = ParseExpression();
+            var decl = ParseDeclaration();
 
             if (decl is null)
                 continue;
@@ -69,7 +73,26 @@ public class DParser
         return call;
     }
 
-    private Statement ParseExpression()
+    private Expression ParseExpression()
+    {
+        /*
+         * FIXME:
+         *  Currently, EVERYTHING is parsed from ParseDeclaration.
+         *  This makes no sense, so overtime, in places where only an expression
+         *  is expected, ParseDeclaration() should be replaced with ParseExpression()
+         */
+        
+        // grouping -- (190 * (92042 + 424))
+        if (Match(TokenType.LeftParen))
+        {
+            return ParseGrouping();
+        }
+        
+        Panic("expected expression");
+        return null!;
+    }
+    
+    private Statement ParseDeclaration()
     {
         if (Match(TokenType.LineBreak))
             _ = Consume(TokenType.LineBreak, "");
@@ -85,9 +108,9 @@ public class DParser
         {
             return ParseSpecificModuleImport();
         }
-
-        // parse top level function calls
-
+        
+        // TODO: add a way to import an entire module as a namespace. example: import 'std' as std;
+        
         if (Match(TokenType.ForcedBreakPoint))
         {
             var @break = Consume(TokenType.ForcedBreakPoint, DErrorCode.Default);
@@ -98,6 +121,7 @@ public class DParser
         // grouping -- (190 * (92042 + 424))
         if (Match(TokenType.LeftParen))
         {
+            // TODO: remove this whole case once ParseExpression is used globally instead.
             return ParseGrouping();
         }
 
@@ -106,7 +130,7 @@ public class DParser
             // the next token IS a return statement, no error code
             _ = Consume(TokenType.Return, DErrorCode.Default);
             // return could be used to just return..
-            var value = ParseExpression();
+            var value = ParseDeclaration();
             return new ReturnValue(value, value.Line);
         }
 
@@ -155,7 +179,7 @@ public class DParser
         {
             _ = Consume(TokenType.Equals, "");
             // assignment to an already existing variable.
-            var assignmentValue = ParseExpression();
+            var assignmentValue = ParseDeclaration();
 
             if (primary is Variable @var)
 
@@ -191,7 +215,7 @@ public class DParser
                     Panic($"expected `=` after `{identifier}`");
                 }
                 var eq = Consume(TokenType.Equals, "");
-                var lit = ParseExpression();
+                var lit = ParseDeclaration();
                 _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
                 if (lit is Variable var)
                     return new Assignment(new Variable(identifier, TypeHint.Any, eq.Line), var);
@@ -235,9 +259,9 @@ public class DParser
         {
             var tok = Consume(TokenType.Identifier, "expected identifier");
             identifiers.Add(tok.Lexeme);
-        } while (!Match(TokenType.Comma));
+        } while (MatchAndAdvance(TokenType.Comma));
 
-        _ = Consume(TokenType.RightBrace, "expected `}`");
+        _ = Consume(TokenType.RightBrace, "expected `}` to signify the end of the imports");
         return new ModuleImport(mod.Lexeme, identifiers.ToArray(), mod.Line);
     }
 
@@ -248,7 +272,7 @@ public class DParser
         var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
         var variableName = identifier.Lexeme;
 
-        TypeHint hint = TypeHint.Any;
+        var hint = TypeHint.Any;
 
         if (Match(TokenType.Colon))
         {
@@ -332,6 +356,10 @@ public class DParser
         }
 
         var value = ParsePrimary();
+        if (value is Literal literal && literal.Type != hint)
+        {
+            Panic($"cannot assign the literal `{literal.Object}` which has the type `{literal.Type}`, to the type `{hint}`");
+        }
         return new Assignment(new(variableName, hint, equalSymbol.Line), value);
     }
 
@@ -393,7 +421,7 @@ public class DParser
         while (!Match(TokenType.RightBrace))
         {
             // parse expression when parsing a declaration?
-            var next = ParseExpression();
+            var next = ParseDeclaration();
             if (next is not FunctionDeclaration)
             {
                 Panic("declarations within a struct must be a function or member variable.");
@@ -440,7 +468,7 @@ public class DParser
                 if (!Match(TokenType.Equals))
                     return accessExpression;
                 var eq = Consume(TokenType.Equals, $"Expected `=`");
-                var rhs = ParseExpression();
+                var rhs = ParseDeclaration();
                 return new VariableAccessAssignment(accessExpression, GetHintFromOperand(rhs), rhs, eq.Line);
             }
 
@@ -467,10 +495,10 @@ public class DParser
 
             var contents = rhsIdentifier.Lexeme;
 
-            if (!DVariables.GlobalSymbolExists(contents))
-            {
-                return new Variable(contents, TypeHint.Any, rhsIdentifier.Line);
-            }
+            if (_staticHints.ContainsKey(contents))
+                return new Variable(contents, _staticHints[contents], rhsIdentifier.Line);
+            Panic($"use of undeclared identifier: `{contents}`");
+            return null!;
 
             /*
              * DVariables have a new re-written token & object instance
@@ -480,7 +508,6 @@ public class DParser
              * But it's worth it.
              */
 
-            return new Variable(contents, TypeHint.Any, rhsIdentifier.Line);
         }
 
         var literal = ParseLiteral();
@@ -532,13 +559,16 @@ public class DParser
 
     private MathStatement ParseMathStatement()
     {
-        var left = ParseExpression();
+        var left = ParseDeclaration();
         return HalfParseMathStatement(left);
     }
 
     // FIXME: debug once this is aids.
     private MathStatement HalfParseMathStatement(Statement left)
     {
+        // TODO: this function is too specific. 
+        // switch things over to ParseExpression instead of specific parsing here.
+        
         var op = Advance();
         if (op.Type is TokenType.RightParen or TokenType.LineBreak)
             return null!;
@@ -626,24 +656,37 @@ public class DParser
         }
 
         // parse the block
-        var body = ParseBlock();
-        var hint = annotation != null ? new(annotation) : TypeHint.Any;
+        var hint = annotation != null ? new TypeHint(annotation) : TypeHint.Any;
+        var body = ParseBlock(hint, identifier.Lexeme);
 
         _staticHints[identifier.Lexeme] = hint;
 
         return new FunctionDeclaration(identifier.Lexeme, arguments, body, hint, paren.Line);
     }
 
-    private Block ParseBlock()
+    private Block ParseBlock(TypeHint? returnType = null, string? bodyName = null)
     {
         _ = Consume(TokenType.LeftBrace, DErrorCode.ExpLeftBrace);
         var statements = new List<Statement>();
 
         while (!Match(TokenType.RightBrace))
         {
-            var statement = ParseExpression();
+            var statement = ParseDeclaration();
             if (statement is not null)
+            {
+                if (statement is ReturnValue rVal && returnType is not null)
+                {
+                    if (rVal.Value is Declaration decl)
+                    {
+                        if (decl.Type != returnType)
+                        {
+                            Panic($"The body for `{bodyName}` is expected to return `{returnType}`, " +
+                                  $"but here it returns `{decl.Type}`");
+                        }
+                    }
+                }
                 statements.Add(statement);
+            }
             else
                 break;
         }
@@ -658,7 +701,7 @@ public class DParser
 
         do
         {
-            var literal = ParseExpression();
+            var literal = ParseDeclaration();
             if (literal is null)
             {
                 continue;

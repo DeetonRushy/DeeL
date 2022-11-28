@@ -53,7 +53,12 @@ if (results::verbose) {
 ";
 
     const string new_source = @"
-from 'std' import {*};
+from 'std' import { string, int };
+
+fn getInt() -> int {
+  let s: int = 'hello';
+  return s;
+}
 ";
     ctx = DlRuntime.Run(new_source, false);
 

@@ -1,7 +1,7 @@
 ﻿
 namespace Runtime.Parser.Production;
 
-public record Grouping(List<Statement> Statements, int Line) : Statement(Line)
+public record Grouping(List<Statement> Statements, int Line) : Expression(Line)
 {
     public override string Debug()
     {

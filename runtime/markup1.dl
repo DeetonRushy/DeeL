@@ -1,35 +1,7 @@
-﻿# End goal is for this file to be totally parsable.
+﻿from 'std' import { string, int };
 
+fn parseStd() -> string {
+  return int();
+}
 
- # simple `special` member set.
-'dl_version' = '1.0.2';
- # lists
-'modules' = [
-    "mod1",
-    "mod2",
-    "mod3"
-];
-
- # dictionarys
-'browsers' = {
-    'supported': [
-        "chrome",
-        "firefox",
-        "safari"
-    ],
-    'explicitly-unsupported': [
-        "internet explorer" # ew <- inline comments
-    ]
-};
-
-# booleans
-'legacy' = true; # sad
-
-# decimals
-'PI' = 3.14159265359;
-
-# decided to remove this because its kind of pointless.
-#            Determined by the CLR.
-#                  vvvvvvv
-# 
-# 'system-max-int' = MAX_INT; # MIN_INT || MAX_DECIMAL || MIN_DECIMAL
+let thing: int = parseStd();

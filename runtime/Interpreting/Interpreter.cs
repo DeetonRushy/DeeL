@@ -10,7 +10,6 @@ using Runtime.Parser.Production.Conditions;
 using Runtime.Parser.Production.Math;
 using System.Diagnostics;
 using System.Reflection;
-using Microsoft.VisualBasic;
 using Runtime.Interpreting.Structs.Builtin;
 
 namespace Runtime.Interpreting;
@@ -105,7 +104,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     /// <summary>
     /// The current position we're at in <see cref="Statements"/>
     /// </summary>
-    private int Position { get; set; } = 0;
+    private int Position { get; set; }
 
     /// <summary>
     /// Get the value of a value in either the local scope or global scope.
@@ -161,15 +160,11 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         Assembly.GetExecutingAssembly().GetTypes().ToList().ForEach(x =>
         {
-            if (typeof(IStruct) != x && typeof(UserDefinedStruct) != x && typeof(BaseBuiltinStructDefinition) != x)
-            {
-                if (x.IsAssignableTo(typeof(IStruct)))
-                {
-                    var instance = Activator.CreateInstance(x) as IStruct;
-                    if (instance is not null)
-                        _global.Assign(instance.Name, instance);
-                }
-            }
+            if (typeof(IStruct) == x || typeof(UserDefinedStruct) == x ||
+                typeof(BaseBuiltinStructDefinition) == x) return;
+            if (!x.IsAssignableTo(typeof(IStruct))) return;
+            if (Activator.CreateInstance(x) is IStruct instance)
+                _global.Assign(instance.Name, instance);
         });
 
         _errors = new DErrorHandler();
@@ -179,13 +174,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     {
         // Lex, Parse & interpret the code in the file.
         var info = new FileInfo(path);
-        if (!info.Exists)
-        {
-            // signify that the file could not be found.
-            _global = null!;
-            return;
-        }
-        
+
         // any panic from here will be our error handler.
         var lexer = new DLexer(info);
         var parser = new DParser(lexer.Lex());
@@ -193,6 +182,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         Mode = InterpreterMode.Module;
         _calls = new CallCenter();
         _global = new RuntimeStorage("<global>");
+        _errors = new DErrorHandler();
         Statements = parser.Parse();
 
         _ = Interpret();
@@ -615,7 +605,6 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         for (int i = 0; i <= variableAccess.Tree.Count; i++)
         {
-            object? it;
             bool lastIteration = (i + 1 >= variableAccess.Tree.Count);
             bool firstIteration = (i == 0);
 
@@ -635,27 +624,26 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                     val = smf.Execute(this, (IStruct)current, call.Arguments.ToList());
                 }
 
-                if (val is not IScope _scope)
+                if (val is not IScope currentScope)
                 {
                     if (lastIteration)
                     {
                         result = val;
                         break;
                     }
-                    Panic($"The function `{call.Identifier}` returns a value that is not accessable. (cannot `::` an instance of `{val.GetType()}`)");
+                    Panic($"The function `{call.Identifier}` returns a value that is not accessible. (cannot `::` an instance of `{val.GetType()}`)");
                     scope = null;
                     return null!;
                 }
-                current = _scope;
+                current = currentScope;
                 continue;
             }
 
             if (current is null)
             {
-                it = variableAccess.Tree[i].Take(this);
+                var it = variableAccess.Tree[i].Take(this);
                 if (it is IScope nextScope)
                     current = nextScope;
-                continue;
             }
             else
             {
@@ -770,29 +758,24 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             Panic($"cannot index an entity of type {entity.GetType()}");
         }
 
-        object? current = null;
-        for (int i = 0; i < entityIndex.Indices.Count; i++)
-        {
-            var index = Visit(entityIndex.Indices[i]);
-
-            if (current == null)
+        var current = entityIndex
+            .Indices
+            .Select(Visit)
+            .Aggregate<object?, object?>(null, (current1, index) =>
             {
-                current = IndexEntity(entity, index);
-            }
-            else
-            {
-                current = IndexEntity(current, index);
-            }
-        }
+                if (index != null) return IndexEntity(current1 ?? entity, index);
+                Panic("internal problem: index was null");
+                return null!;
+            });
 
         return current ?? Undefined;
     }
 
-    private Dictionary<string, string>? KnownModules;
+    private Dictionary<string, string>? _knownModules;
 
     private Dictionary<string, string> InitializeModuleLookupTableIfNeeded()
     {
-        if (KnownModules is not null) return KnownModules;
+        if (_knownModules is not null) return _knownModules;
         
         // check if all available files have been loaded yet or not.
         if (Configuration.GetOption("module-paths") is not { } paths)
@@ -802,7 +785,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             return new Dictionary<string, string>();
         }
 
-        KnownModules = new Dictionary<string, string>();
+        _knownModules = new Dictionary<string, string>();
         var cwd = Directory.GetCurrentDirectory();    
         
         foreach (var path in paths)
@@ -826,25 +809,25 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             files.ForEach(x =>
             {
                 var info = new FileInfo(x);
-                KnownModules.Add(info.Name.Replace(".dl", ""), info.FullName);
+                _knownModules.Add(info.Name.Replace(".dl", ""), info.FullName);
             });
         }
 
-        return KnownModules;
+        return _knownModules;
     }
     
     public object VisitModuleImport(ModuleImport import)
     {
-        KnownModules ??= InitializeModuleLookupTableIfNeeded();
+        _knownModules ??= InitializeModuleLookupTableIfNeeded();
 
-        if (!KnownModules.ContainsKey(import.FileName))
+        if (!_knownModules.ContainsKey(import.FileName))
         {
             Panic($"No such file `{import.FileName}` in any lookup path.");
             return Undefined;
         }
         
         // initialize a new interpreter to parse the file.
-        var moduleInterpreter = new Interpreter(KnownModules[import.FileName]);
+        var moduleInterpreter = new Interpreter(_knownModules[import.FileName]);
         
         // If this code is executing, it means that lexing, parsing and interpreting didn't go wrong.
         // Lets check if it's a wildcard.
@@ -862,7 +845,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             var value = moduleInterpreter.GlobalScope().GetValue(expected);
             if (value is null or Undefined)
             {
-                Panic($"The module `{import.FileName}` contains no member `{expected}`");
+                Panic($"The module `{import.FileName}` contains no definition for `{expected}`");
                 return null!;
             }
 
