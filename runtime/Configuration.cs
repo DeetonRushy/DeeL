@@ -66,6 +66,19 @@ public static class Configuration
         SOptions[option] = defaults;
     }
 
+    public static void AppendToOption(string option, params string[] opts)
+    {
+        if (!SOptions.ContainsKey(option))
+            SOptions[option] = opts;
+        else
+        {
+            // scuffed
+            var copy = SOptions[option].ToList();
+            copy.AddRange(opts);
+            SOptions[option] = copy.ToArray();
+        }
+    }
+
     public static List<string>? GetOption(string setting)
     {
         return SOptions.ContainsKey(setting)

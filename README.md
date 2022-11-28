@@ -61,7 +61,20 @@ object Person {
 Assign to `self` within `self`. Other entities will not be able to assign to `self` (that is the plan
 , but may still work in some cases)
 
+### Module System
+Import a module 
+```
+from 'std.io' import { File, Path };
+```
 
+At some point there will be a CLI that you can register paths from.
+But, currently you must use the `Configuration` class.
+
+```csharp
+Configuration.AppendToOption("module-paths", "C:/my/custom/path");
+```
+import will only load files that have the extension
+`.dl` and **will** search within nested directorys.
 ### Conditional Logic
 ```
 let num: number = get_some_number();
