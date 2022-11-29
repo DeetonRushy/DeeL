@@ -65,6 +65,8 @@ Assign to `self` within `self`. Other entities will not be able to assign to `se
 Import a module 
 ```
 from 'std.io' import { File, Path };
+# the `*` wildcard is also supported, this will import everything
+from 'some.lib' import {*}; # Nice!
 ```
 
 At some point there will be a CLI that you can register paths from.
