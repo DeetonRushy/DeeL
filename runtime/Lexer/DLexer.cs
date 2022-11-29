@@ -372,7 +372,7 @@ public class DLexer
             }
 
             if (Peek() == LineBreak || Peek() == EOF ||
-                Peek() is LeftParen or RightParen or Comma or Colon or LeftBrace or ListClose)
+                Peek() is LeftParen or RightParen or Comma or Colon or LeftBrace or ListClose or ListOpen)
                 break;
 
             ch = Advance();
