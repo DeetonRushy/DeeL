@@ -1,7 +1,17 @@
-﻿from 'std' import { string, int };
+﻿let fmt: string = String::format("Hello, {}!", "World");
+writeln(fmt);
 
-fn parseStd() -> string {
-  return int();
+object CustomConsole {
+  fn construct(self) -> void {
+    self::prefix = 'LOG';
+  }
+  
+  fn log(self, message: string) -> void {
+    let format: string = String::format("[{}]: {}", self::prefix, message);
+    writeln(format);
+  }
 }
 
-let thing: int = parseStd();
+let console: CustomConsole = CustomConsole();
+console::prefix = 'ERROR';
+console::log("hello, world!");

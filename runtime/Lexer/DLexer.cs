@@ -288,9 +288,6 @@ public class DLexer
             current = Advance();
         }
 
-        Expect(!_lexeme.Any(IsStringDelimeter),
-            "failed to correctly lex string contents.");
-
         return MakeToken(TokenType.String, _lexeme);
     }
 

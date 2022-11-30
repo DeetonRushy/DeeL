@@ -1,0 +1,34 @@
+mod 'dl.goal';
+
+from 'std.types' import { * };
+from 'std.io' import { File, FileBuffer };
+from 'std.conversions' import { Convert };
+
+# MakePointer is kind of sus but required in this case for opaque handles
+from 'windows' import { MakePointer, FreePointer, QueryProcess, NtProcessQueryInfo, QUERY_ALL };
+
+let config_file: FileBuffer = File::find('config.json')::expect('failed to find configuration file...');
+
+from 'newtonsoft.json' import { JsonConvert };
+
+let actual_config: dict = JsonConvert::deserialize(config_file)::expect('failed to convert config into JSON object');
+let constant_handle: uptr = Convert::to_ptr(actual_config['native_ptr'])::expect('no native handle in configuration');
+
+# win32def is a builtin `macro` that contains definitions for critical windows API stuff.
+
+let raw_pointer: *(alias(win32def('HANDLE'))) = MakePointer(constant_handle); # HANDLE const*
+let process_query: NtProcessQueryInfo = QueryProcess(raw_pointer, QUERY_ALL)::expect('failed to query process');
+
+let pid: int = process_query::pid;
+let name: string = process_query::name;
+
+writeln(@'found process `{name}` ({pid})');
+
+let wants_free: bool = actual_config['wants_free']::expect('configuration contains no `wants_free` section');
+
+if (wants_free) {
+  let free_result: bool = FreePointer(raw_pointer)::expect('system failed to free the raw ptr');
+  if (!free_result) fail("failed to free pointer, but was able to interface with it.");
+}
+
+quit('the operation completed successfully', 0);

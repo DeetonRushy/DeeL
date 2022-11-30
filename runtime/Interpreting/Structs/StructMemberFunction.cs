@@ -8,7 +8,6 @@ public interface IStructFunction
 {
     public string Name { get; }
     public bool IsStatic { get; }
-
     public ReturnValue Execute(Interpreter interpreter, IStruct instance, List<Statement> args);
 }
 
@@ -49,12 +48,10 @@ public class StructMemberFunction : IStructFunction
 
         // populate function scope, dont assign to self.
 
-        for (int i = 0; i < _expectedArguments.Count - 1; ++i)
+        for (var i = 0; i < (IsStatic ? _expectedArguments.Count : _expectedArguments.Count - 1); ++i)
         {
-            if (i == 0 && !IsStatic)
-                continue;
             var value = args[i].Take(interpreter);
-            interpreter.CurrentScope.Assign(_expectedArguments[i].Name, value);
+            interpreter.CurrentScope.Assign(_expectedArguments[IsStatic ? i : i+1].Name, value);
         }
 
         var result = _body.Take(interpreter);

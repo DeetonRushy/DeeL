@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Runtime.Interpreting.Extensions;
 using Runtime.Parser.Production;
 
 namespace Runtime.Interpreting.Structs.Builtin;
@@ -16,6 +17,25 @@ public class Interop : BaseBuiltinStructDefinition
         : base("interop")
     {
         DefineBuiltinFunction("get_native_function", true, ExecuteNativeCall);
+        DefineBuiltinFunction("quit", true, ExecuteQuitCall);
+    }
+
+    private static ReturnValue ExecuteQuitCall(Interpreter interpreter, IStruct self, List<Statement> arguments)
+    {
+        if (arguments.Count == 0)
+        {
+            Environment.Exit(0);
+            return new ReturnValue("unreachable", -1);
+        }
+
+        var code = arguments[0].Take(interpreter);
+        if (!code.IsIntegral())
+        {
+            interpreter.Panic($"quit expected an integer, argument. (got '{code}')");
+        }
+        
+        Environment.Exit(Convert.ToInt32(code));
+        return new ReturnValue("unreachable", -1);
     }
 
     public override string Name => "CSharp";

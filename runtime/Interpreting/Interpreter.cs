@@ -54,7 +54,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     public readonly Dictionary<string, bool> ModuleFlags = new()
     {
         { "stdout", true },
-        { "stdin", false }
+        { "stdin", true }
     };
 
     public bool PreventExit { get; set; } = false;
@@ -171,7 +171,8 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         // initialize all types (other than itself) that inherit from IStruct.
         // then populate the global scope with them.
-
+        
+        // TODO: this needs to be globalized, so other assembly's can plug in. (replace GetExecutingAssembly) 
         Assembly.GetExecutingAssembly().GetTypes().ToList().ForEach(x =>
         {
             if (typeof(IStruct) == x || typeof(UserDefinedStruct) == x ||
@@ -413,9 +414,19 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         return id;
     }
 
+    private void DumpScopes()
+    {
+        if (AllowsStdout)
+        {
+            var g = Newtonsoft.Json.JsonConvert.SerializeObject(_global);
+            var l = Newtonsoft.Json.JsonConvert.SerializeObject(ActiveScope);
+
+            Console.WriteLine($"Globals: {g}\nLocals: {l}");
+        }
+    }
+
     public object VisitVariable(Variable variable)
     {
-        var global = _global;
         var local = ActiveScope;
 
         if (local is not null && local.Contains(variable.Name))
@@ -423,9 +434,9 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             return local.GetValue(variable.Name);
         }
 
-        if (global.Contains(variable.Name))
+        if (_global.Contains(variable.Name))
         {
-            return global.GetValue(variable.Name);
+            return _global.GetValue(variable.Name);
         }
 
         Panic($"The variable `{variable.Name}` does not exist in any scope.");
@@ -633,9 +644,13 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                     var id = current?.GetValue(call.Identifier);
                     if (id is not IStructFunction smf || current is null)
                     {
-                        throw new InterpreterException("extreme confusion");
+                        Panic($"undefined member `{call.Identifier}` on instance `{current}`");
+                        scope = null!;
+                        return null!;
                     }
-                    val = smf.Execute(this, (IStruct)current, call.Arguments.ToList());
+
+                    var args = call.Arguments.ToList();
+                    val = smf.Execute(this, (IStruct)current, args);
                 }
 
                 if (val is not IScope currentScope)
