@@ -11,10 +11,11 @@ public static class DConstants
         { "return", TokenType.Return },
         { "let", TokenType.Let },
         { "__break", TokenType.ForcedBreakPoint },
-        { "object", TokenType.Struct },
+        { "object", TokenType.Object },
         { "while", TokenType.While },
         { "from", TokenType.From },
-        { "import", TokenType.Import }
+        { "import", TokenType.Import },
+        { "property", TokenType.Property }
     };
 
     public const char EOF = '\0';
@@ -68,6 +69,7 @@ public static class DConstants
     public const char Divide = '/';
     public const char Modulo = '%';
     public const char Bang = '!';
+    public const char Dot = '.';
 
     public static bool IsDLNumberCharacter(char ch)
     {

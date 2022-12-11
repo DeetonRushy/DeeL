@@ -41,6 +41,11 @@ public static class Configuration
 
         SFlags[setting] = value;
     }
+
+    public static void SetFlag(string setting, bool value)
+    {
+        SFlags[setting] = value;
+    }
     
     /// <summary>
     /// Get the value for a specified flag. If the flag does not exist, the default value

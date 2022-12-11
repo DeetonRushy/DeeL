@@ -17,20 +17,20 @@ internal class AccessFunction : ICallable
 
         if (args.Length < 1)
         {
-            interpreter.DisplayErr($"access expects at least 2 arguments. example: access('variable', 'key', ...keys|...index)");
+            interpreter.Panic("access expects at least 2 arguments. example: access('variable', 'key', ...keys|...index)");
             return Literal.False;
         }
 
-        var @var = interpreter.VisitLiteral(args[0]);
+        var var = interpreter.VisitLiteral(args[0]);
         var scope = interpreter.GlobalScope();
 
-        if (!scope.Contains(@var))
+        if (!scope.Contains(var))
         {
-            interpreter.DisplayErr($"no such variable `{@var}`");
+            interpreter.Panic($"no such variable `{var}`");
             return Literal.False;
         }
 
-        var value = scope.GetValue(@var);
+        var value = scope.GetValue(var);
 
         if (args.Length == 1)
         {
@@ -59,7 +59,7 @@ internal class AccessFunction : ICallable
         {
             if (accessor is not long index)
             {
-                State.DisplayErr($"cannot access list! index must be a number.");
+                State.Panic($"cannot access list! index must be a number.");
                 return false;
             }
             var managed = managedList[(int)index];
@@ -70,14 +70,14 @@ internal class AccessFunction : ICallable
         {
             if (!dictionary.ContainsKey(accessor))
             {
-                State.DisplayErr($"failed to find key matching `{accessor}`!");
+                State.Panic($"failed to find key matching `{accessor}`!");
                 return false;
             }
             var value = dictionary[accessor];
             return value;
         }
 
-        State.DisplayErr($"internal: DoAccess was passed an unmanaged type to index. {runtimeType}");
+        State.Panic($"internal: DoAccess was passed an unmanaged type to index. {runtimeType}");
         return false;
     }
 

@@ -1,0 +1,39 @@
+mod "std.logger";
+
+let DL_STD_LOGGER: bool = true;
+
+object Logger {
+    fn construct(self) -> void {
+        self::prefix = 'log';
+    }
+
+    fn set_prefix(self, pref: string) -> void {
+        self::prefix = pref;
+    }
+
+    fn log(self, message: string) -> void {
+        let fmt: string = String::format("[{}] {}", self::prefix, message);
+        writeln(fmt);
+    }
+
+    fn warn(self, message: string) -> void {
+        self::set_prefix('warn');
+        self::log(message);
+    }
+
+    fn info(self, message: string) -> void {
+        self::set_prefix('info');
+        self::log(message);
+    }
+
+    fn err(self, message: string) -> void {
+        self::set_prefix('error');
+        self::log(message);
+    }
+
+    fn new(default_prefix: string) -> Logger {
+        let logger: Logger = Logger();
+        logger::set_prefix(default_prefix);
+        return logger;
+    }
+}

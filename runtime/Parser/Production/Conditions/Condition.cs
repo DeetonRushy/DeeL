@@ -10,6 +10,6 @@ public record Condition(Statement Left, Statement Right, int Line) : Statement(L
 
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {
-        throw new NotImplementedException();
+        throw new InvalidOperationException("You must override Condition.Take");
     }
 }

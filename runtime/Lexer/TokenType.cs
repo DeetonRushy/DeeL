@@ -224,11 +224,15 @@ public enum TokenType
     /// <summary>
     /// The `struct` keyword.
     /// </summary>
-    Struct,
+    Object,
     /// <summary>
     /// The assigned scope accessor.
     /// </summary>
-    Access,
+    InstanceAccess,
+    /// <summary>
+    /// The assigned static scope accessor.
+    /// </summary>
+    StaticAccess,
     /// <summary>
     /// The while keyword.
     /// </summary>
@@ -240,5 +244,9 @@ public enum TokenType
     /// <summary>
     /// The import keyword.
     /// </summary>
-    Import
+    Import,
+    /// <summary>
+    /// The `property` keyword.
+    /// </summary>
+    Property
 }

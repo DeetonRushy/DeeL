@@ -18,8 +18,31 @@ public class Interop : BaseBuiltinStructDefinition
     {
         DefineBuiltinFunction("get_native_function", true, ExecuteNativeCall);
         DefineBuiltinFunction("quit", true, ExecuteQuitCall);
+        DefineBuiltinFunction("enable_option", true, EnableInterpreterOptionCall);
+        DefineBuiltinFunction("module_name", true, GetExecutingModuleCall);
     }
 
+    private static ReturnValue GetExecutingModuleCall(Interpreter interpreter, IStruct self, List<Statement> args)
+    {
+        return new ReturnValue(interpreter.Identity, 0);
+    }
+    
+    private static ReturnValue EnableInterpreterOptionCall(Interpreter interpreter, IStruct self, List<Statement> args)
+    {
+        foreach (var val in args.Select(stmt => stmt.Take(interpreter)))
+        {
+            if (val is not string s)
+            {
+                interpreter.Panic("Interpreter flags can only be strings.");
+                return ReturnValue.Bad;
+            }
+            
+            Configuration.SetFlag(s, true);
+        }
+
+        return new ReturnValue(args.Count, 0);
+    }
+    
     private static ReturnValue ExecuteQuitCall(Interpreter interpreter, IStruct self, List<Statement> arguments)
     {
         if (arguments.Count == 0)
@@ -38,7 +61,7 @@ public class Interop : BaseBuiltinStructDefinition
         return new ReturnValue("unreachable", -1);
     }
 
-    public override string Name => "CSharp";
+    public override string Name => "interpreter";
     private static Type[]? _assemblyTypes;
 
     private static ReturnValue ExecuteNativeCall(Interpreter interpreter, IStruct self, List<Statement> args)

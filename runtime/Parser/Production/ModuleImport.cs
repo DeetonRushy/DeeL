@@ -12,3 +12,16 @@ public record ModuleImport(string FileName, string[] Members, int Line): Stateme
         return visitor.VisitModuleImport(this);
     }
 }
+
+public record AssignedModuleImport(Variable Assignee, string Name, int Line) : Statement(Line)
+{
+    public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
+    {
+        return visitor.VisitModuleAssignment(this);
+    }
+
+    public override string Debug()
+    {
+        throw new NotImplementedException();
+    }
+}

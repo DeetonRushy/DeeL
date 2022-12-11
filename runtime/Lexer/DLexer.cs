@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic.CompilerServices;
 using Runtime.Lexer.Exceptions;
 using Runtime.Parser.Errors;
 using static Runtime.Lexer.DConstants;
@@ -174,7 +175,7 @@ public class DLexer
                     if (Peek() == Colon)
                     {
                         _ = Advance();
-                        return MakeToken(TokenType.Access);
+                        return MakeToken(TokenType.StaticAccess);
                     }
                     return MakeToken(TokenType.Colon);
                 }
@@ -182,6 +183,8 @@ public class DLexer
                 return MakeToken(TokenType.LeftParen);
             case RightParen:
                 return MakeToken(TokenType.RightParen);
+            case Dot:
+                return MakeToken(TokenType.InstanceAccess);
             case Minus:
                 {
                     if (Peek() == GreaterThan)

@@ -76,9 +76,13 @@ public class DErrorHandler
         }
 
         string content = string.Empty;
+        var lineBefore = string.Empty;
+        var lineAfter = string.Empty;
         if (skipHighlight)
         {
             content = relevantContent;
+            lineBefore = SourceLines.Skip(token.Line - 1).FirstOrDefault() ?? "";
+            lineAfter = SourceLines.Skip(token.Line + 1).FirstOrDefault() ?? "";
         }
         else
         {
@@ -87,11 +91,13 @@ public class DErrorHandler
         }
 
         var sb = new StringBuilder();
+        sb.AppendLine($"{token.Line - 1} | {lineBefore}");
         sb.AppendLine($"{token.Line} | {content}");
+        sb.AppendLine($"{token.Line + 1} | {lineAfter}");
         sb.AppendLine(new string('~', relevantContent.Length + 3));
         sb.Append("ERROR".Pastel(Color.Red));
         sb.Append(':');
-        sb.AppendLine($" {message}");
+        sb.AppendLine($" {message.Pastel(Color.Pink)}");
 
         return sb.ToString();
     }
@@ -190,7 +196,7 @@ internal class SyntaxHighlighter
                 (TokenType.Module, _, _) => Highlight($"mod", Color.Pink),
                 (TokenType.Comment, _, _) => Highlight($"#{token.Lexeme}", Color.Gray),
                 (TokenType.Let, _, _) => Highlight("let ", Color.Pink),
-                (TokenType.Access, _, _) => "::",
+                (TokenType.InstanceAccess, _, _) => "::",
                 (TokenType.Plus, _, _) => "+",
                 (TokenType.Minus, _, _) => "-",
                 (TokenType.Divide, _, _) => "/",

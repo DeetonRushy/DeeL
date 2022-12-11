@@ -20,4 +20,6 @@ public record ReturnValue(object? Value, int Line) : Statement(Line)
     {
         return Value?.ToString() ?? "null";
     }
+
+    public static ReturnValue Bad => new(0, 0);
 }

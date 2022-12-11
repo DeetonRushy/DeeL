@@ -197,10 +197,13 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         Mode = InterpreterMode.Module;
         _calls = new CallCenter();
         _global = new RuntimeStorage("<global>");
+        var previous = DErrorHandler.SourceLines;
+        DErrorHandler.SourceLines = File.ReadAllLines(info.FullName).ToList();
         _errors = new DErrorHandler();
         Statements = parser.Parse();
 
         _ = Interpret();
+        DErrorHandler.SourceLines = previous;
     }
 
     public object Interpret()
@@ -339,21 +342,27 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 // FIXME: not all functions may return a string...
                 var literal = new Literal(DToken.MakeVar(TokenType.String), TypeHint.String, result);
                 arguments.Add(literal);
+                continue;
             }
 
             if (arg is Literal paramLiteral)
+            {
                 arguments.Add(paramLiteral);
+                continue;
+            }
 
             if (arg is Variable variable)
             {
                 // builtin functions dont have their own scope.
                 var @var = GetFromEither(variable.Name);
                 arguments.Add(new Literal(DToken.MakeVar(TokenType.String), TypeHint.String, @var));
+                continue;
             }
 
             if (arg is VariableAccess access)
             {
                 arguments.Add(new Literal(DToken.MakeVar(TokenType.String), TypeHint.String, access.Take(this)));
+                continue;
             }
         }
         return function.Execute(this, arguments.ToArray());
@@ -628,10 +637,10 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         IScope? current = null;
         object? result = null;
 
-        for (int i = 0; i <= variableAccess.Tree.Count; i++)
+        for (var i = 0; i <= variableAccess.Tree.Count; i++)
         {
-            bool lastIteration = (i + 1 >= variableAccess.Tree.Count);
-            bool firstIteration = (i == 0);
+            var lastIteration = (i + 1 >= variableAccess.Tree.Count);
+            var firstIteration = (i == 0);
 
             if (variableAccess.Tree[i] is FunctionCall @call)
             {
@@ -882,6 +891,35 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         }
 
         return Undefined;
+    }
+
+    public object VisitModuleAssignment(AssignedModuleImport import)
+    {
+        _knownModules ??= InitializeModuleLookupTableIfNeeded();
+
+        if (!_knownModules.ContainsKey(import.Name))
+        {
+            Panic($"No such file `{import.Name}` in any lookup path.");
+            return Undefined;
+        }
+        
+        // initialize a new interpreter to parse the file.
+        var moduleInterpreter = new Interpreter(_knownModules[import.Name]) { PreventExit = PreventExit };
+
+        // Combine the interpreted scope into the new module instance.
+        var module = new RuntimeStorage($"<module '{import.Name}'>");
+        module.Combine(moduleInterpreter.Globals());
+
+        // TODO: this doesn't work... If you use an inline import statement 
+        // the identifier is for SOME reason not assigned into any scope.
+        CurrentScope.Assign(import.Assignee.Name, module);
+        
+        return module;
+    }
+
+    public object VisitPropertyDeclaration(PropertyDeclaration declaration)
+    {
+        throw new NotImplementedException();
     }
 
     public object IndexEntity(object entity, object accessor)

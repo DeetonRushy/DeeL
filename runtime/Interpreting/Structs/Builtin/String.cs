@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Newtonsoft.Json;
 using Runtime.Parser.Production;
 
 namespace Runtime.Interpreting.Structs.Builtin;
@@ -13,7 +14,7 @@ public class StringBuiltin : BaseBuiltinStructDefinition
         DefineBuiltinFunction("format", true, ExecuteFormat);
     }
 
-    public ReturnValue ExecuteFormat(Interpreter interpreter, IStruct self, List<Statement> args)
+    public static ReturnValue ExecuteFormat(Interpreter interpreter, IStruct self, List<Statement> args)
     {
         if (args.Count == 0)
         {
@@ -46,7 +47,29 @@ public class StringBuiltin : BaseBuiltinStructDefinition
             {
                 if ((cursor + 1) > vaArgs.Count)
                     interpreter.Panic($"format delimiter #{cursor + 1} does not have a matching argument");
-                sb.Append(vaArgs[cursor++].Take(interpreter));
+                var instance = vaArgs[cursor++].Take(interpreter);
+                
+                if (instance is List<object> or IDictionary<object, object> 
+                    || Configuration.GetFlag("auto-serialize-all"))
+                {
+                    var serialized = JsonConvert.SerializeObject(instance);
+                    sb.Append(serialized);
+                }
+                else if (instance is IStruct @struct)
+                {
+                    if (@struct.GetValue("to_string") is IStructFunction fn)
+                    {
+                        sb.Append(fn.Execute(interpreter, @struct, Array.Empty<Statement>().ToList()).Value);
+                    }
+                    else
+                    {
+                        sb.Append(@struct);
+                    }
+                }
+                else
+                {
+                    sb.Append(instance);
+                }
                 wasLastFormatDelim = true;
                 continue;
             }

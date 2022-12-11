@@ -9,10 +9,6 @@ using System.Runtime.CompilerServices;
 
 namespace Runtime.Parser;
 
-/*
- * TODO: add a function called `ParseExpression` that only attempts to parse expressions.
- */
-
 public class DParser
 {
     private readonly List<DToken> _tokens;
@@ -24,7 +20,8 @@ public class DParser
     private bool _panicked;
 
     private readonly IDictionary<string, TypeHint> _staticHints;
-    private TypeHint GetTypeHintFor(string name) => _staticHints[name];
+    private TypeHint GetTypeHintFor(string name) 
+        => _staticHints.ContainsKey(name) ? _staticHints[name] : new TypeHint(name);
 
     public DParser(List<DToken> tokens)
     {
@@ -91,26 +88,73 @@ public class DParser
         Panic("expected expression");
         return null!;
     }
+
+    public PropertyDeclaration ParseObjectProperty()
+    {
+        bool isStatic = false;
+        _ = Consume(TokenType.Property, "expected `property` keyword.");
+
+        if (Match(TokenType.Star))
+        {
+            isStatic = true;
+            Advance();
+        }
+
+        var identifier = Consume(TokenType.Identifier, "expected identifier");
+        
+        if (!Match(TokenType.Colon))
+            Panic($"property `{identifier.Lexeme}` is missing a type annotation");
+        Advance();
+        if (!Match(TokenType.Identifier))
+            Panic($"property `{identifier.Lexeme}` is missing a type annotation");
+        var hint = Advance();
+
+        if (!Match(TokenType.Equals))
+        {
+            return new
+                PropertyDeclaration(
+                    identifier.Lexeme,
+                    isStatic,
+                    new TypeHint(hint.Lexeme),
+                    null,
+                    identifier.Line);
+        }
+
+        _ = Advance();
+        var initializer = ParseExpression();
+        return new PropertyDeclaration(
+            identifier.Lexeme,
+            isStatic,
+            new TypeHint(hint.Lexeme),
+            initializer,
+            identifier.Line);
+    }
     
     private Statement ParseDeclaration()
     {
+        
+        // This basically removes the need for ';' at the end of lines.
+        // This is intended, line breaks should not be mandatory.
         if (Match(TokenType.LineBreak))
             _ = Consume(TokenType.LineBreak, "");
 
         if (Match(
-            TokenType.Let)
-            )
+                TokenType.Let)
+           )
         {
             return ParseLetStatement();
+        }
+
+        if (Match(TokenType.Property))
+        {
+            return ParseObjectProperty();
         }
 
         if (Match(TokenType.From))
         {
             return ParseSpecificModuleImport();
         }
-        
-        // TODO: add a way to import an entire module as a namespace. example: import 'std' as std;
-        
+
         if (Match(TokenType.ForcedBreakPoint))
         {
             var @break = Consume(TokenType.ForcedBreakPoint, DErrorCode.Default);
@@ -154,22 +198,20 @@ public class DParser
             return ParseWhileStatement();
         }
 
-        if (Match(TokenType.Struct))
+        if (Match(TokenType.Object))
         {
-            return ParseStructDeclaration();
+            return ParseObjectDeclaration();
         }
 
         if (Match(TokenType.ListOpen))
         {
             var list = ParseListDeclaration();
-            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return list;
         }
 
         if (Match(TokenType.LeftBrace))
         {
             var dict = ParseDictDeclaration();
-            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return dict;
         }
 
@@ -193,7 +235,7 @@ public class DParser
 
             if (Match(TokenType.Identifier))
             {
-                if (Peek().Type == TokenType.Access)
+                if (Peek().Type == TokenType.InstanceAccess)
                 {
                     return ParseVariableAccess();
                 }
@@ -289,7 +331,15 @@ public class DParser
         }
         else
         {
-            Errors.CreateWithMessage(identifier, $"expected type annotation after '{identifier.Lexeme}'", false);
+            // see if they are importing a module.
+            _ = Consume(TokenType.Equals, $"expect an equals after `{identifier.Lexeme}`");
+            if (!Match(TokenType.Import))
+            {
+                Panic("You can only assign to a non-type hinted variable with an import.");
+            }
+
+            var lhs = new Variable(identifier.Lexeme, TypeHint.Any, identifier.Line);
+            return ParseNamespaceImport(lhs);
         }
 
         var equalSymbol = Consume(TokenType.Equals, DErrorCode.ExpEquals);
@@ -297,7 +347,7 @@ public class DParser
 
         if (Match(TokenType.Identifier))
         {
-            if (Peek(1).Type == TokenType.Access)
+            if (Peek(1).Type == TokenType.InstanceAccess)
             {
                 var access = ParseVariableAccess();
                 return new Assignment(new Variable(identifier.Lexeme, hint, equalSymbol.Line), access);
@@ -318,7 +368,6 @@ public class DParser
                 // the function.
 
                 var call = ParseFunction(rhsIdentifier);
-                var lineBreak = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
                 var returnType = GetTypeHintFor(call.Identifier);
 
                 if (hint != returnType)
@@ -326,7 +375,7 @@ public class DParser
                     Panic($"The call to '{call.Identifier}' returns `{returnType}`. The hint specified is `{hint}`. These do not match.");
                 }
 
-                return new Assignment(new(variableName, hint, lineBreak.Line), call);
+                return new Assignment(new(variableName, hint, call.Line), call);
             }
 
             var contents = rhsIdentifier.Lexeme;
@@ -363,6 +412,13 @@ public class DParser
         return new Assignment(new(variableName, hint, equalSymbol.Line), value);
     }
 
+    private AssignedModuleImport ParseNamespaceImport(Variable assignee)
+    {
+        _ = Consume(TokenType.Import, "expected 'import'");
+        var module = Consume(TokenType.String, "expected module name after `import`");
+        return new AssignedModuleImport(assignee, module.Lexeme, module.Line);
+    }
+    
     private Statement ParseWhileStatement()
     {
         _ = Consume(TokenType.While, string.Empty); // unlikely
@@ -410,9 +466,9 @@ public class DParser
         };
     }
 
-    private Statement ParseStructDeclaration()
+    private Statement ParseObjectDeclaration()
     {
-        _ = Consume(TokenType.Struct, "Expected 'struct' keyword");
+        _ = Consume(TokenType.Object, "Expected 'object' keyword");
         var identifier = Consume(TokenType.Identifier, "Expected struct identifier");
 
         _ = Consume(TokenType.LeftBrace, $"Expected '{{' after {identifier.Lexeme}");
@@ -422,9 +478,9 @@ public class DParser
         {
             // parse expression when parsing a declaration?
             var next = ParseDeclaration();
-            if (next is not FunctionDeclaration)
+            if (next is not FunctionDeclaration && next is not PropertyDeclaration)
             {
-                Panic("declarations within a struct must be a function or member variable.");
+                Panic("declarations within a struct must be a function or property.");
             }
             declarations.Add((Declaration)next);
         }
@@ -462,7 +518,7 @@ public class DParser
 
         if (Match(TokenType.Identifier))
         {
-            if (Peek(1).Type == TokenType.Access)
+            if (Peek(1).Type == TokenType.InstanceAccess)
             {
                 var accessExpression = ParseVariableAccess();
                 if (!Match(TokenType.Equals))
@@ -487,8 +543,6 @@ public class DParser
                 // the function.
 
                 var call = ParseFunction(rhsIdentifier);
-
-                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
 
                 return call;
             }
@@ -603,14 +657,11 @@ public class DParser
         var mod = Consume(TokenType.Module, DErrorCode.ExpKeyword);
         var identifier = ParseLiteral();
 
-        if (identifier is not Literal id)
-        {
-            AddParseError(DErrorCode.ExpIdentifier);
-            return null!;
-        }
+        if (identifier is Literal id) return new ModuleIdentity(id, mod.Line);
+        
+        AddParseError(DErrorCode.ExpIdentifier);
+        return null!;
 
-        _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
-        return new ModuleIdentity(id, mod.Line);
     }
 
     private FunctionDeclaration ParseFunctionDeclaration()
@@ -867,6 +918,7 @@ public class DParser
 
         // FIXME:
         var hint = annotation != null ? new TypeHint(annotation) : TypeHint.Any;
+        _staticHints[identifier.Lexeme] = hint;
         return new Variable(identifier.Lexeme, hint, identifier.Line);
     }
 
@@ -879,9 +931,11 @@ public class DParser
             new Variable(first.Lexeme, TypeHint.Any, first.Line, false)
         };
 
-        while (Match(TokenType.Access))
+        while (Match(TokenType.InstanceAccess, TokenType.StaticAccess))
         {
-            var accessor = Consume(TokenType.Access, "expected accessor");
+            var accessor = Match(TokenType.InstanceAccess)
+                ? Consume(TokenType.InstanceAccess, "expected `::`")
+                : Consume(TokenType.StaticAccess, "expected `::` or `.`");
             var next = Consume(TokenType.Identifier, "expected identifier after '::'");
             if (next is null)
                 break;
@@ -902,7 +956,7 @@ public class DParser
     {
         if (Match(TokenType.Identifier))
         {
-            if (Peek(1).Type == TokenType.Access)
+            if (Peek(1).Type == TokenType.InstanceAccess)
                 return ParseVariableAccess();
 
             var identifier = Advance();

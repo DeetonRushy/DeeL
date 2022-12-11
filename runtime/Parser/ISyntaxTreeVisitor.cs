@@ -39,4 +39,6 @@ public interface ISyntaxTreeVisitor<out T>
     public T VisitVariableAccessAssignment(VariableAccessAssignment variableAccessAssignment);
     public T VisitEntityIndex(EntityIndex entityIndex);
     public T VisitModuleImport(ModuleImport import);
+    public T VisitModuleAssignment(AssignedModuleImport assignedModuleImport);
+    public T VisitPropertyDeclaration(PropertyDeclaration declaration);
 }

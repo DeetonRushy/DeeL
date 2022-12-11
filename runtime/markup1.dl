@@ -1,17 +1,12 @@
-﻿let fmt: string = String::format("Hello, {}!", "World");
-writeln(fmt);
+﻿mod 'dee.testing'
 
-object CustomConsole {
+object Person {
+  property *name: int
+
   fn construct(self) -> void {
-    self::prefix = 'LOG';
-  }
-  
-  fn log(self, message: string) -> void {
-    let format: string = String::format("[{}]: {}", self::prefix, message);
-    writeln(format);
   }
 }
 
-let console: CustomConsole = CustomConsole();
-console::prefix = 'ERROR';
-console::log("hello, world!");
+let me: Person = Person()
+
+print('My name is {}', me.name)
