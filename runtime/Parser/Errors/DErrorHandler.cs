@@ -91,8 +91,9 @@ public class DErrorHandler
         }
 
         var sb = new StringBuilder();
+        sb.AppendLine(new string('~', relevantContent.Length + 3));
         sb.AppendLine($"{token.Line - 1} | {lineBefore}");
-        sb.AppendLine($"{token.Line} | {content}");
+        sb.AppendLine($"{token.Line.ToString().Pastel(Color.Red)} | {content}");
         sb.AppendLine($"{token.Line + 1} | {lineAfter}");
         sb.AppendLine(new string('~', relevantContent.Length + 3));
         sb.Append("ERROR".Pastel(Color.Red));
