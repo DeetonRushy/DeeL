@@ -1,6 +1,5 @@
 mod 'std.time'
 
-
 # https://github.com/DeetonRushy/DeeL/blob/master/runtime/Interpreting/Structs/Builtin/Core/Interop.cs#L28
 let const TIME_MILLIS: int = 0
 let const TIME_SECONDS: int = 1
@@ -15,7 +14,11 @@ object Time {
     self.hours = Lang::time(TIME_HOURS)
   }
 
-  fn to_string(const self) -> string {
-    return String::format('{}:{}:{}', self.hours, self.minutes, self.seconds)
+  fn as_time_string(const self) -> string {
+      return String::format('{}:{}:{}', self.hours, self.minutes, self.seconds)
+  }
+
+  fn now() -> Time {
+    return Time()
   }
 }
