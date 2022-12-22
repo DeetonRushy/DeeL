@@ -2,9 +2,8 @@
 
 A programming language that is getting there bit by bit.
 
-# DISCLAIMER
-This isn't actually a language persay, there are no types that actually build the language
-or make it extendable right now.
+# Features
+see [here](https://github.com/DeetonRushy/DeeL/blob/master/runtime/README.md)
 
 # Information
 There are 6 implicit data types in DeeL. 
