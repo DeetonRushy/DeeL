@@ -250,9 +250,12 @@ public class Interpreter : ISyntaxTreeVisitor<object>
     {
         var name = assignment.Decl.Name;
         var value = assignment.Statement.Take(this);
+
+        var isConst = (assignment.Decl as Variable)?.IsConstant ?? assignment.IsConst;
+
         var instance = new DeeObject<object>(value)
         {
-            IsConst = assignment.Decl.IsConst
+            IsConst = isConst
         };
 
         if (value is Declaration decl)
@@ -266,6 +269,11 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         if (value is IStruct @struct)
         {
+            if (isConst)
+            {
+                @struct.ConstInstance = true;
+            }
+
             if (assignment.Decl.Type.Name != @struct.Name)
             {
                 Panic($"cannot assign an instance of '{@struct.Name}' to '{assignment.Decl.Type}'");
@@ -680,6 +688,11 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
         for (var i = 0; i <= variableAccess.Tree.Count; i++)
         {
+            if (current is not null && current.ConstInstance)
+            {
+                Panic("cannot assign to constant instance");
+            }
+
             var lastIteration = (i + 1 >= variableAccess.Tree.Count);
             var firstIteration = (i == 0);
 

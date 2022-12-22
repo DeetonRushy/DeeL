@@ -65,11 +65,6 @@ public enum DErrorCode
     ExpDictValue,
 
     /// <summary>
-    /// Expected a line break. The character ';' was expected at the end of a statement or declaration.
-    /// </summary>
-    ExpLineBreak,
-
-    /// <summary>
     /// Some specified identifier is not recognized.
     /// </summary>
     UndefinedSymbol,

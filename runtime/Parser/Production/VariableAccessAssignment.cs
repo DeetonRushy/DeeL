@@ -4,7 +4,7 @@ public record VariableAccessAssignment(VariableAccess Access, TypeHint Hint, Sta
 {
     public override string Debug()
     {
-        throw new NotImplementedException();
+        return $"VariableAccessAssignment";
     }
 
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)

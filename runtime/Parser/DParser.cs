@@ -170,7 +170,6 @@ public class DParser
         if (Match(TokenType.ForcedBreakPoint))
         {
             var @break = Consume(TokenType.ForcedBreakPoint, DErrorCode.Default);
-            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return new ExplicitBreakpoint(@break.Line);
         }
 
@@ -383,7 +382,7 @@ public class DParser
                     Panic($"The call to '{call.Identifier}' returns `{returnType}`. The hint specified is `{hint}`. These do not match.");
                 }
 
-                return new Assignment(new(variableName, hint, call.Line), call);
+                return new Assignment(new(variableName, hint, call.Line), call) { IsConst = isConst };
             }
 
             var contents = rhsIdentifier.Lexeme;
@@ -417,7 +416,7 @@ public class DParser
         {
             Panic($"cannot assign the literal `{literal.Object}` which has the type `{literal.Type}`, to the type `{hint}`");
         }
-        return new Assignment(new(variableName, hint, equalSymbol.Line), value);
+        return new Assignment(variable, value);
     }
 
     private AssignedModuleImport ParseNamespaceImport(Variable assignee)
@@ -515,14 +514,12 @@ public class DParser
         if (Match(TokenType.ListOpen))
         {
             var list = ParseListDeclaration();
-            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return list;
         }
 
         if (Match(TokenType.LeftBrace))
         {
             var dict = ParseDictDeclaration();
-            _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
             return dict;
         }
 

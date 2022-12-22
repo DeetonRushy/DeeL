@@ -26,7 +26,6 @@ public class DErrorHandler
             { DErrorCode.ExpRightBrace, (DErrorLevel.All, "expected a closing '}'") },
             { DErrorCode.ExpColonDictPair, (DErrorLevel.All, "expected a colon ':', between a dictionary pair") },
             { DErrorCode.ExpDictValue, (DErrorLevel.All, "expected a value inside of dictionary pair.") },
-            { DErrorCode.ExpLineBreak, (DErrorLevel.All, "expected a ';' at the end of a declaration or statement.") },
             { DErrorCode.UndefinedSymbol, (DErrorLevel.All, "undefined symbol `{0}`") },
             { DErrorCode.ExpLeftParen, (DErrorLevel.Many, "expected a '('") },
             { DErrorCode.ExpRightParen, (DErrorLevel.Many, "expected a ')'") },

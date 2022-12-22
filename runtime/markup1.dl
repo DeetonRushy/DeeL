@@ -1,24 +1,10 @@
 ﻿mod 'dee.testing'
 
-from 'std.time' import {*}
-
-object Data {
-  fn construct(self: Data) -> void {
-    self.a = 2
-    self.b = 3
-  }
-
-  fn to_string(self) -> string {
-    return String::format('Data: a -> {}, b -> {}', self.a, self.b)
+object Version {
+  fn construct(self, Major: int, Minor: int) -> void {
+    self.major = Major
+    self.minor = Minor
   }
 }
 
-fn doSomeShit(const data: Data) -> string {
-  return String::format('{}{}', data.a, data.b)
-}
-
-let data: Data = Data()
-let result: string = doSomeShit(data)
-let now: Time = Time()
-
-print("{} at {}:{}:{}", result, now.hours, now.minutes, now.seconds)
+let const version: Version = Version(1, 2)

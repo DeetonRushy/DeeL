@@ -12,6 +12,25 @@ public class StringBuiltin : BaseBuiltinStructDefinition
         : base("StringHelper")
     {
         DefineBuiltinFunction("format", true, ExecuteFormat);
+        DefineBuiltinFunction("make", true, ExecuteFrom);
+    }
+
+    public static ReturnValue ExecuteFrom(Interpreter interpreter, IStruct self, List<Statement> args)
+    {
+        if (args.Count != 1)
+        {
+            interpreter.Panic("expected one argument");
+        }
+
+        var statement = args[0].Take(interpreter);
+
+        if (Configuration.GetFlag("auto-serialize-all") ||
+            statement is List<object> or Dictionary<object, object>)
+        {
+            return new ReturnValue(JsonConvert.SerializeObject(statement), 0);
+        }
+
+        return new ReturnValue(statement.ToString(), 0);
     }
 
     public static ReturnValue ExecuteFormat(Interpreter interpreter, IStruct self, List<Statement> args)
