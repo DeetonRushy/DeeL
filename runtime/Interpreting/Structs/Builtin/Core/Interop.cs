@@ -3,7 +3,7 @@ using Runtime.Interpreting.Calls.Builtins;
 using Runtime.Interpreting.Extensions;
 using Runtime.Parser.Production;
 
-namespace Runtime.Interpreting.Structs.Builtin;
+namespace Runtime.Interpreting.Structs.Builtin.Core;
 
 public class Interop : BaseBuiltinStructDefinition
 {
@@ -56,7 +56,7 @@ public class Interop : BaseBuiltinStructDefinition
     {
         return new ReturnValue(interpreter.Identity, 0);
     }
-    
+
     private static ReturnValue EnableInterpreterOptionCall(Interpreter interpreter, IStruct self, List<Statement> args)
     {
         foreach (var val in args.Select(stmt => stmt.Take(interpreter)))
@@ -66,13 +66,13 @@ public class Interop : BaseBuiltinStructDefinition
                 interpreter.Panic("Interpreter flags can only be strings.");
                 return ReturnValue.Bad;
             }
-            
+
             Configuration.SetFlag(s, true);
         }
 
         return new ReturnValue(args.Count, 0);
     }
-    
+
     private static ReturnValue ExecuteQuitCall(Interpreter interpreter, IStruct self, List<Statement> arguments)
     {
         if (arguments.Count == 0)
@@ -86,7 +86,7 @@ public class Interop : BaseBuiltinStructDefinition
         {
             interpreter.Panic($"quit expected an integer, argument. (got '{code}')");
         }
-        
+
         Environment.Exit(Convert.ToInt32(code));
         return new ReturnValue("unreachable", -1);
     }
@@ -127,7 +127,7 @@ public class Interop : BaseBuiltinStructDefinition
         }
 
         var actualMethod = methods.First(x => x.Name == functionName);
-        
+
         /*
          * TODO: create a wrapper for a native function that can SOMEHOW call it...
          */

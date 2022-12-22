@@ -1,6 +1,6 @@
 ﻿using Runtime.Parser.Production;
 
-namespace Runtime.Interpreting.Structs.Builtin;
+namespace Runtime.Interpreting.Structs.Builtin.Core;
 
 public class BuiltinConsoleClass : BaseBuiltinStructDefinition
 {
@@ -41,24 +41,24 @@ public class BuiltinConsoleClass : BaseBuiltinStructDefinition
         _disabled = false;
         return new ReturnValue(_disabled, 0);
     }
-    
+
     public ReturnValue ExecuteConsoleInput(Interpreter interpreter, IStruct self, List<Statement> args)
     {
         if (_disabled)
             return new ReturnValue(string.Empty, 0);
-        
+
         if (!interpreter.Allows("stdin") || !interpreter.AllowsStdout)
         {
             interpreter.Panic("cannot get user input while `stdin` and/or `stdout` has been disallowed.");
         }
-        
+
         var prompt = ">> ";
 
         if (args.Count >= 1 && args[0].Take(interpreter) is string s)
         {
             prompt = s;
         }
-        
+
         Console.Write(prompt);
         var input = Console.ReadLine();
         Console.Write("\n");
