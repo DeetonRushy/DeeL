@@ -358,12 +358,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
                 var @struct = new UserDefinedStruct(scopeId, false);
                 @struct.Populate(this, structDecl);
-                if (structDecl.GetValue("construct") is not IStructFunction constructor)
-                {
-                    Panic($"internal error: no constructor but apparently `construct` is defined for `{scopeId}`");
-                    throw new NotImplementedException();
-                }
-                _ = constructor.Execute(this, @struct, call.Arguments.ToList());
+                _ = ctor.Execute(this, @struct, call.Arguments.ToList());
                 return @struct;
             }
 
