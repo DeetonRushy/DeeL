@@ -52,9 +52,6 @@ __break; # <-- causes a break, then the next step will be your code.
 my_new_feature_that_isnt_working()
 ```
 
-## This isn't too serious
-I'm making this to challenge myself. That being said, this isn't going to be the fastest, most reliable configuration language out there. However, it's been fun to work on up to now so it's worth it.
-
 ## Credits
 [Jay Madden](https://github.com/Jay-Madden) with their project [SharpLox](https://github.com/Jay-Madden/SharpLox).
 The entire design was inspired by this project.
