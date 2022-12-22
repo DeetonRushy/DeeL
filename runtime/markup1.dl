@@ -19,5 +19,6 @@ fn doSomeShit(const data: Data) -> string {
 
 let data: Data = Data()
 let result: string = doSomeShit(data)
+let now: Time = Time()
 
-print("{}", result)
+print("{} at {}:{}:{}", result, now.hours, now.minutes, now.seconds)

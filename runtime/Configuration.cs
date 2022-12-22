@@ -16,7 +16,7 @@ public static class Configuration
         // import.
         
         RegisterDefaultOption("module-paths",
-            "C:\\Users\\deeto\\source\\repos\\DeeL\\playground\\bin\\STD\\DL"
+            $"C:\\Users\\{Environment.UserName}\\source\\repos\\DeeL\\STD"
             );
 
         RegisterDefaultFlag("debug",

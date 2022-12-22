@@ -218,23 +218,31 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             if (node is null)
                 throw new InterpreterException("internal: parser problem... null node?");
 
+#if DEBUG
             var sw = Stopwatch.StartNew();
+#endif
             _ = node.Take(this);
+#if DEBUG
             sw.Stop();
+#endif
 
+#if DEBUG
             if (!productionTimes.ContainsKey(node.GetType()))
                 productionTimes[node.GetType()] = sw.ElapsedMilliseconds;
             else
             {
                 productionTimes[node.GetType()] += sw.ElapsedMilliseconds;
             }
+#endif
         }
 
+#if DEBUG
         foreach (var time in productionTimes)
         {
             Console.WriteLine($"{time.Key.Name} -- {time.Value}ms ({time.Value / 1000}s)");
         }
-        
+#endif
+
         return Undefined;
     }
 

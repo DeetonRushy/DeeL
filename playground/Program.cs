@@ -9,7 +9,7 @@ try
     ctx = DlRuntime.Run(File.ReadAllText($"C:\\Users\\{Environment.UserName}\\source\\repos\\DeeL\\runtime\\markup1.dl"), false);
 
     sw.Stop();
-    Console.WriteLine($"\n\nTotal execution time: {sw.Elapsed} ({sw.ElapsedMilliseconds}ms)");
+    Console.WriteLine($"\n\nexecution time: {sw.Elapsed} ({sw.ElapsedMilliseconds}ms)");
 }
 catch (Exception ex)
 {
@@ -19,9 +19,11 @@ catch (Exception ex)
 
 ctx.ErrorHandler.DisplayErrors();
 
+#if DEBUG
 Console.WriteLine("**** GLOBALS ****\n");
 
 foreach (var (key, value) in ctx.Interpreter.Globals())
 {
     Console.WriteLine($"{{ {key}: {value} }}");
 }
+#endif
