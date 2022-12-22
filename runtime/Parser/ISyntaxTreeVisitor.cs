@@ -31,7 +31,7 @@ public interface ISyntaxTreeVisitor<out T>
     public T VisitMultiplication(Multiplication multiplication);
     public T VisitDivision(Division division);
     public T VisitStructDeclaration(StructDeclaration structDeclaration);
-    public T VisitVariableAccess(VariableAccess variableAccess, out IScope? scope);
+    public T VisitVariableAccess(VariableAccess variableAccess, out IScope? scope, bool isAssignment = false);
     public T VisitIfStatement(IfStatement conditional);
     public T VisitIsEqualsComparison(IsEqual isEqual);
     public T VisitIsNotEquals(IsNotEqual isNotEqual);
