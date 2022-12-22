@@ -13,7 +13,7 @@ object Time {
     self.hours = Lang::time(TIME_HOURS)
   }
 
-  fn to_string(self) -> string {
+  fn to_string(const self) -> string {
     return String::format('{}:{}:{}', self.hours, self.minutes, self.seconds)
   }
 }
