@@ -3,6 +3,7 @@ using Runtime.Lexer;
 using Runtime.Parser.Exceptions;
 using System.Drawing;
 using System.Text;
+using Runtime.Parser.Production;
 
 namespace Runtime.Parser.Errors;
 
@@ -46,7 +47,7 @@ public class DErrorHandler
         if (!_defaultLevels.TryGetValue(code, out var defaults))
             throw new
                 InvalidOperationException(
-                $"please implement DErrorCode.{code} in {nameof(DErrorHandler)}.{nameof(_defaultLevels)}");
+                    $"please implement DErrorCode.{code} in {nameof(DErrorHandler)}.{nameof(_defaultLevels)}");
 
         var (level, message) = defaults;
 
@@ -100,6 +101,12 @@ public class DErrorHandler
         sb.AppendLine($" {message.Pastel(Color.Pink)}");
 
         return sb.ToString();
+    }
+
+    public void CreateWithMessage(Statement statement, string message, bool skipHighlight)
+    {
+        var pretty = CreatePrettyErrorMessage(new DToken { Line = statement.Line }, message, skipHighlight);
+        Errors.Add(new DError {Code = DErrorCode.Default, Message = pretty});
     }
 
     public void CreateWithMessage(DToken token, string message, bool skipHighlight)

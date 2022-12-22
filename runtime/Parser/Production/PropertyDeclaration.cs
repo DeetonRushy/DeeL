@@ -3,7 +3,7 @@
 public record PropertyDeclaration(string Name,
     bool IsStatic,
     TypeHint Type,
-    Expression? Initializer,
+    Statement? Initializer,
     int Line
 ): Declaration(Name, Type, Line)
 {

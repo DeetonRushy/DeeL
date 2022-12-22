@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Runtime.Interpreting.Calls.Builtins;
 using Runtime.Interpreting.Extensions;
 using Runtime.Parser.Production;
 
@@ -20,6 +21,35 @@ public class Interop : BaseBuiltinStructDefinition
         DefineBuiltinFunction("quit", true, ExecuteQuitCall);
         DefineBuiltinFunction("enable_option", true, EnableInterpreterOptionCall);
         DefineBuiltinFunction("module_name", true, GetExecutingModuleCall);
+        DefineBuiltinFunction("time", true, GetTimeValue);
+        DefineBuiltinFunction("get_native_types", true, ExecuteGetNativeTypesCall);
+    }
+
+    private static ReturnValue GetTimeValue(Interpreter interpreter, IStruct self, List<Statement> statements)
+    {
+        if (statements.Count == 0)
+        {
+            interpreter.Panic("expected an argument signifying the time value to fetch");
+        }
+
+        var first = statements.First().Take(interpreter);
+        if (first is not long Code)
+        {
+            interpreter.Panic("the signifying code must be an integer");
+            return new ReturnValue(0, 0);
+        }
+
+        var now = DateTime.Now;
+
+        return Code switch
+        {
+            0 => new ReturnValue(now.Millisecond, 0),
+            1 => new ReturnValue(now.Second, 0),
+            2 => new ReturnValue(now.Minute, 0),
+            3 => new ReturnValue(now.Hour, 0),
+            4 => new ReturnValue(now.Day, 0),
+            _ => new ReturnValue(0, 0),
+        };
     }
 
     private static ReturnValue GetExecutingModuleCall(Interpreter interpreter, IStruct self, List<Statement> args)
@@ -61,8 +91,14 @@ public class Interop : BaseBuiltinStructDefinition
         return new ReturnValue("unreachable", -1);
     }
 
-    public override string Name => "interpreter";
+    public override string Name => "Lang";
     private static Type[]? _assemblyTypes;
+
+    private static ReturnValue ExecuteGetNativeTypesCall(Interpreter interpreter, IStruct self, List<Statement> args)
+    {
+        _assemblyTypes ??= LoadAllTypes(interpreter);
+        return new(_assemblyTypes.ToList(), 0);
+    }
 
     private static ReturnValue ExecuteNativeCall(Interpreter interpreter, IStruct self, List<Statement> args)
     {
@@ -71,7 +107,7 @@ public class Interop : BaseBuiltinStructDefinition
 
         var classSig = args.First().Take(interpreter) as string;
 
-        var match = _assemblyTypes.Where(x => x.FullName == classSig);
+        var match = _assemblyTypes.Where(x => x.Name == classSig);
 
         var enumerable = match.ToList();
         if (!enumerable.Any())

@@ -37,10 +37,7 @@ public class DlRuntime
         {
             var ast = parser.Parse();
             interpreter = new Interpreter(ast);
-            var timeTakenToInterpret = Stopwatch.StartNew();
             interpreter.Interpret();
-            timeTakenToInterpret.Stop();
-            Console.WriteLine($"Took {timeTakenToInterpret.ElapsedMilliseconds}ms to interpret.");
         }
         catch (Exception ex)
         {

@@ -1,6 +1,6 @@
 namespace Runtime.Parser.Production;
 
-public record Assignment(Declaration Decl, Statement Statement) : Statement(Decl.Line)
+public record Assignment(Declaration Decl, Statement Statement) : Statement(false, Decl.Line)
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {

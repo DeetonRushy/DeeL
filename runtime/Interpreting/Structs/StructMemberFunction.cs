@@ -15,6 +15,7 @@ public class StructMemberFunction : IStructFunction
 {
     public string Name { get; private set; }
     public bool IsStatic { get; private set; } = true;
+    public bool SelfIsConst { get; private set; } = false;
     private readonly Block _body;
     private readonly List<Variable> _expectedArguments;
 
@@ -23,7 +24,11 @@ public class StructMemberFunction : IStructFunction
         if (arguments.Count != 0)
         {
             if (arguments[0].Name == "self")
+            {
                 IsStatic = false;
+                if (arguments[0].IsConstant)
+                    SelfIsConst = true;
+            }
         }
 
         _body = body;
@@ -38,7 +43,8 @@ public class StructMemberFunction : IStructFunction
 
         if (!IsStatic)
         {
-            interpreter.CurrentScope.Assign("self", instance);
+            interpreter.CurrentScope.Assign(interpreter, "self", 
+                new DeeObject<object>(instance) { IsConst = SelfIsConst });
 
             if (args.Count != (_expectedArguments.Count - 1))
             {
@@ -50,8 +56,11 @@ public class StructMemberFunction : IStructFunction
 
         for (var i = 0; i < (IsStatic ? _expectedArguments.Count : _expectedArguments.Count - 1); ++i)
         {
+            var current = _expectedArguments[IsStatic ? i : i + 1];
             var value = args[i].Take(interpreter);
-            interpreter.CurrentScope.Assign(_expectedArguments[IsStatic ? i : i+1].Name, value);
+
+            interpreter.CurrentScope.Assign(interpreter, current.Name,
+                new DeeObject<object>(value) { IsConst = current.IsConstant });
         }
 
         var result = _body.Take(interpreter);

@@ -1,6 +1,6 @@
 ﻿namespace Runtime.Parser.Production;
 
-public record VariableAccessAssignment(VariableAccess Access, TypeHint Hint, Statement Operand, int Line) : Statement(Line)
+public record VariableAccessAssignment(VariableAccess Access, TypeHint Hint, Statement Operand, bool IsConst, int Line) : Statement(IsConst, Line)
 {
     public override string Debug()
     {

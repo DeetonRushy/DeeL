@@ -7,9 +7,10 @@ namespace Runtime.Parser;
 public class TypeHint
 {
     public static TypeHint String => new("string") { IsString = true };
-    public static TypeHint Boolean => new("boolean");
-    public static TypeHint Integer => new("integer") { IsIntegral = true };
-    public static TypeHint Decimal => new("float") { IsIntegral = true };
+    public static TypeHint Boolean => new("bool");
+    public static TypeHint Integer => new("int") { IsIntegral = true };
+    // floats are decimals
+    public static TypeHint Float => new("float") { IsIntegral = true };
     public static TypeHint Dict => new("dict");
     public static TypeHint List => new("list");
     public static TypeHint Func => new("function");
@@ -38,7 +39,7 @@ public class TypeHint
             TokenType.String => String,
             TokenType.Boolean => Boolean,
             TokenType.Number => Integer,
-            TokenType.Decimal => Decimal,
+            TokenType.Decimal => Float,
             _ => Any,
         };
     }

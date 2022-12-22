@@ -248,5 +248,10 @@ public enum TokenType
     /// <summary>
     /// The `property` keyword.
     /// </summary>
-    Property
+    Property,
+
+    /// <summary>
+    /// The `const` keyword.
+    /// </summary>
+    Const
 }

@@ -1,4 +1,3 @@
-using Microsoft.VisualBasic.CompilerServices;
 using Runtime.Lexer.Exceptions;
 using Runtime.Parser.Errors;
 using static Runtime.Lexer.DConstants;
@@ -372,7 +371,7 @@ public class DLexer
             }
 
             if (Peek() == LineBreak || Peek() == EOF ||
-                Peek() is LeftParen or RightParen or Comma or Colon or LeftBrace or ListClose or ListOpen)
+                Peek() is LeftParen or RightParen or Comma or Colon or LeftBrace or ListClose or ListOpen or Dot)
                 break;
 
             ch = Advance();

@@ -15,7 +15,8 @@ public static class DConstants
         { "while", TokenType.While },
         { "from", TokenType.From },
         { "import", TokenType.Import },
-        { "property", TokenType.Property }
+        { "property", TokenType.Property },
+        { "const", TokenType.Const }
     };
 
     public const char EOF = '\0';

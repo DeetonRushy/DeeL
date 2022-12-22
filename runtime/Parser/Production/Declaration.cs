@@ -1,6 +1,6 @@
 ﻿namespace Runtime.Parser.Production;
 
-public record Declaration(string Name, TypeHint Type, int Line) : Statement(Line)
+public record Declaration(string Name, TypeHint Type, int Line) : Statement(false, Line)
 {
     public override string Debug()
     {

@@ -7,7 +7,7 @@ namespace Runtime.Parser.Production;
  Tree must be in order, start to finish.
  */
 
-public record VariableAccess(List<Statement> Tree, int Line) : Statement(Line)
+public record VariableAccess(List<Statement> Tree, int Line) : Statement(true, Line)
 {
     public override string Debug()
     {

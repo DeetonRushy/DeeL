@@ -2,7 +2,7 @@
 
 // This inherits from Statement, which looks weird. But statement is basically just `Node`.
 
-public record Expression(int Line): Statement(Line)
+public record Expression(int Line): Statement(false, Line)
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {

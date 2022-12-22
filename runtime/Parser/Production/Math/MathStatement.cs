@@ -1,7 +1,7 @@
 ﻿
 namespace Runtime.Parser.Production.Math;
 
-public record MathStatement(Statement Left, Statement Right, int Line) : Statement(Line)
+public record MathStatement(Statement Left, Statement Right, int Line) : Statement(true, Line)
 {
     public override string Debug()
     {

@@ -16,6 +16,11 @@ public class BuiltinConsoleClass : BaseBuiltinStructDefinition
         DefineBuiltinFunction("enable", true, ExecuteEnable);
         DefineBuiltinFunction("disable", true, ExecuteDisable);
         DefineBuiltinFunction("is_disabled", true, ExecuteIsDisabled);
+        DefineBuiltinFunction("clear", true, (i, s, a) =>
+        {
+            Console.Clear();
+            return new ReturnValue(0, 0);
+        });
     }
 
     public ReturnValue ExecuteDisable(Interpreter interpreter, IStruct self, List<Statement> args)

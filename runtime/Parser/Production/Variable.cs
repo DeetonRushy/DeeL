@@ -1,6 +1,6 @@
 ﻿namespace Runtime.Parser.Production;
 
-public record Variable(string Name, TypeHint Type, int Line, bool IsInitialization = true) : Declaration(Name, Type, Line)
+public record Variable(string Name, TypeHint Type, int Line, bool IsConstant, bool IsInitialization = true) : Declaration(Name, Type, Line)
 {
     public override string Debug()
     {

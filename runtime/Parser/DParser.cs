@@ -11,6 +11,15 @@ namespace Runtime.Parser;
 
 public class DParser
 {
+
+    private readonly List<string> BuiltinIdentifiers = new()
+    {
+        "String",
+        "Lang",
+        "Console",
+        "Thread"
+    };
+    
     private readonly List<DToken> _tokens;
     public readonly DErrorHandler Errors;
     private bool IsAtEnd => Peek().Type == TokenType.Eof;
@@ -52,11 +61,12 @@ public class DParser
                 continue;
             }
 
-            var decl = ParseDeclaration();
+            var decl = ParseStatement();
 
             if (decl is null)
                 continue;
-
+            
+            Logger.Info(this, $"parsed node at line {decl.Line} [{decl.Debug()}]");
             result.Add(decl);
         }
 
@@ -84,7 +94,9 @@ public class DParser
         {
             return ParseGrouping();
         }
-        
+
+        var primary = ParsePrimary();
+
         Panic("expected expression");
         return null!;
     }
@@ -121,7 +133,7 @@ public class DParser
         }
 
         _ = Advance();
-        var initializer = ParseExpression();
+        var initializer = ParseStatement();
         return new PropertyDeclaration(
             identifier.Lexeme,
             isStatic,
@@ -130,7 +142,7 @@ public class DParser
             identifier.Line);
     }
     
-    private Statement ParseDeclaration()
+    private Statement ParseStatement()
     {
         
         // This basically removes the need for ';' at the end of lines.
@@ -174,7 +186,7 @@ public class DParser
             // the next token IS a return statement, no error code
             _ = Consume(TokenType.Return, DErrorCode.Default);
             // return could be used to just return..
-            var value = ParseDeclaration();
+            var value = ParseStatement();
             return new ReturnValue(value, value.Line);
         }
 
@@ -221,10 +233,9 @@ public class DParser
         {
             _ = Consume(TokenType.Equals, "");
             // assignment to an already existing variable.
-            var assignmentValue = ParseDeclaration();
+            var assignmentValue = ParseStatement();
 
             if (primary is Variable @var)
-
                 return new Assignment(@var, assignmentValue);
         }
 
@@ -235,7 +246,7 @@ public class DParser
 
             if (Match(TokenType.Identifier))
             {
-                if (Peek().Type == TokenType.InstanceAccess)
+                if (Peek().Type is TokenType.InstanceAccess or TokenType.StaticAccess)
                 {
                     return ParseVariableAccess();
                 }
@@ -257,11 +268,10 @@ public class DParser
                     Panic($"expected `=` after `{identifier}`");
                 }
                 var eq = Consume(TokenType.Equals, "");
-                var lit = ParseDeclaration();
-                _ = Consume(TokenType.LineBreak, DErrorCode.ExpLineBreak);
+                var lit = ParseStatement();
                 if (lit is Variable var)
-                    return new Assignment(new Variable(identifier, TypeHint.Any, eq.Line), var);
-                return new Assignment(new Variable(identifier, TypeHint.Any, eq.Line), lit);
+                    return new Assignment(new Variable(identifier, TypeHint.Any, eq.Line, var.IsConstant), var);
+                return new Assignment(new Variable(identifier, TypeHint.Any, eq.Line, false), lit);
 
             }
         }
@@ -311,6 +321,9 @@ public class DParser
     {
         _ = Consume(TokenType.Let, DErrorCode.Default);
 
+        bool isConst = Match(TokenType.Const);
+        if (isConst) _ = Advance();
+
         var identifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
         var variableName = identifier.Lexeme;
 
@@ -329,28 +342,23 @@ public class DParser
                 _staticHints[identifier.Lexeme] = hint;
             }
         }
-        else
-        {
-            // see if they are importing a module.
-            _ = Consume(TokenType.Equals, $"expect an equals after `{identifier.Lexeme}`");
-            if (!Match(TokenType.Import))
-            {
-                Panic("You can only assign to a non-type hinted variable with an import.");
-            }
 
-            var lhs = new Variable(identifier.Lexeme, TypeHint.Any, identifier.Line);
+        var equalSymbol = Consume(TokenType.Equals, DErrorCode.ExpEquals);
+        var variable = new Variable(identifier.Lexeme, hint, identifier.Line, isConst);
+
+        if (Match(TokenType.Import))
+        {
+            // Panic("You can only assign to a non-type hinted variable with an import.");
+            var lhs = new Variable(identifier.Lexeme, TypeHint.Any, identifier.Line, isConst);
             return ParseNamespaceImport(lhs);
         }
 
-        var equalSymbol = Consume(TokenType.Equals, DErrorCode.ExpEquals);
-        var variable = new Variable(identifier.Lexeme, hint, identifier.Line);
-
         if (Match(TokenType.Identifier))
         {
-            if (Peek(1).Type == TokenType.InstanceAccess)
+            if (Peek(1).Type is TokenType.InstanceAccess or TokenType.StaticAccess)
             {
                 var access = ParseVariableAccess();
-                return new Assignment(new Variable(identifier.Lexeme, hint, equalSymbol.Line), access);
+                return new Assignment(new Variable(identifier.Lexeme, hint, equalSymbol.Line, isConst), access);
             }
 
             var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
@@ -382,7 +390,7 @@ public class DParser
 
             if (!DVariables.GlobalSymbolExists(contents))
             {
-                return new Assignment(new Variable(contents, hint, rhsIdentifier.Line), new Variable(contents, TypeHint.Any, rhsIdentifier.Line));
+                return new Assignment(new Variable(contents, hint, rhsIdentifier.Line, isConst), new Variable(contents, TypeHint.Any, rhsIdentifier.Line, isConst));
             }
 
             /*
@@ -434,6 +442,8 @@ public class DParser
     private IfStatement ParseIfStatement()
     {
         _ = Consume(TokenType.If, "expected `if`");
+        bool isConst = Match(TokenType.Const);
+        if (isConst) _ = Advance();
         _ = Consume(TokenType.LeftParen, "expected `(` after `if`");
 
         var cond = ParseCondition();
@@ -443,13 +453,13 @@ public class DParser
 
         if (!Match(TokenType.Else))
         {
-            return new IfStatement(cond, body, null, cond.Line);
+            return new IfStatement(cond, body, null, isConst, cond.Line);
         }
 
         var @else = Consume(TokenType.Else, string.Empty);
         var fallbackBlock = ParseBlock();
 
-        return new IfStatement(cond, body, fallbackBlock, @else.Line);
+        return new IfStatement(cond, body, fallbackBlock, isConst, @else.Line);
     }
 
     private Condition ParseCondition()
@@ -477,7 +487,7 @@ public class DParser
         while (!Match(TokenType.RightBrace))
         {
             // parse expression when parsing a declaration?
-            var next = ParseDeclaration();
+            var next = ParseStatement();
             if (next is not FunctionDeclaration && next is not PropertyDeclaration)
             {
                 Panic("declarations within a struct must be a function or property.");
@@ -518,15 +528,20 @@ public class DParser
 
         if (Match(TokenType.Identifier))
         {
-            if (Peek(1).Type == TokenType.InstanceAccess)
+            var isConst = Match(TokenType.Const);
+            if (isConst)
+                _ = Consume(TokenType.Const, "");
+
+            if (Peek(1).Type is TokenType.InstanceAccess or TokenType.StaticAccess)
             {
                 var accessExpression = ParseVariableAccess();
                 if (!Match(TokenType.Equals))
                     return accessExpression;
                 var eq = Consume(TokenType.Equals, $"Expected `=`");
-                var rhs = ParseDeclaration();
-                return new VariableAccessAssignment(accessExpression, GetHintFromOperand(rhs), rhs, eq.Line);
+                var rhs = ParseStatement();
+                return new VariableAccessAssignment(accessExpression, GetHintFromOperand(rhs), rhs, isConst, eq.Line);
             }
+
 
             var rhsIdentifier = Consume(TokenType.Identifier, DErrorCode.ExpIdentifier);
 
@@ -550,7 +565,14 @@ public class DParser
             var contents = rhsIdentifier.Lexeme;
 
             if (_staticHints.ContainsKey(contents))
-                return new Variable(contents, _staticHints[contents], rhsIdentifier.Line);
+                return new Variable(contents, _staticHints[contents], rhsIdentifier.Line, isConst);
+
+            if (BuiltinIdentifiers.Contains(contents))
+            {
+                _current -= 1;
+                return ParseVariableAccess();
+            }
+            
             Panic($"use of undeclared identifier: `{contents}`");
             return null!;
 
@@ -613,7 +635,7 @@ public class DParser
 
     private MathStatement ParseMathStatement()
     {
-        var left = ParseDeclaration();
+        var left = ParseStatement();
         return HalfParseMathStatement(left);
     }
 
@@ -633,7 +655,7 @@ public class DParser
             if (Match(TokenType.LeftParen))
                 statement = ParseFunction(identifier: identifier);
             else
-                statement = new Variable(identifier.Lexeme, TypeHint.Any, identifier.Line);
+                statement = new Variable(identifier.Lexeme, TypeHint.Any, identifier.Line, false);
         }
         else if (Match(TokenType.LeftParen))
             statement = ParseGrouping();
@@ -722,17 +744,46 @@ public class DParser
 
         while (!Match(TokenType.RightBrace))
         {
-            var statement = ParseDeclaration();
+            var statement = ParseStatement();
             if (statement is not null)
             {
-                if (statement is ReturnValue rVal && returnType is not null)
+                if (statement is ReturnValue rVal 
+                    && returnType is not null
+                    && returnType != TypeHint.Any)
                 {
                     if (rVal.Value is Declaration decl)
                     {
                         if (decl.Type != returnType)
                         {
-                            Panic($"The body for `{bodyName}` is expected to return `{returnType}`, " +
-                                  $"but here it returns `{decl.Type}`");
+                            Panic($"`{bodyName}` hints that it returns `{returnType}`, " +
+                                  $"but here it returns `{decl.Type}`..");
+                        }
+                    }
+
+                    if (rVal.Value is Literal literal)
+                    {
+                        if (returnType != literal.Type)
+                        {
+                            Panic($"`{bodyName}` hints that it returns `{returnType}`" + 
+                                $", but here it returns `{literal.Type}`..");
+                        }
+                    }
+
+                    if (rVal.Value is Dict dict)
+                    {
+                        if (returnType != TypeHint.Dict)
+                        {
+                            Panic($"`{bodyName}` hints that it returns `{returnType}`" +
+                                $", but here it returns `{TypeHint.Dict}`..");
+                        }
+                    }
+
+                    if (rVal.Value is List)
+                    {
+                        if (returnType != TypeHint.List)
+                        {
+                            Panic($"`{bodyName}` hints that it returns `{returnType}`" +
+                                $", but here it returns `{TypeHint.List}`..");
                         }
                     }
                 }
@@ -747,12 +798,15 @@ public class DParser
 
     private List ParseListDeclaration()
     {
+        bool isConst = Match(TokenType.Const);
+        if (isConst) _ = Advance();
+
         var open = Consume(TokenType.ListOpen, DErrorCode.ExpListOpen);
         var elements = new List<Statement>();
 
         do
         {
-            var literal = ParseDeclaration();
+            var literal = ParseStatement();
             if (literal is null)
             {
                 continue;
@@ -767,11 +821,14 @@ public class DParser
             // hacky fix to sort the above loop adding an extra null element..
             elements.ToArray(),
             close,
+            isConst,
             open.Line);
     }
 
     private Statement ParseDictDeclaration()
     {
+        bool isConst = Match(TokenType.Const);
+        if (isConst) _ = Advance();
         var open = Consume(TokenType.LeftBrace, DErrorCode.ExpLeftBrace);
 
         List<DictAssignment> elements = new();
@@ -816,7 +873,12 @@ public class DParser
         } while (MatchAndAdvance(TokenType.Comma));
 
         var close = Consume(TokenType.RightBrace, DErrorCode.ExpRightBrace);
-        return new Dict(open, elements.ToArray(), close, close.Line);
+        return new Dict(
+            open, 
+            elements.ToArray(), 
+            close,
+            isConst,
+            close.Line);
     }
 
     private Statement ParseLiteral()
@@ -842,7 +904,7 @@ public class DParser
         {
             if (value.Literal is decimal dec)
             {
-                return new Literal(value, TypeHint.Decimal, dec);
+                return new Literal(value, TypeHint.Float, dec);
             }
 
             // wasn't set in the lexer, attempt to convert it here.
@@ -853,7 +915,7 @@ public class DParser
                     ParserException("decimal literal could not be parsed.");
             }
 
-            return new Literal(value, TypeHint.Decimal, dec2);
+            return new Literal(value, TypeHint.Float, dec2);
         }
 
         if (value.Type == TokenType.Number)
@@ -899,6 +961,9 @@ public class DParser
         // specific for arguments inside a function declaration
         // the only things allowed are identifiers & type annotations.
 
+        bool isConst = Match(TokenType.Const);
+        if (isConst) Advance();
+
         if (!Match(TokenType.Identifier))
             return null!;
 
@@ -919,7 +984,7 @@ public class DParser
         // FIXME:
         var hint = annotation != null ? new TypeHint(annotation) : TypeHint.Any;
         _staticHints[identifier.Lexeme] = hint;
-        return new Variable(identifier.Lexeme, hint, identifier.Line);
+        return new Variable(identifier.Lexeme, hint, identifier.Line, isConst);
     }
 
     private VariableAccess ParseVariableAccess()
@@ -954,6 +1019,7 @@ public class DParser
 
     private Statement ParseFunctionArgument()
     {
+
         if (Match(TokenType.Identifier))
         {
             if (Peek(1).Type == TokenType.InstanceAccess)
@@ -972,7 +1038,7 @@ public class DParser
 
             if (!DVariables.GlobalSymbolExists(contents))
             {
-                return new Variable(contents, TypeHint.Any, identifier.Line);
+                return new Variable(contents, TypeHint.Any, identifier.Line, false);
             }
 
             var (tok, inst) = DVariables.GetValueFor(contents);

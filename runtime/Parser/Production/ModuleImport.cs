@@ -1,6 +1,6 @@
 ﻿namespace Runtime.Parser.Production;
 
-public record ModuleImport(string FileName, string[] Members, int Line): Statement(Line)
+public record ModuleImport(string FileName, string[] Members, int Line): Statement(true, Line)
 {
     public override string Debug()
     {
@@ -13,7 +13,7 @@ public record ModuleImport(string FileName, string[] Members, int Line): Stateme
     }
 }
 
-public record AssignedModuleImport(Variable Assignee, string Name, int Line) : Statement(Line)
+public record AssignedModuleImport(Variable Assignee, string Name, int Line) : Statement(true, Line)
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {
@@ -22,6 +22,6 @@ public record AssignedModuleImport(Variable Assignee, string Name, int Line) : S
 
     public override string Debug()
     {
-        throw new NotImplementedException();
+        return $"Namespace(Name: {Assignee.Name}, Contents: <from '{Name}'>)";
     }
 }

@@ -2,7 +2,7 @@
 
 // a block is not a statement, this wording is fucked
 // line zero because each statement will be processed individually.
-public record Block(List<Statement> Statements) : Statement(0)
+public record Block(List<Statement> Statements) : Statement(false, 0)
 {
     public override string Debug()
     {

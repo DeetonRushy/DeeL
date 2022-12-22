@@ -1,11 +1,11 @@
 ﻿
 namespace Runtime.Parser.Production.Conditions;
 
-public record WhileStatement(Condition Condition, Block Body, int Line) : Statement(Line)
+public record WhileStatement(Condition Condition, Block Body, int Line) : Statement(true, Line)
 {
     public override string Debug()
     {
-        throw new NotImplementedException();
+        return "While";
     }
 
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)

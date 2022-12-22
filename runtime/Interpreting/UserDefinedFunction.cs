@@ -1,5 +1,6 @@
 ﻿
 using Runtime.Interpreting.Exceptions;
+using Runtime.Interpreting.Structs;
 using Runtime.Parser.Production;
 
 namespace Runtime.Interpreting;
@@ -27,11 +28,33 @@ public class UserDefinedFunction
             throw new InterpreterException($"function `{Name}` expects {ExpectedArguments.Count} argument(s), but got {receivedArguments.Count}.");
         }
 
+        var scopesToRestoreConstness = new List<IScope>();
+
         // populate the local scope with the arguments
-        for (int i = 0; i < ExpectedArguments.Count; ++i)
+        for (var i = 0; i < ExpectedArguments.Count; ++i)
         {
             var value = receivedArguments[i].Take(interpreter);
-            interpreter.ActiveScope.Assign(ExpectedArguments[i].Name, value);
+            var current = ExpectedArguments[i];
+
+            if (current.IsConstant || current.IsConst)
+            {
+                if (value is IStruct @struct)
+                {
+                    @struct.GetScope().ConstInstance = true;
+                    scopesToRestoreConstness.Add(@struct.GetScope());
+                }
+
+                interpreter.ActiveScope.Assign(
+                    interpreter,
+                    current.Name,
+                    new DeeObject<object>(value)
+                    { IsConst = true }, current);
+            }
+            else
+            {
+                interpreter.ActiveScope.Assign(interpreter, ExpectedArguments[i].Name,
+                new DeeObject<object>(value) { IsConst = ExpectedArguments[i].IsConstant || ExpectedArguments[i].IsConst });
+            }
         }
 
         var result = Body.Take(interpreter);
@@ -56,6 +79,7 @@ public class UserDefinedFunction
         }
 
         interpreter.ActiveScope = prevScope;
+        scopesToRestoreConstness.ForEach(x => x.ConstInstance = false);
 
         return returnValue ?? new ReturnValue(Literal.Undefined, 0);
     }

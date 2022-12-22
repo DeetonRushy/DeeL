@@ -1,7 +1,7 @@
 ﻿
 namespace Runtime.Parser.Production;
 
-public record EntityIndex(Statement Entity, List<Statement> Indices, int Line) : Statement(Line)
+public record EntityIndex(Statement Entity, List<Statement> Indices, int Line) : Statement(true, Line)
 {
     public override string Debug()
     {

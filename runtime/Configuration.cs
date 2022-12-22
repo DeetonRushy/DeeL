@@ -15,10 +15,17 @@ public static class Configuration
         // these are to be used when searching for a file during an
         // import.
         
-        RegisterDefaultOption("module-paths", 
-            "stl", // DL should ship with a directory named `stl` within its own CWD
-            "src" // default /src folder for any custom source files made by the user. (to be included globally)
-            ); 
+        RegisterDefaultOption("module-paths",
+            "C:\\Users\\deeto\\source\\repos\\DeeL\\playground\\bin\\STD\\DL"
+            );
+
+        RegisterDefaultFlag("debug",
+#if DEBUG
+    true
+#else
+          false
+#endif
+            );
     }
     
     /// <summary>
@@ -38,12 +45,15 @@ public static class Configuration
 
         if (SFlags.ContainsKey(setting))
             return;
+        
+        Logger.Info(setting, $"This flag was set to `{value}`");
 
         SFlags[setting] = value;
     }
 
     public static void SetFlag(string setting, bool value)
     {
+        Logger.Info(setting, $"This flag was set to `{value}`");
         SFlags[setting] = value;
     }
     
@@ -67,12 +77,16 @@ public static class Configuration
 
         if (SFlags.ContainsKey(option))
             return;
+        
+        Logger.Info(option, $"This flag was set to `[{string.Join(',', defaults)}]`");
 
         SOptions[option] = defaults;
     }
 
     public static void AppendToOption(string option, params string[] opts)
     {
+        Logger.Info(option, $"Values [{string.Join(',', opts)}] were appended");
+        
         if (!SOptions.ContainsKey(option))
             SOptions[option] = opts;
         else

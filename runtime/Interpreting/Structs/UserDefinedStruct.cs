@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Runtime.Parser.Production;
+using System.Collections;
 
 namespace Runtime.Interpreting.Structs;
 
@@ -13,6 +14,17 @@ public class UserDefinedStruct : IStruct
     private readonly RuntimeStorage _structScope;
     private readonly bool _isStaticInstance;
 
+    public bool ConstInstance { 
+        get 
+        {
+            return _structScope.ConstInstance;
+        }
+        set
+        {
+            _structScope.ConstInstance = value;
+        }
+    }
+
     public UserDefinedStruct(string identifier, bool isStaticInstance)
     {
         _structScope = new RuntimeStorage(identifier);
@@ -20,22 +32,22 @@ public class UserDefinedStruct : IStruct
         _isStaticInstance = isStaticInstance;
     }
 
-    public void Define(string identifier, object? value)
+    public void Define(Interpreter interpreter, string identifier, DeeObject<object> value, Statement? statement = null)
     {
-        _structScope.Assign(identifier, value);
+        _structScope.Assign(interpreter ,identifier, value, statement);
     }
 
-    public void Populate(IStruct other)
+    public void Populate(Interpreter interpreter, IStruct other, Statement? statement = null)
     {
         foreach (var member in other)
         {
-            Assign(member.Key, member.Value);
+            Assign(interpreter, member.Key, new DeeObject<object>(member.Value), statement);
         }
     }
 
-    public string Assign(object key, object value)
+    public string Assign(Interpreter interpreter, object key, DeeObject<object> value, Statement? statement = null)
     {
-        return _structScope.Assign(key, value);
+        return _structScope.Assign(interpreter, key, value, statement);
     }
 
     public object GetValue(object key)
@@ -53,7 +65,7 @@ public class UserDefinedStruct : IStruct
         return this;
     }
 
-    public IEnumerator<KeyValuePair<object, object>> GetEnumerator()
+    public IEnumerator<KeyValuePair<object, DeeObject<object>>> GetEnumerator()
     {
         return _structScope.GetEnumerator();
     }

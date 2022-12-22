@@ -1,12 +1,21 @@
 ﻿mod 'dee.testing'
 
-object Person {
-  property *name: int
+object Data {
+  fn construct(self: Data) -> void {
+    self.a = 2
+    self.b = 3
+  }
 
-  fn construct(self) -> void {
+  fn to_string(self) -> string {
+    return String::format('Data: a -> {}, b -> {}', self.a, self.b)
   }
 }
 
-let me: Person = Person()
+fn doSomeShit(const data: Data) -> string {
+  return String::format('{}{}', data.a, data.b)
+}
 
-print('My name is {}', me.name)
+let data: Data = Data()
+let result: string = doSomeShit(data)
+
+print("{}", result)

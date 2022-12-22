@@ -43,6 +43,14 @@ public class BaseBuiltinStructDefinition : IStruct
 {
     private readonly RuntimeStorage _storage;
 
+    public bool ConstInstance
+    {
+        get { return _storage.ConstInstance; }
+        set { _storage.ConstInstance = value; }
+    }
+    
+    public Interpreter? Interpreter { get; set; }
+
     protected BaseBuiltinStructDefinition(string scopeName)
     {
         _storage = new RuntimeStorage(scopeName);
@@ -50,13 +58,15 @@ public class BaseBuiltinStructDefinition : IStruct
 
     public void DefineBuiltinFunction(string Name, bool isStatic, BuiltinStructFunctionDelegate callback)
     {
-        Assign(Name, new BuiltinStructFunctionDefinition(Name, isStatic, callback));
+        Assign(Interpreter!, Name,
+            new DeeObject<object>(new BuiltinStructFunctionDefinition(Name, isStatic, callback))
+            );
     }
 
     public virtual string Name { get; internal set; } = "<internal>";
 
-    public string Assign(object key, object value)
-        => _storage.Assign(key, value);
+    public string Assign(Interpreter interpreter, object key, DeeObject<object> value, Statement? statement = null)
+        => _storage.Assign(interpreter, key, value, statement);
 
     public object GetValue(object key)
         => _storage.GetValue(key);
@@ -66,7 +76,7 @@ public class BaseBuiltinStructDefinition : IStruct
         return _storage;
     }
 
-    public IEnumerator<KeyValuePair<object, object>> GetEnumerator()
+    public IEnumerator<KeyValuePair<object, DeeObject<object>>> GetEnumerator()
     {
         return _storage.GetEnumerator();
     }

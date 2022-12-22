@@ -2,7 +2,7 @@ using Runtime.Lexer;
 
 namespace Runtime.Parser.Production;
 
-public record Literal(DToken Sentiment, TypeHint Type, object Object) : Statement(Sentiment.Line)
+public record Literal(DToken Sentiment, TypeHint Type, object Object) : Statement(true, Sentiment.Line)
 {
     public override T Take<T>(ISyntaxTreeVisitor<T> visitor)
     {
@@ -50,7 +50,7 @@ public record Literal(DToken Sentiment, TypeHint Type, object Object) : Statemen
 
         if (rtType == typeof(decimal))
         {
-            return new Literal(DToken.MakeVar(TokenType.Decimal), TypeHint.Decimal, rt);
+            return new Literal(DToken.MakeVar(TokenType.Decimal), TypeHint.Float, rt);
         }
 
         if (rtType == typeof(bool))
