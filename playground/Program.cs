@@ -6,7 +6,7 @@ DContext ctx;
 try
 {
     var sw = Stopwatch.StartNew();
-    ctx = DlRuntime.Run(File.ReadAllText("C:\\Users\\deeto\\source\\repos\\DeeL\\runtime\\markup1.dl"), false);
+    ctx = DlRuntime.Run(File.ReadAllText($"C:\\Users\\{Environment.UserName}\\source\\repos\\DeeL\\runtime\\markup1.dl"), false);
 
     sw.Stop();
     Console.WriteLine($"\n\nTotal execution time: {sw.Elapsed} ({sw.ElapsedMilliseconds}ms)");

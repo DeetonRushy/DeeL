@@ -1,0 +1,19 @@
+mod 'std.time'
+
+let const TIME_MILLIS: int = 0
+let const TIME_SECONDS: int = 1
+let const TIME_MINUTES: int = 2
+let const TIME_HOURS: int = 3
+let const TIME_DAYS: int = 4
+
+object Time {
+  fn construct(self: Time) -> void {
+    self.seconds = Lang::time(TIME_SECONDS)
+    self.minutes = Lang::time(TIME_MINUTES)
+    self.hours = Lang::time(TIME_HOURS)
+  }
+
+  fn to_string(self) -> string {
+    return String::format('{}:{}:{}', self.hours, self.minutes, self.seconds)
+  }
+}

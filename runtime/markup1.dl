@@ -1,5 +1,7 @@
 ﻿mod 'dee.testing'
 
+from 'std.time' import {*}
+
 object Data {
   fn construct(self: Data) -> void {
     self.a = 2
