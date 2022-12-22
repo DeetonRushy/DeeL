@@ -345,8 +345,9 @@ public class Interpreter : ISyntaxTreeVisitor<object>
             {
                 Logger.Info(this, $"Calling object constructor `{structDecl.Name}`");
                 var scopeId = structDecl.Name;
+                var ctor = structDecl.GetValue("construct") as IStructFunction;
 
-                if (structDecl.GetValue("construct") is Undefined)
+                if (ctor is null || structDecl.GetValue("construct") is Undefined)
                 {
                     Logger.Info(this, $"Object `{structDecl.Name}` has no constructor."
                      + " Constructing it using default");
@@ -358,7 +359,10 @@ public class Interpreter : ISyntaxTreeVisitor<object>
                 var @struct = new UserDefinedStruct(scopeId, false);
                 @struct.Populate(this, structDecl);
                 if (structDecl.GetValue("construct") is not IStructFunction constructor)
-                    throw new InterpreterException("invalid instance inside of struct scope..");
+                {
+                    Panic($"internal error: no constructor but apparently `construct` is defined for `{scopeId}`");
+                    throw new NotImplementedException();
+                }
                 _ = constructor.Execute(this, @struct, call.Arguments.ToList());
                 return @struct;
             }
@@ -681,7 +685,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         return declaration;
     }
 
-    public object VisitVariableAccess(VariableAccess variableAccess, out IScope? scope)
+    public object VisitVariableAccess(VariableAccess variableAccess, out IScope? scope, bool isAssignment)
     {
         IScope? current = null;
         object? result = null;
@@ -690,7 +694,8 @@ public class Interpreter : ISyntaxTreeVisitor<object>
         {
             if (current is not null && current.ConstInstance)
             {
-                Panic("cannot assign to constant instance");
+                if (isAssignment)
+                    Panic(variableAccess.Tree.First(), "cannot assign to constant instance");
             }
 
             var lastIteration = (i + 1 >= variableAccess.Tree.Count);
@@ -831,7 +836,7 @@ public class Interpreter : ISyntaxTreeVisitor<object>
 
     public object VisitVariableAccessAssignment(VariableAccessAssignment variableAccessAssignment)
     {
-        _ = VisitVariableAccess(variableAccessAssignment.Access, out IScope? scope);
+        _ = VisitVariableAccess(variableAccessAssignment.Access, out IScope? scope, true);
 
         if (scope is null)
             throw new NotImplementedException("Variable accesses scope is null...");
