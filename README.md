@@ -5,6 +5,12 @@ A programming language that is getting there bit by bit.
 # Features
 see [here](https://github.com/DeetonRushy/DeeL/blob/master/runtime/README.md)
 
+To get started (for vs22), clone to repo and open it.
+At the top, select the project `playground` to execute.
+Then edit the file /Runtime/markup1.dl and run to see results.
+
+Run in debug to see *LOTS* of debug information, release to see program output.
+
 # Information
 There are 6 implicit data types in DeeL. 
 

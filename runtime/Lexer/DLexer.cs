@@ -1,5 +1,6 @@
 using Runtime.Lexer.Exceptions;
 using Runtime.Parser.Errors;
+using System.Reflection.Metadata.Ecma335;
 using static Runtime.Lexer.DConstants;
 
 namespace Runtime.Lexer;
@@ -113,6 +114,9 @@ public class DLexer
                 _lexeme = "";
                 continue;
             }
+
+            if (token.Type == TokenType.Comment)
+                continue;
 
             _tokens.Add(token);
             _lexeme = string.Empty;

@@ -1,8 +1,14 @@
-﻿mod 'dee.testing'
+﻿object MyObject {
+    property count: int
+    property *instances: int
 
-object Type {
-  property age: int = 0
+    fn construct(self) -> void {
+        self.count = 0
+        # sadly this is how it has to be done right now lol
+        MyObject::instances = MyObject::instances + 1
+    }
+
+    fn increment(self) -> void {
+        self.count = self.count + 1
+    }
 }
-
-let str: Type = Type()
-str.age = 19
