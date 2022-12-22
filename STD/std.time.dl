@@ -1,5 +1,7 @@
 mod 'std.time'
 
+
+# https://github.com/DeetonRushy/DeeL/blob/master/runtime/Interpreting/Structs/Builtin/Core/Interop.cs#L28
 let const TIME_MILLIS: int = 0
 let const TIME_SECONDS: int = 1
 let const TIME_MINUTES: int = 2
